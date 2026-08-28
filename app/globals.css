@@ -677,3 +677,9 @@ button{cursor:pointer}
 .dowbar span{
   font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);
 }
+
+/* spacing corrections after reviewing the rendered screen */
+.weekstrip{margin:22px 0 4px}
+.rail{padding-top:14px}
+.sechead{margin-top:24px}
+.hero{margin-top:2px}
