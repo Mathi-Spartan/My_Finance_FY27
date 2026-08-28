@@ -1951,3 +1951,16 @@ button{cursor:pointer}
 
 .rowsize{border-radius:16px 0 0 16px;opacity:.1}
 .rowwrap.open .row.compact{border-radius:16px 16px 0 0}
+
+/* refunds are money back, so they read as a deduction */
+.pg .v.refunded{color:#B6F5D8}
+.netmath{
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  margin-top:12px;padding-top:11px;border-top:1px dashed rgba(255,255,255,.28);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,.78);
+}
+.netmath b{
+  color:#B6F5D8;font-weight:700;
+  background:rgba(255,255,255,.14);padding:3px 8px;border-radius:7px;
+}
+.attbar{background:rgba(255,255,255,.22)}

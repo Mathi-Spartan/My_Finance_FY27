@@ -183,20 +183,19 @@ export default function HomeView({ onAddTo, goTo }) {
         <button className="paaristrip" onClick={() => goTo && goTo('paari')}>
           <span className="psleft">
             <span className="psk">Paari · therapy</span>
-            <span className="psv">{money(paari.total.paid)}</span>
+            <span className="psv">{money(paari.total.netPaid)}</span>
             <span className="psd">{paari.months.length} months · {paari.total.sessions} sessions</span>
           </span>
           <span className="psright">
             <span className="psbar">
               <i className="pb used" style={{ flexGrow: Math.max(paari.total.attendedAmt, 0.001) }} />
               <i className="pb lost" style={{ flexGrow: Math.max(paari.total.missedAmt, 0.001) }} />
-              <i className="pb back" style={{ flexGrow: Math.max(paari.total.refund, 0.001) }} />
               <i className="pb open" style={{ flexGrow: Math.max(paari.total.plannedAmt, 0.001) }} />
             </span>
             <span className="pstags">
               <em className="ok">{paari.total.attended} attended</em>
               {paari.total.missed > 0 && <em className="bad">{paari.total.missed} missed</em>}
-              {paari.total.refund > 0 && <em className="ref">{money(paari.total.refund)} back</em>}
+              {paari.total.refund > 0 && <em className="ref">−{money(paari.total.refund)} refunded</em>}
               {paari.total.planned > 0 && <em>{paari.total.planned} to mark</em>}
             </span>
           </span>

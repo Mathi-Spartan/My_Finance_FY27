@@ -82,6 +82,7 @@ export default function PaariView() {
   }, [inMonth]);
 
 
+  const net = sums.total - sums.refundAmt;
   const idx = months.indexOf(monthKey);
   const label = fmtDay(monthKey + '-01').month;
   const done = sums.attended + sums.missed;
@@ -122,14 +123,17 @@ export default function PaariView() {
       <div className="hero paarihero">
         <div className="eyebrow"><span className="dot" />{inMonth.length} sessions · paid in advance</div>
         <div className="bignum">
-          <span className="cur">₹</span>{Math.round(sums.total).toLocaleString('en-IN')}
+          <span className="cur">₹</span>{Math.round(net).toLocaleString('en-IN')}
         </div>
-        <div className="sublabel">paid for {label}</div>
+        <div className="sublabel">
+          {sums.refundAmt > 0
+            ? <>net cost for {label} · {money(sums.refundAmt)} refunded</>
+            : <>paid for {label}</>}
+        </div>
 
         <div className="attbar">
-          <span className="attfill used" style={{ width: (sums.total ? (sums.attendedAmt / sums.total) * 100 : 0) + '%' }} />
-          <span className="attfill lost" style={{ width: (sums.total ? (sums.missedAmt / sums.total) * 100 : 0) + '%' }} />
-          <span className="attfill back" style={{ width: (sums.total ? (sums.refundAmt / sums.total) * 100 : 0) + '%' }} />
+          <span className="attfill used" style={{ width: (net ? (sums.attendedAmt / net) * 100 : 0) + '%' }} />
+          <span className="attfill lost" style={{ width: (net ? (sums.missedAmt / net) * 100 : 0) + '%' }} />
         </div>
 
         <div className="paarigrid">
@@ -144,11 +148,19 @@ export default function PaariView() {
             <span className="d">{sums.missed} missed · no refund</span>
           </div>
           <div className="pg">
-            <span className="k">Coming back</span>
-            <span className="v">{money(sums.refundAmt)}</span>
+            <span className="k">Refunded</span>
+            <span className="v refunded">{sums.refundAmt > 0 ? '−' : ''}{money(sums.refundAmt)}</span>
             <span className="d">{sums.cancelled} cancelled</span>
           </div>
         </div>
+
+        {sums.refundAmt > 0 && (
+          <div className="netmath">
+            <span>{money(sums.total)} booked</span>
+            <b>−{money(sums.refundAmt)}</b>
+            <span>= {money(net)}</span>
+          </div>
+        )}
 
         <div className="netline" style={{ marginTop: 12 }}>
           {byTherapy.map((t) => (
@@ -164,7 +176,8 @@ export default function PaariView() {
           <span className="rbk">Refund balance</span>
           <span className="rbv">{money(refundAll.amount)}</span>
           <span className="rbd">
-            {refundAll.count} cancelled {refundAll.count === 1 ? 'session' : 'sessions'} across all months
+            {refundAll.count} cancelled {refundAll.count === 1 ? 'session' : 'sessions'} across all months,
+            already taken off what you&apos;ve paid
           </span>
         </div>
       )}
@@ -332,26 +345,37 @@ function AllMonths({ appointments }) {
       <p className="note" style={{ margin: 0 }}>No sessions loaded yet.</p>
     </div>;
   }
-  const peak = Math.max(...r.months.map((m) => m.paid), 1);
+  const peak = Math.max(...r.months.map((m) => m.netPaid), 1);
 
   return (
     <>
       <div className="hero paarihero" style={{ marginTop: 14 }}>
         <div className="eyebrow"><span className="dot" />{r.months.length} months · {t.sessions} sessions</div>
-        <div className="bignum"><span className="cur">₹</span>{Math.round(t.paid).toLocaleString('en-IN')}</div>
-        <div className="sublabel">paid since {monthLabel(r.months[0].month)}</div>
+        <div className="bignum"><span className="cur">₹</span>{Math.round(t.netPaid).toLocaleString('en-IN')}</div>
+        <div className="sublabel">
+          {t.refund > 0
+            ? <>net cost since {monthLabel(r.months[0].month)} · {money(t.refund)} refunded</>
+            : <>paid since {monthLabel(r.months[0].month)}</>}
+        </div>
 
         <div className="attbar">
-          <span className="attfill used" style={{ width: (t.attendedAmt / t.paid) * 100 + '%' }} />
-          <span className="attfill lost" style={{ width: (t.missedAmt / t.paid) * 100 + '%' }} />
-          <span className="attfill back" style={{ width: (t.refund / t.paid) * 100 + '%' }} />
+          <span className="attfill used" style={{ width: (t.attendedAmt / t.netPaid) * 100 + '%' }} />
+          <span className="attfill lost" style={{ width: (t.missedAmt / t.netPaid) * 100 + '%' }} />
         </div>
 
         <div className="paarigrid">
           <div className="pg"><span className="k">Used</span><span className="v">{money(t.attendedAmt)}</span><span className="d">{t.attended} attended</span></div>
           <div className="pg"><span className="k">Lost</span><span className="v">{money(t.missedAmt)}</span><span className="d">{t.missed} missed</span></div>
-          <div className="pg"><span className="k">Coming back</span><span className="v">{money(t.refund)}</span><span className="d">{t.cancelled} cancelled</span></div>
+          <div className="pg"><span className="k">Refunded</span><span className="v refunded">{t.refund > 0 ? '−' : ''}{money(t.refund)}</span><span className="d">{t.cancelled} cancelled</span></div>
         </div>
+
+        {t.refund > 0 && (
+          <div className="netmath">
+            <span>{money(t.paid)} booked</span>
+            <b>−{money(t.refund)}</b>
+            <span>= {money(t.netPaid)}</span>
+          </div>
+        )}
 
         {r.attendanceRate !== null && (
           <div className="netline" style={{ marginTop: 12 }}>
@@ -384,23 +408,22 @@ function AllMonths({ appointments }) {
                 <span className="mbar">
                   <i className="mb used" style={{ flexGrow: Math.max(m.attendedAmt, 0.001) }} />
                   <i className="mb lost" style={{ flexGrow: Math.max(m.missedAmt, 0.001) }} />
-                  <i className="mb back" style={{ flexGrow: Math.max(m.refund, 0.001) }} />
-                  <i className="mb open" style={{ flexGrow: Math.max(m.plannedAmt, 0.001) }} />
+                    <i className="mb open" style={{ flexGrow: Math.max(m.plannedAmt, 0.001) }} />
                 </span>
                 <span className="sttime">
                   {m.sessions} booked · {m.attended} attended · {m.missed} missed · {m.cancelled} cancelled
                 </span>
               </span>
               <span className="stright">
-                <span className="stamt">{money(m.paid)}</span>
-                <span className="stpill" style={{ opacity: m.paid / peak > 0.99 ? 1 : 0.55 }}>
-                  {Math.round((m.paid / peak) * 100)}%
+                <span className="stamt">{money(m.netPaid)}</span>
+                <span className="stpill" style={{ opacity: m.netPaid / peak > 0.99 ? 1 : 0.55 }}>
+                  {Math.round((m.netPaid / peak) * 100)}%
                 </span>
               </span>
             </div>
           </div>
         ))}
-        <div className="stfoot"><span>{r.months.length} months</span><b>{money(t.paid)}</b></div>
+        <div className="stfoot"><span>{r.months.length} months</span><b>{money(t.netPaid)}</b></div>
       </div>
 
       <div className="card" style={{ marginTop: 12 }}>
@@ -409,11 +432,11 @@ function AllMonths({ appointments }) {
           <div className="drift" key={th.name}>
             <div className="drifttop">
               <span className="lab">{th.name}</span>
-              <span className="val">{th.sessions} sessions · {money(th.paid)}</span>
+              <span className="val">{th.sessions} sessions · {money(th.netPaid)}</span>
             </div>
             <div className="track">
               <div className="fillbar" style={{
-                width: Math.max(4, (th.paid / t.paid) * 100) + '%',
+                width: Math.max(4, (th.netPaid / Math.max(t.netPaid, 1)) * 100) + '%',
                 background: th.name === 'Speech'
                   ? 'linear-gradient(90deg,var(--g1),var(--g3))'
                   : 'linear-gradient(90deg,#2D6FE0,#7CB4FF)',
