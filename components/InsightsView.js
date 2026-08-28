@@ -1,6 +1,7 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Refresh } from './Icons';
+import SalaryView from './SalaryView';
 import { useStore } from '@/lib/store';
 import {
   rupees, money, totals, lastMonthTotals, whereItWent, biggestChanges,
@@ -9,6 +10,7 @@ import {
 
 export default function InsightsView() {
   const { txs, categories, reload, loading } = useStore();
+  const [tab, setTab] = useState('spending');
 
   const month = useMemo(() => totals(txs), [txs]);
   const prev = useMemo(() => lastMonthTotals(txs), [txs]);
@@ -51,6 +53,17 @@ export default function InsightsView() {
           <Refresh width="16" height="16" />
         </button>
       </div>
+
+      <div className="seg modeseg">
+        <button className={tab === 'spending' ? 'on' : ''} onClick={() => setTab('spending')}>Spending</button>
+        <button className={tab === 'salary' ? 'on' : ''} onClick={() => setTab('salary')}>Salary</button>
+      </div>
+
+      {tab === 'salary' ? <SalaryView /> : txs.length === 0 ? (
+        <div className="card" style={{ marginTop: 14 }}>
+          <p className="note" style={{ margin: 0 }}>Nothing to read yet. Add a few entries and this fills in on its own.</p>
+        </div>
+      ) : <>
 
       {/* headline */}
       <div className="card">
@@ -174,6 +187,7 @@ export default function InsightsView() {
           )}
         </div>
       )}
+      </>}
     </div>
   );
 }

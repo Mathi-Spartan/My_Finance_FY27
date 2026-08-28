@@ -2032,3 +2032,18 @@ button{cursor:pointer}
 }
 .tworow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tworow .field{margin-bottom:12px}
+
+/* ============================================================
+   SALARY
+   ============================================================ */
+.salrow{cursor:pointer}
+.salbar{
+  display:block;height:6px;border-radius:4px;background:var(--line-2);
+  overflow:hidden;margin-bottom:5px;
+}
+.salbar i{
+  display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--in),#5FD9AF);
+  animation:wipe .7s cubic-bezier(.2,.85,.25,1) both;
+}
+.btnrow .btn{display:flex;align-items:center;justify-content:center;gap:7px}
