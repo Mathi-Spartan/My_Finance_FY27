@@ -729,3 +729,31 @@ button{cursor:pointer}
 
 /* quick date chips under the picker */
 .quickdates{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+
+/* credit card limit bar on the account card */
+.abal small{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+  margin-top:3px;text-align:right;
+}
+.limitwrap{display:block;margin-top:13px}
+.limitbar{
+  display:block;height:7px;border-radius:6px;background:var(--line-2);overflow:hidden;
+}
+.limitfill{
+  display:block;height:100%;border-radius:6px;
+  background:linear-gradient(90deg,var(--g2),var(--g1));
+  animation:wipe .8s cubic-bezier(.2,.85,.25,1) both;
+}
+.limitmeta{
+  display:flex;justify-content:space-between;margin-top:7px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);
+}
+
+/* per-account editor block in settings */
+.acctedit{
+  background:var(--card-2);border:1px solid var(--line-2);border-radius:18px;
+  padding:16px;margin-bottom:14px;
+}
+.aename{font-size:14.5px;font-weight:650;letter-spacing:-.01em;margin-bottom:12px}
+.acctedit .field:last-of-type{margin-bottom:0}

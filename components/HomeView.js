@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search } from './Icons';
 import {
-  rupees, totals, totalCash, accountBalances, accountFlow, splitName,
+  rupees, totals, totalCash, accountBalances, accountFlow, splitName, cardStatus, isCard,
   dayLabel, timeLabel, isoDay, initials, colorOf,
 } from '@/lib/finance';
 
@@ -171,10 +171,30 @@ export default function HomeView({ onAddTo }) {
                   {nm.title}
                   {nm.sub && <small>{nm.sub}</small>}
                 </span>
-                <span className="abal" style={{ color: (balances[a.id] || 0) < 0 ? 'var(--out)' : undefined }}>
-                  {rupees(balances[a.id] || 0, { decimals: false })}
-                </span>
+                {isCard(a) ? (
+                  <span className="abal">
+                    {rupees(cardStatus(a, balances).available, { decimals: false })}
+                    <small>available</small>
+                  </span>
+                ) : (
+                  <span className="abal" style={{ color: (balances[a.id] || 0) < 0 ? 'var(--out)' : undefined }}>
+                    {rupees(balances[a.id] || 0, { decimals: false })}
+                  </span>
+                )}
               </span>
+
+              {isCard(a) && cardStatus(a, balances).limit > 0 && (
+                <span className="limitwrap">
+                  <span className="limitbar">
+                    <span className="limitfill" style={{ width: cardStatus(a, balances).used + '%' }} />
+                  </span>
+                  <span className="limitmeta">
+                    <span>{rupees(cardStatus(a, balances).owed, { decimals: false })} used</span>
+                    <span>of {rupees(cardStatus(a, balances).limit, { decimals: false })}</span>
+                  </span>
+                </span>
+              )}
+
               <span className="aflow">
                 <span className="af in">↓ {rupees(f.in, { decimals: false })}</span>
                 <span className="af out">↑ {rupees(f.out, { decimals: false })}</span>

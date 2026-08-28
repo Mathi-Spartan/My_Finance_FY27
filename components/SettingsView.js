@@ -71,23 +71,60 @@ export default function SettingsView({ theme, toggleTheme }) {
         <>
           <div className="card">
             <div className="cardhead"><h4>Accounts</h4><span>{accounts.length}</span></div>
-            {accounts.map((a) => (
-              <div className="field" key={a.id}>
-                <label>{a.name} · {rupees(balances[a.id] || 0, { decimals: false })}</label>
-                <input type="number" defaultValue={a.opening}
-                       onBlur={(e) => saveAccount({ id: a.id, opening: Number(e.target.value) || 0 })}
-                       placeholder="Opening balance" />
-              </div>
-            ))}
-            <div className="btnrow">
-              <input className="field" style={{ flex: 1, background: 'var(--card-2)', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px' }}
-                     value={newAcct} onChange={(e) => setNewAcct(e.target.value)} placeholder="New account name" />
-              <button className="btn" style={{ width: 'auto', padding: '13px 18px' }}
-                      onClick={() => { if (newAcct.trim()) { saveAccount({ name: newAcct.trim(), kind: 'bank', sort: accounts.length + 1 }); setNewAcct(''); } }}>
-                Add
-              </button>
+            {accounts.map((a) =>
+              a.kind === 'card' ? (
+                <div className="acctedit" key={a.id}>
+                  <div className="aename">{a.name}</div>
+                  <div className="field">
+                    <label>Total credit limit (₹)</label>
+                    <input type="number" inputMode="decimal" defaultValue={a.credit_limit || ''}
+                           placeholder="e.g. 200000"
+                           onBlur={(e) => saveAccount({ id: a.id, credit_limit: Number(e.target.value) || 0 })} />
+                  </div>
+                  <div className="field">
+                    <label>Available limit right now (₹)</label>
+                    <input type="number" inputMode="decimal"
+                           defaultValue={Math.max(0, Number(a.credit_limit || 0) + Number(a.opening || 0)) || ''}
+                           placeholder="e.g. 175000"
+                           onBlur={(e) => {
+                             const avail = Number(e.target.value) || 0;
+                             const limit = Number(a.credit_limit) || 0;
+                             // whatever isn't available is already owed
+                             saveAccount({ id: a.id, opening: -(Math.max(0, limit - avail)) });
+                           }} />
+                  </div>
+                  <p className="note" style={{ marginTop: 4 }}>
+                    Enter both once. After that, every card spend lowers the available limit and every
+                    payment raises it, on its own.
+                  </p>
+                </div>
+              ) : (
+                <div className="field" key={a.id}>
+                  <label>{a.name} · {rupees(balances[a.id] || 0, { decimals: false })}</label>
+                  <input type="number" inputMode="decimal" defaultValue={a.opening}
+                         onBlur={(e) => saveAccount({ id: a.id, opening: Number(e.target.value) || 0 })}
+                         placeholder="Balance today" />
+                </div>
+              )
+            )}
+            <div className="field">
+              <label>Add another</label>
+              <input value={newAcct} onChange={(e) => setNewAcct(e.target.value)}
+                     placeholder="Name, e.g. Cash — Wallet" />
             </div>
-            <p className="note">Set the opening balance to what the account actually holds today, then let entries do the rest.</p>
+            <div className="btnrow">
+              {[['bank', 'Bank'], ['cash', 'Cash'], ['card', 'Credit card']].map(([k, label]) => (
+                <button key={k} className="btn ghost" style={{ padding: '12px 10px', fontSize: 13 }}
+                        onClick={() => {
+                          if (!newAcct.trim()) { say('Give it a name first'); return; }
+                          saveAccount({ name: newAcct.trim(), kind: k, sort: accounts.length + 1 });
+                          setNewAcct('');
+                        }}>
+                  Add {label}
+                </button>
+              ))}
+            </div>
+            <p className="note">Set each balance to what the account actually holds today. Entries take it from there.</p>
           </div>
         </>
       )}
