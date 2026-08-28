@@ -2,7 +2,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search, Refresh, Back } from './Icons';
-import EditSheet from './EditSheet';
 import {
   money, rangeOf, inRange, rangeTotals, monthGrid, dailyMap,
   isoDay, dayLabel, timeLabel, initials, colorOf,
@@ -10,13 +9,13 @@ import {
 
 const MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
 
-export default function EntriesView() {
+export default function EntriesView({ onEdit }) {
   const { txs, accounts, categories, reload, loading } = useStore();
   const [mode, setMode] = useState('month');
   const [anchor, setAnchor] = useState(new Date());
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
-  const [editing, setEditing] = useState(null);
+
 
   const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
   const acctName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name.split('—')[0].trim()])), [accounts]);
@@ -159,7 +158,7 @@ export default function EntriesView() {
                 const isIn = tx.direction === 'in';
                 return (
                   <div key={tx.id}>
-                    <button className="row" onClick={() => setEditing(tx)}>
+                    <button className="row" onClick={() => onEdit(tx)}>
                       <span className="av" style={{
                         background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
                         color: isIn ? 'var(--in)' : `var(--${c})`,
@@ -183,13 +182,6 @@ export default function EntriesView() {
             </div>
           );
         })
-      )}
-
-      {editing && (
-        <EditSheet
-          tx={txs.find((t) => t.id === editing.id) || editing}
-          onClose={() => setEditing(null)}
-        />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import EntriesView from './EntriesView';
 import InsightsView from './InsightsView';
 import SettingsView from './SettingsView';
 import AddSheet from './AddSheet';
+import EditSheet from './EditSheet';
 import Login from './Login';
 import Lock from './Lock';
 import { Home, Chart, Gear, Plus, Calendar } from './Icons';
@@ -15,6 +16,7 @@ export default function App() {
   const [tab, setTab] = useState('home');
   const [adding, setAdding] = useState(false);
   const [presetAccount, setPresetAccount] = useState(null);
+  const [editing, setEditing] = useState(null);
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
 
@@ -44,7 +46,7 @@ export default function App() {
     <div className="shell">
       <div key={tab} className="viewfade">
         {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
-        {tab === 'entries' && <EntriesView />}
+        {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
       </div>
@@ -68,6 +70,7 @@ export default function App() {
       </nav>
 
       {adding && <AddSheet presetAccount={presetAccount} onClose={() => { setAdding(false); setPresetAccount(null); }} />}
+      {editing && <EditSheet tx={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }
