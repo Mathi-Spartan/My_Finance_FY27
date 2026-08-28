@@ -278,150 +278,147 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ============================================================
-   DESKTOP SHELL — sidebar, not a stretched phone
+   COLOUR + MOTION PASS — mobile only, no layout changes
    ============================================================ */
-.layout{display:flex;min-height:100dvh}
-.side{display:none}
 
-@media (min-width:1024px){
-  .layout{gap:0}
-  .side{
-    display:flex;flex-direction:column;gap:6px;
-    width:264px;flex:0 0 264px;padding:26px 18px;
-    border-right:1px solid var(--line);
-    background:
-      radial-gradient(120% 60% at 0% 0%, color-mix(in srgb,var(--brand) 9%, transparent) 0%, transparent 60%),
-      var(--card);
-    position:sticky;top:0;height:100dvh;
-  }
-  .shell{max-width:none;margin:0;flex:1;min-width:0}
-  .body{
-    padding:34px 40px 60px;
-    max-width:1180px;margin:0 auto;
-    display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
-    gap:22px;align-items:start;
-  }
-  .body > .full{grid-column:1 / -1}
-  .body > .apphead{grid-column:1 / -1;padding-top:0}
-  .nav{display:none}
-  .wide{display:contents}
+/* --- richer accent ramp --- */
+:root{
+  --g1:#6D4AFF; --g2:#9B5CF6; --g3:#3B82F6;
+  --glow:0 18px 40px -18px rgba(109,74,255,.55);
 }
-@media (min-width:1500px){
-  .body{max-width:1320px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+[data-theme="dark"]{
+  --g1:#8C7BFF; --g2:#B18CFF; --g3:#5AA2FF;
+  --glow:0 18px 44px -18px rgba(140,123,255,.6);
 }
 
-.sidebrand{display:flex;align-items:baseline;gap:8px;padding:4px 10px 22px}
-.sidebrand b{font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:800;letter-spacing:-.04em}
-.sidebrand span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase}
-
-.sidebtn{
-  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
-  border:0;background:transparent;color:var(--ink-2);
-  font-size:14px;font-weight:600;padding:11px 12px;border-radius:13px;
-  transition:background .18s ease,color .18s ease,transform .18s ease;
-  position:relative;
+/* --- hero becomes a gradient surface, not a white box --- */
+.hero{
+  background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 52%,var(--g3) 100%);
+  border:0;color:#fff;box-shadow:var(--glow);
+  position:relative;overflow:hidden;
+  animation:heroIn .6s cubic-bezier(.2,.85,.25,1) both;
 }
-.sidebtn svg{width:18px;height:18px;flex:0 0 auto}
-.sidebtn:hover{background:var(--card-2);color:var(--ink);transform:translateX(2px)}
-.sidebtn.on{background:var(--ink);color:var(--paper)}
-.sidebtn.on:hover{transform:none}
-.sideadd{
-  margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
-  border:0;background:var(--brand);color:#fff;font-size:14.5px;font-weight:700;
-  padding:14px;border-radius:15px;box-shadow:0 10px 24px -10px var(--brand);
-  transition:transform .16s ease,box-shadow .16s ease;
-}
-.sideadd:hover{transform:translateY(-2px);box-shadow:0 16px 30px -12px var(--brand)}
-.sideadd:active{transform:scale(.97)}
-.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
-.sidemeta{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);
-  letter-spacing:.06em;padding:0 12px 4px;
-}
-.sidecash{
-  background:var(--card-2);border:1px solid var(--line-2);border-radius:16px;padding:14px;
-}
-.sidecash .k{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-.sidecash .v{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:500;margin-top:5px;letter-spacing:-.03em}
-
-/* ============================================================
-   MOTION — entrance, count-up, hover
-   ============================================================ */
-@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes fadein{from{opacity:0}to{opacity:1}}
-.rise{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
-.d1{animation-delay:.04s} .d2{animation-delay:.09s} .d3{animation-delay:.15s} .d4{animation-delay:.21s}
-.viewfade{animation:fadein .32s ease both}
-
-.hero{position:relative;overflow:hidden}
-.hero::after{
+.hero::before{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(90% 130% at 100% 0%, color-mix(in srgb,var(--brand) 10%, transparent) 0%, transparent 55%);
+  background:
+    radial-gradient(60% 90% at 92% 6%, rgba(255,255,255,.30), transparent 60%),
+    radial-gradient(50% 70% at 8% 100%, rgba(255,255,255,.16), transparent 60%);
 }
 .hero > *{position:relative;z-index:1}
-.card,.row,.acct{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-@media (hover:hover){
-  .card:hover{transform:translateY(-2px)}
-  .acct:hover{transform:translateY(-3px);border-color:var(--brand)}
+@keyframes heroIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+
+.hero .eyebrow{color:rgba(255,255,255,.72)}
+.hero .eyebrow .dot{background:#7BF0C0;box-shadow:0 0 0 4px rgba(123,240,192,.22)}
+.hero .eyebrow .dot.warn{background:#FFB4A8;box-shadow:0 0 0 4px rgba(255,180,168,.22)}
+.hero .bignum{color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.14)}
+.hero .bignum.neg{color:#FFD9D2}
+.hero .bignum .cur,.hero .bignum .cent{color:rgba(255,255,255,.62)}
+.hero .herosub{color:rgba(255,255,255,.82)}
+.hero .herosub b{color:#fff}
+.hero .runlabels{color:rgba(255,255,255,.55)}
+.hero .runfoot{color:rgba(255,255,255,.78);border-top-color:rgba(255,255,255,.22)}
+.hero .runfoot b{color:#fff}
+.hero .pill{background:rgba(255,255,255,.18);color:#fff}
+.hero .pill.good{background:rgba(123,240,192,.24);color:#DFFFF1}
+.hero .pill.bad{background:rgba(255,180,168,.24);color:#FFE7E2}
+
+/* bars on the gradient */
+.hero .bar{background:rgba(255,255,255,.22)}
+.hero .bar.spent{background:rgba(255,255,255,.55)}
+.hero .bar.over{background:#FFB4A8}
+.hero .bar.today{background:#fff;box-shadow:0 0 14px rgba(255,255,255,.85)}
+.bars.idle{opacity:.55}
+.bars.idle .bar{animation:none;height:7px !important}
+
+/* --- segmented control with a sliding feel --- */
+.seg{box-shadow:0 1px 2px rgba(13,19,33,.05)}
+.seg button{transition:background .26s cubic-bezier(.2,.8,.2,1),color .2s ease,transform .2s ease}
+.seg button.on{
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  box-shadow:0 6px 14px -6px var(--g1);
+}
+.seg button:active{transform:scale(.96)}
+
+/* --- entry rows: colour, depth, stagger --- */
+.row{animation:rowIn .42s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rowIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.row:nth-child(1){animation-delay:.02s}
+.row:nth-child(2){animation-delay:.06s}
+.row:nth-child(3){animation-delay:.10s}
+.row:nth-child(4){animation-delay:.14s}
+.row:nth-child(5){animation-delay:.18s}
+.row:active{transform:scale(.98)}
+.av{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+
+/* --- account tiles get identity --- */
+.rail{padding-top:18px}
+.acct{
+  animation:rowIn .45s cubic-bezier(.2,.8,.2,1) both;
+  background:linear-gradient(160deg,var(--card) 0%,var(--card-2) 100%);
+  position:relative;overflow:hidden;
+}
+.acct::after{
+  content:'';position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:3px 3px 0 0;
+  background:linear-gradient(90deg,var(--g1),var(--g3));opacity:.85;
+}
+.acct:nth-child(2)::after{background:linear-gradient(90deg,#00A36C,#4FD1A5)}
+.acct:nth-child(3)::after{background:linear-gradient(90deg,#E5484D,#FF8A80)}
+.acct:nth-child(4)::after{background:linear-gradient(90deg,#E08A00,#FFC15E)}
+.acct:nth-child(2){animation-delay:.05s}
+.acct:nth-child(3){animation-delay:.1s}
+.acct:nth-child(4){animation-delay:.15s}
+
+/* --- cards lift in --- */
+.card{animation:rowIn .5s cubic-bezier(.2,.8,.2,1) both}
+.card:nth-of-type(2){animation-delay:.06s}
+.card:nth-of-type(3){animation-delay:.12s}
+
+/* --- floating glass nav --- */
+.nav{
+  background:none;
+  padding:10px 14px calc(16px + env(safe-area-inset-bottom));
+}
+.nav::before{
+  content:'';position:absolute;left:12px;right:12px;top:4px;bottom:calc(10px + env(safe-area-inset-bottom));
+  border-radius:26px;background:color-mix(in srgb,var(--card) 82%,transparent);
+  backdrop-filter:blur(18px) saturate(1.5);
+  border:1px solid var(--line);box-shadow:0 12px 30px -14px rgba(13,19,33,.35);
+}
+.navbtn,.addbtn{position:relative;z-index:1}
+.navbtn{padding:8px 0;transition:color .2s ease,transform .2s ease}
+.navbtn.on{color:var(--g1)}
+.navbtn:active{transform:scale(.9)}
+.addbtn{
+  background:linear-gradient(135deg,var(--g1),var(--g2));
+  box-shadow:0 10px 22px -8px var(--g1);
+  padding:12px 18px;
 }
 
-/* ============================================================
-   EMPTY / ONBOARDING — designed, not an apology
-   ============================================================ */
-.startcard{
-  background:var(--card);border:1px solid var(--line);border-radius:24px;
-  padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden;
-}
-.startcard::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(80% 120% at 0% 0%, color-mix(in srgb,var(--brand) 8%, transparent), transparent 60%);
-}
-.startcard > *{position:relative}
-.startcard h3{
-  font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700;
-  letter-spacing:-.03em;margin-bottom:6px;
-}
-.startcard p.lede{font-size:14px;color:var(--ink-2);line-height:1.55;margin-bottom:20px}
-.steps{display:flex;flex-direction:column;gap:10px}
-.step{
-  display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;
-  background:var(--card-2);border:1px solid var(--line-2);border-radius:16px;padding:14px 16px;
-  transition:border-color .18s ease,transform .18s ease;
-}
-.step:hover{border-color:var(--brand);transform:translateX(3px)}
-.step .n{
-  width:26px;height:26px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
-  background:var(--brand-soft);color:var(--brand);
-  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
-}
-.step .t{font-size:14px;font-weight:650;letter-spacing:-.01em}
-.step .s{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
-.step.done .n{background:var(--in-soft);color:var(--in)}
-.step.done .t{color:var(--ink-3);text-decoration:line-through}
+/* --- add sheet --- */
+.amount{transition:color .2s ease}
+.key{transition:transform .1s ease,background .16s ease,color .16s ease}
+.key:active{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;transform:scale(.94)}
+.chip{transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.chip:active{transform:scale(.95)}
+.chip.auto{background:linear-gradient(135deg,color-mix(in srgb,var(--g1) 12%,transparent),color-mix(in srgb,var(--g3) 12%,transparent))}
+.knob{background:linear-gradient(135deg,#00A36C,#3FD6A0);box-shadow:0 6px 14px -6px rgba(0,163,108,.7)}
+.swipe .fill{background:linear-gradient(90deg,color-mix(in srgb,#00A36C 22%,transparent),color-mix(in srgb,#3FD6A0 26%,transparent))}
 
-/* flat-line runway when there's nothing to draw */
-.bars.idle{opacity:.45}
-.bars.idle .bar{animation:none;height:6px !important}
-
-/* --- corrections after reviewing the rendered desktop layout --- */
-.step .t, .step .s{display:block}
+/* --- start card picks up the accent --- */
+.startcard{animation:rowIn .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:.08s}
+.step .t,.step .s{display:block}
 .step > span:last-child{min-width:0}
+.step .n{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff}
+.step:active{transform:scale(.99)}
 
-@media (min-width:1024px){
-  /* accounts belong in a grid on desktop, not a scrolling strip that clips */
-  .rail{
-    display:grid;grid-template-columns:1fr 1fr;gap:10px;
-    overflow:visible;padding:0;
-  }
-  .acct{min-width:0;padding:14px 16px}
-  .acct .bal{font-size:18px}
+/* --- buttons --- */
+.btn{background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 10px 22px -10px var(--g1)}
+.detect{background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:var(--glow)}
+.detect .primary{color:var(--g1)}
 
-  /* give the hero room to breathe */
-  .hero{padding:26px 26px 22px}
-  .bignum{font-size:56px}
-  .bars{height:76px}
-  .runway{margin-top:22px}
+/* view change */
+.viewfade{animation:rowIn .34s cubic-bezier(.2,.8,.2,1) both}
 
-  .startcard{padding:30px}
-  .sechead{margin-top:6px}
+@media (prefers-reduced-motion:reduce){
+  .hero,.row,.card,.acct,.startcard,.viewfade{animation:none !important}
 }
