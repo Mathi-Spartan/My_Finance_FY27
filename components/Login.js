@@ -13,9 +13,21 @@ export default function Login() {
     if (!email.includes('@')) { setMsg({ t: 'err', m: 'Enter a valid email address.' }); return; }
     if (!password) { setMsg({ t: 'err', m: 'Enter your password.' }); return; }
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) setMsg({ t: 'err', m: error.message });
+    setMsg(null);
+    // Never leave the button spinning with nothing to read.
+    const stall = setTimeout(() => {
+      setBusy(false);
+      setMsg({ t: 'err', m: 'That took too long. Check your connection and try again.' });
+    }, 12000);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setMsg({ t: 'err', m: error.message });
+    } catch (e) {
+      setMsg({ t: 'err', m: e?.message || 'Sign in failed.' });
+    } finally {
+      clearTimeout(stall);
+      setBusy(false);
+    }
   };
 
   const sendLink = async () => {
