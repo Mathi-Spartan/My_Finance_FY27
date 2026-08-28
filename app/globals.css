@@ -1472,3 +1472,32 @@ button{cursor:pointer}
   .dnote,.flynote{animation:none;display:none}
   .icobtn.spinning svg{animation:none}
 }
+
+/* ============================================================
+   REAL DENOMINATIONS — sized and angled like actual notes
+   ============================================================ */
+.dnote,.flynote{height:auto}
+.dnote{width:40px;opacity:.13}
+.flynote{
+  width:38px;opacity:0;
+  filter:drop-shadow(0 5px 10px rgba(0,0,0,.28));
+}
+/* larger notes read slightly bigger, as they are in the hand */
+.flynote:nth-child(1){width:42px}
+.flynote:nth-child(2){width:40px}
+.flynote:nth-child(3){width:38px}
+.flynote:nth-child(4){width:36px}
+.flynote:nth-child(5){width:35px}
+.flynote:nth-child(6){width:34px}
+
+/* the drift layer sits behind, dimmed so text stays legible */
+.drift-notes{opacity:.55;filter:saturate(.7)}
+.dn0{width:44px} .dn1{width:38px} .dn2{width:41px} .dn3{width:36px} .dn4{width:39px}
+
+/* a touch of tumble so they don't fly flat */
+@keyframes flyUp{
+  0%  {opacity:0;   transform:translate(0,28px) rotate(-4deg) scale(.68)}
+  16% {opacity:1}
+  72% {opacity:.8}
+  100%{opacity:0;   transform:translate(var(--sway),-148px) rotate(var(--spin)) scale(1.06)}
+}

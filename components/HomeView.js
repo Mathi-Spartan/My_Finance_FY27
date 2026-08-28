@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Refresh, Plus } from './Icons';
+import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
   splitName, cardStatus, isCard,
@@ -9,16 +10,6 @@ import {
 
 const TONES = ['tone-a', 'tone-b', 'tone-c', 'tone-d', 'tone-e', 'tone-f'];
 
-// A little banknote, drawn rather than an emoji so it takes our colours.
-const Note = ({ className, style }) => (
-  <svg className={className} style={style} viewBox="0 0 34 20" fill="none" aria-hidden="true">
-    <rect x="0.6" y="0.6" width="32.8" height="18.8" rx="3" fill="currentColor" opacity="0.9" />
-    <circle cx="17" cy="10" r="5" fill="none" stroke="#fff" strokeWidth="1.1" opacity=".85" />
-    <path d="M14.8 7.4h4.4M14.8 9.4h4.4M18.4 7.4c1 0 1.6.8 1.6 1.7 0 1-.7 1.6-1.9 1.6h-1.3l3 3.1"
-          stroke="#fff" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" opacity=".95" />
-    <path d="M3.5 3.5v13M30.5 3.5v13" stroke="#fff" strokeWidth="1" opacity=".5" />
-  </svg>
-);
 
 function useCountUp(target, ms = 700) {
   const [v, setV] = useState(0);
@@ -44,7 +35,7 @@ function useCountUp(target, ms = 700) {
 export default function HomeView({ onAddTo }) {
   const { accounts, txs, reload, loading } = useStore();
   const [focus, setFocus] = useState(null); // null = everything
-  const [burst, setBurst] = useState(0);
+  const [burst, setBurst] = useState(null);
   const prev = useRef(null);
 
   const live = useMemo(() => accounts.filter((a) => !a.archived), [accounts]);
@@ -67,10 +58,11 @@ export default function HomeView({ onAddTo }) {
   // Money arriving deserves to look like money arriving.
   useEffect(() => {
     if (prev.current !== null && headline > prev.current + 0.005) {
+      const gain = headline - prev.current;
       const id = Date.now();
-      setBurst(id);
-      // take the notes back out once they've flown, so nothing lingers
-      const t = setTimeout(() => setBurst((b) => (b === id ? 0 : b)), 2100);
+      // fly the notes you'd actually be handed for that amount
+      setBurst({ id, notes: notesFor(gain) });
+      const t = setTimeout(() => setBurst((b) => (b && b.id === id ? null : b)), 2100);
       prev.current = headline;
       return () => clearTimeout(t);
     }
@@ -105,16 +97,16 @@ export default function HomeView({ onAddTo }) {
       <div className={'hero wallet' + (selected ? ' focused' : '')}>
         {/* ambient notes drifting behind the figures */}
         <div className="drift-notes" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Note key={i} className={'dnote dn' + i} />
+          {[500, 200, 100, 50, 20].map((v, i) => (
+            <INRNote key={v} denom={v} className={'dnote dn' + i} />
           ))}
         </div>
 
         {/* a short flurry whenever the balance goes up */}
-        {burst > 0 && (
-          <div className="cashfly" key={burst} aria-hidden="true">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <Note key={i} className={'flynote fn' + i} />
+        {burst && (
+          <div className="cashfly" key={burst.id} aria-hidden="true">
+            {burst.notes.map((v, i) => (
+              <INRNote key={i} denom={v} className={'flynote fn' + i} />
             ))}
           </div>
         )}
