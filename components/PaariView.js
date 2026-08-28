@@ -41,18 +41,30 @@ export default function PaariView() {
     [inMonth, filter]
   );
 
+  // Everything is paid up front. Missing a class burns the money; a trainer
+  // cancellation comes back in full.
   const sums = useMemo(() => {
-    const s = { planned: 0, attended: 0, missed: 0, attendedAmt: 0, missedAmt: 0, plannedAmt: 0, total: 0 };
+    const s = {
+      planned: 0, attended: 0, missed: 0, cancelled: 0,
+      attendedAmt: 0, missedAmt: 0, plannedAmt: 0, refundAmt: 0, total: 0,
+    };
     inMonth.forEach((a) => {
       const amt = Number(a.amount) || 0;
       s.total += amt;
       s[a.status] = (s[a.status] || 0) + 1;
       if (a.status === 'attended') s.attendedAmt += amt;
       else if (a.status === 'missed') s.missedAmt += amt;
+      else if (a.status === 'cancelled') s.refundAmt += amt;
       else s.plannedAmt += amt;
     });
     return s;
   }, [inMonth]);
+
+  // refunds owed across every month, not just the one on screen
+  const refundAll = useMemo(() => {
+    const list = appointments.filter((a) => a.status === 'cancelled');
+    return { count: list.length, amount: list.reduce((t, a) => t + (Number(a.amount) || 0), 0) };
+  }, [appointments]);
 
   const byTherapy = useMemo(() => {
     const m = {};
@@ -101,19 +113,34 @@ export default function PaariView() {
       </div>
 
       <div className="hero paarihero">
-        <div className="eyebrow"><span className="dot" />{inMonth.length} sessions this month</div>
+        <div className="eyebrow"><span className="dot" />{inMonth.length} sessions · paid in advance</div>
         <div className="bignum">
-          <span className="cur">₹</span>{Math.round(sums.attendedAmt).toLocaleString('en-IN')}
+          <span className="cur">₹</span>{Math.round(sums.total).toLocaleString('en-IN')}
         </div>
-        <div className="sublabel">attended · {money(sums.total)} scheduled</div>
+        <div className="sublabel">paid for {label}</div>
 
         <div className="attbar">
-          <span className="attfill" style={{ width: progress + '%' }} />
+          <span className="attfill used" style={{ width: (sums.total ? (sums.attendedAmt / sums.total) * 100 : 0) + '%' }} />
+          <span className="attfill lost" style={{ width: (sums.total ? (sums.missedAmt / sums.total) * 100 : 0) + '%' }} />
+          <span className="attfill back" style={{ width: (sums.total ? (sums.refundAmt / sums.total) * 100 : 0) + '%' }} />
         </div>
-        <div className="attmeta">
-          <span>{sums.attended} attended</span>
-          <span>{sums.missed} missed</span>
-          <span>{sums.planned} to go</span>
+
+        <div className="paarigrid">
+          <div className="pg">
+            <span className="k">Used</span>
+            <span className="v">{money(sums.attendedAmt)}</span>
+            <span className="d">{sums.attended} attended</span>
+          </div>
+          <div className="pg">
+            <span className="k">Lost</span>
+            <span className="v">{money(sums.missedAmt)}</span>
+            <span className="d">{sums.missed} missed · no refund</span>
+          </div>
+          <div className="pg">
+            <span className="k">Coming back</span>
+            <span className="v">{money(sums.refundAmt)}</span>
+            <span className="d">{sums.cancelled} cancelled</span>
+          </div>
         </div>
 
         <div className="netline" style={{ marginTop: 12 }}>
@@ -125,9 +152,25 @@ export default function PaariView() {
         </div>
       </div>
 
-      <div className="seg modeseg" style={{ marginTop: 16 }}>
-        {[['all', `All ${inMonth.length}`], ['attended', 'Attended'], ['missed', 'Missed'], ['planned', 'To go']].map(([k, l]) => (
-          <button key={k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{l}</button>
+      {refundAll.count > 0 && (
+        <div className="refundbar">
+          <span className="rbk">Refund balance</span>
+          <span className="rbv">{money(refundAll.amount)}</span>
+          <span className="rbd">
+            {refundAll.count} cancelled {refundAll.count === 1 ? 'session' : 'sessions'} across all months
+          </span>
+        </div>
+      )}
+
+      <div className="filterrail">
+        {[
+          ['all', `All ${inMonth.length}`],
+          ['planned', `To go ${sums.planned}`],
+          ['attended', `Attended ${sums.attended}`],
+          ['missed', `Missed ${sums.missed}`],
+          ['cancelled', `Cancelled ${sums.cancelled}`],
+        ].map(([k, l]) => (
+          <button key={k} className={'fchip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>
         ))}
       </div>
 
@@ -153,22 +196,31 @@ export default function PaariView() {
                   <div className="sessbot">
                     <span className="sesstime">{a.slot}</span>
                     <span className={'sessstat ' + a.status}>
-                      {a.status === 'attended' ? 'Attended' : a.status === 'missed' ? 'Missed' : 'Not marked'}
+                      {a.status === 'attended' ? 'Attended'
+                        : a.status === 'missed' ? 'Missed · no refund'
+                        : a.status === 'cancelled' ? `Refund ${money(a.amount)}`
+                        : 'Not marked'}
                     </span>
                   </div>
                 </div>
-                <div className="sessacts">
+                <div className="sessacts three">
                   <button
                     className={'sessbtn yes' + (a.status === 'attended' ? ' on' : '')}
                     onClick={() => setAppointmentStatus(a.id, a.status === 'attended' ? 'planned' : 'attended')}
                   >
-                    <Check width="14" height="14" /> Attended
+                    <Check width="13" height="13" /> Attended
                   </button>
                   <button
                     className={'sessbtn no' + (a.status === 'missed' ? ' on' : '')}
                     onClick={() => setAppointmentStatus(a.id, a.status === 'missed' ? 'planned' : 'missed')}
                   >
-                    <Close width="13" height="13" /> Missed
+                    <Close width="12" height="12" /> I missed
+                  </button>
+                  <button
+                    className={'sessbtn back' + (a.status === 'cancelled' ? ' on' : '')}
+                    onClick={() => setAppointmentStatus(a.id, a.status === 'cancelled' ? 'planned' : 'cancelled')}
+                  >
+                    Trainer off
                   </button>
                 </div>
               </div>
