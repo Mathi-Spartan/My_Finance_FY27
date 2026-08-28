@@ -757,3 +757,9 @@ button{cursor:pointer}
 }
 .aename{font-size:14.5px;font-weight:650;letter-spacing:-.01em;margin-bottom:12px}
 .acctedit .field:last-of-type{margin-bottom:0}
+
+/* refresh button */
+.pagehead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.icobtn:disabled{opacity:.6}
+.icobtn.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Search } from './Icons';
+import { Search, Refresh } from './Icons';
 import {
   rupees, money, totals, totalCash, accountBalances, accountFlow, splitName, cardStatus, isCard,
   dayLabel, timeLabel, isoDay, initials, colorOf,
@@ -29,7 +29,7 @@ function useCountUp(target, ms = 750) {
 }
 
 export default function HomeView({ onAddTo }) {
-  const { accounts, categories, txs, deleteTx } = useStore();
+  const { accounts, categories, txs, deleteTx, reload, loading } = useStore();
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(null);
@@ -101,6 +101,10 @@ export default function HomeView({ onAddTo }) {
           <span className="k">Total balance</span>
         </div>
         <div className="spacer" />
+        <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()}
+                aria-label="Refresh" disabled={loading}>
+          <Refresh width="16" height="16" />
+        </button>
         <button className="icobtn" onClick={() => setSearching((s) => !s)} aria-label="Search">
           <Search width="16" height="16" />
         </button>

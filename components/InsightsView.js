@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import { Refresh } from './Icons';
 import { useStore } from '@/lib/store';
 import {
   rupees, money, totals, lastMonthTotals, whereItWent, biggestChanges,
@@ -7,7 +8,7 @@ import {
 } from '@/lib/finance';
 
 export default function InsightsView() {
-  const { txs, categories } = useStore();
+  const { txs, categories, reload, loading } = useStore();
 
   const month = useMemo(() => totals(txs), [txs]);
   const prev = useMemo(() => lastMonthTotals(txs), [txs]);
@@ -19,7 +20,13 @@ export default function InsightsView() {
   if (txs.length === 0) {
     return (
       <div className="body">
-        <div className="pagehead"><h2>Patterns</h2></div>
+        <div className="pagehead">
+        <h2>Patterns</h2>
+        <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()}
+                aria-label="Refresh" disabled={loading}>
+          <Refresh width="16" height="16" />
+        </button>
+      </div>
         <div className="card">
           <p className="note" style={{ margin: 0 }}>
             Nothing to read yet. Add a few entries and this fills in on its own.
@@ -37,7 +44,13 @@ export default function InsightsView() {
 
   return (
     <div className="body">
-      <div className="pagehead"><h2>Patterns</h2></div>
+      <div className="pagehead">
+        <h2>Patterns</h2>
+        <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()}
+                aria-label="Refresh" disabled={loading}>
+          <Refresh width="16" height="16" />
+        </button>
+      </div>
 
       {/* headline */}
       <div className="card">
