@@ -1154,3 +1154,18 @@ button{cursor:pointer}
   color:var(--ink-2);white-space:nowrap;
 }
 .acctchip.on .cval{color:var(--brand)}
+
+/* segment + tab corrections after review */
+.seg-piece{min-width:18px}
+.acctchip{padding:9px 12px;gap:7px}
+.acctchip .cname{
+  display:flex;flex-direction:column;gap:1px;line-height:1.15;font-size:12px;
+}
+.acctchip .cname em{
+  font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600;
+}
+.acctchip.on .cname em{color:var(--brand)}
+.acctchip .cval{font-size:12px}
+.chipsrail{padding:14px 0 6px}
+.chipsrail::after{content:'';flex:0 0 6px}

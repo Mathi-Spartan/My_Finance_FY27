@@ -95,17 +95,21 @@ export default function HomeView({ onAddTo }) {
         {!selected && (
           <div className="spread">
             {spread.sum > 0
-              ? spread.holders.filter((h) => h.v > 0).map((h) => (
-                  <button
-                    key={h.a.id}
-                    className={'seg-piece ' + TONES[h.i % TONES.length]}
-                    style={{ flexGrow: h.v }}
-                    onClick={() => setFocus(h.a.id)}
-                    title={`${splitName(h.a.name).title} · ${money(h.v)}`}
-                  >
-                    <span className="segshare">{Math.round((h.v / spread.sum) * 100)}%</span>
-                  </button>
-                ))
+              ? spread.holders.filter((h) => h.v > 0).map((h) => {
+                  const share = (h.v / spread.sum) * 100;
+                  return (
+                    <button
+                      key={h.a.id}
+                      className={'seg-piece ' + TONES[h.i % TONES.length]}
+                      style={{ flexGrow: Math.max(h.v, spread.sum * 0.04) }}
+                      onClick={() => setFocus(h.a.id)}
+                      title={`${splitName(h.a.name).title} · ${money(h.v)}`}
+                    >
+                      {/* a label only where there's room for one */}
+                      {share >= 9 && <span className="segshare">{Math.round(share)}%</span>}
+                    </button>
+                  );
+                })
               : <div className="seg-empty" />}
           </div>
         )}
@@ -157,7 +161,10 @@ export default function HomeView({ onAddTo }) {
               onClick={() => setFocus(focus === a.id ? null : a.id)}
             >
               <span className="cdot" />
-              <span className="cname">{nm.title}{nm.sub ? ` · ${nm.sub}` : ''}</span>
+              <span className="cname">
+                {nm.title}
+                {nm.sub && <em>{nm.sub}</em>}
+              </span>
               <span className="cval">{money(c ? c.available : (balances[a.id] || 0))}</span>
             </button>
           );
