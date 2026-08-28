@@ -5,7 +5,7 @@ import { Refresh, Plus } from './Icons';
 import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
-  splitName, cardStatus, isCard,
+  splitName, cardStatus, isCard, sessionReport,
 } from '@/lib/finance';
 
 const TONES = ['tone-a', 'tone-b', 'tone-c', 'tone-d', 'tone-e', 'tone-f'];
@@ -39,6 +39,7 @@ export default function HomeView({ onAddTo, goTo }) {
   const prev = useRef(null);
 
   const live = useMemo(() => accounts.filter((a) => !a.archived), [accounts]);
+  const paari = useMemo(() => sessionReport(appointments || []), [appointments]);
   const month = useMemo(() => totals(txs), [txs]);
   const balances = useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
   const flow = useMemo(() => accountFlow(txs), [txs]);
