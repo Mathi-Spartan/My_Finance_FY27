@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Close, Arrow, Check, Bolt } from './Icons';
+import Portal from './Portal';
 import {
   rupees, frequentMerchants, isoDay, totals,
 } from '@/lib/finance';
@@ -99,7 +100,7 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
   };
 
   return (
-    <>
+    <Portal>
       <div className="scrim" onClick={onClose} />
       <div className="sheet" role="dialog" aria-label="Add entry">
         <div className="grab" />
@@ -200,7 +201,7 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
           </>
         )}
       </div>
-    </>
+    </Portal>
   );
 }
 

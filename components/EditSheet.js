@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Close, Trash } from './Icons';
+import Portal from './Portal';
 import { money, isoDay, splitName } from '@/lib/finance';
 
 export default function EditSheet({ tx, onClose }) {
@@ -53,7 +54,7 @@ export default function EditSheet({ tx, onClose }) {
   };
 
   return (
-    <>
+    <Portal>
       <div className="scrim" onClick={onClose} />
       <div className="sheet" role="dialog" aria-label="Edit entry">
         <div className="grab" />
@@ -134,6 +135,6 @@ export default function EditSheet({ tx, onClose }) {
           </>
         )}
       </div>
-    </>
+    </Portal>
   );
 }

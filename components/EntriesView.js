@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search, Refresh, Back, Trash } from './Icons';
+import Portal from './Portal';
 import {
   money, rangeOf, inRange, rangeTotals, monthGrid, dailyMap,
   isoDay, dayLabel, timeLabel, initials, colorOf,
@@ -191,7 +192,7 @@ export default function EntriesView({ onEdit }) {
       )}
 
       {wipe && (
-        <>
+        <Portal>
           <div className="scrim" onClick={() => setWipe(false)} />
           <div className="sheet">
             <div className="grab" />
@@ -215,7 +216,7 @@ export default function EntriesView({ onEdit }) {
               Keep them
             </button>
           </div>
-        </>
+        </Portal>
       )}
     </div>
   );

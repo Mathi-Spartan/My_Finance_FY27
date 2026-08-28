@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trash } from './Icons';
+import Portal from './Portal';
 
 const MAX_DIGITS = 12;
 
@@ -189,7 +190,7 @@ export default function CalculatorView({ onUse }) {
       </div>
 
       {showTape && (
-        <>
+        <Portal>
           <div className="scrim" onClick={() => setShowTape(false)} />
           <div className="sheet tapesheet">
             <div className="grab" />
@@ -210,7 +211,7 @@ export default function CalculatorView({ onUse }) {
               ))}
             </div>
           </div>
-        </>
+        </Portal>
       )}
 
       <div className="calcpad">
