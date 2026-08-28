@@ -5,6 +5,13 @@ import { Plus, Close, Trash } from './Icons';
 import Portal from './Portal';
 import { money, salaryReport, monthLabel } from '@/lib/finance';
 
+// 1st, 2nd, 3rd, 4th … 21st, 31st
+const ordinal = (n) => {
+  const v = Math.round(n);
+  const s = ['th', 'st', 'nd', 'rd'][(v % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][v % 100] || 'th';
+  return v + s;
+};
+
 export default function SalaryView() {
   const { salary, addSalary, updateSalary, deleteSalary } = useStore();
   const [adding, setAdding] = useState(false);
@@ -44,7 +51,7 @@ export default function SalaryView() {
             </div>
             <div className="pg">
               <span className="k">Usually paid</span>
-              <span className="v">{Math.round(r.avgDay)}th</span>
+              <span className="v">{ordinal(r.avgDay)}</span>
               <span className="d">{r.earliestDay}–{r.latestDay} range</span>
             </div>
           </div>
