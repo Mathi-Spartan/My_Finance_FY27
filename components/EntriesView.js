@@ -175,17 +175,21 @@ export default function EntriesView({ onEdit }) {
                       onClick={() => setOpenId(openId === tx.id ? null : tx.id)}
                     >
                       <span className="rowsize" style={{ width: ((Number(tx.amount) || 0) / dayPeak) * 100 + '%' }} />
-                      <span className="av" style={{
-                        background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
-                        color: isIn ? 'var(--in)' : `var(--${c})`,
-                      }}>{initials(tx.merchant)}</span>
+                      <span className={'dirbadge ' + (isIn ? 'in' : 'out')}>
+                        {isIn ? '↓' : '↑'}
+                      </span>
                       <span className="rmain">
-                        <span className="rtop">
-                          <span className="rname">{tx.merchant}</span>
-                          <span className={'ramt' + (isIn ? ' in' : '')}>
-                            {isIn ? '+' : '−'}{money(tx.amount)}
-                          </span>
+                        <span className="rname">{tx.merchant}</span>
+                        <span className="rsub">
+                          {acctName[tx.account_id] || '—'}
+                          {catName[tx.category_id] ? ` · ${catName[tx.category_id]}` : ''}
                         </span>
+                      </span>
+                      <span className="rside">
+                        <span className={'ramt' + (isIn ? ' in' : '')}>
+                          {isIn ? '+' : '−'}{money(tx.amount)}
+                        </span>
+                        <span className="rtime">{timeLabel(tx.occurred_at)}</span>
                       </span>
                     </button>
 

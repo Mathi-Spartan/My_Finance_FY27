@@ -1887,7 +1887,7 @@ button{cursor:pointer}
 }
 .row.r-in .rowsize{background:linear-gradient(90deg,var(--in),transparent)}
 .row.r-out .rowsize{background:linear-gradient(90deg,var(--out),transparent)}
-.row.compact > *{position:relative;z-index:1}
+.row.compact > *:not(.rowsize){position:relative;z-index:1}
 
 /* day headings read as dividers, not headings */
 .sechead{
@@ -1918,3 +1918,36 @@ button{cursor:pointer}
 
 /* keep the last rows clear of the floating nav */
 .body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+
+/* ============================================================
+   ENTRY ROWS — direction badge, meta line, weight bar
+   ============================================================ */
+.row.compact{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:16px;
+}
+.dirbadge{
+  width:34px;height:34px;flex:0 0 auto;border-radius:11px;
+  display:grid;place-items:center;font-size:15px;font-weight:700;line-height:1;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);
+}
+.dirbadge.in{background:var(--in-soft);color:var(--in)}
+.dirbadge.out{background:var(--out-soft);color:var(--out)}
+
+.row.compact .rmain{
+  flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+}
+.row.compact .rname{
+  font-size:14px;font-weight:650;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.rsub{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);
+  letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.rside{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:0 0 auto}
+.row.compact .ramt{font-size:14.5px;font-weight:600;letter-spacing:-.02em}
+.rtime{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3)}
+
+.rowsize{border-radius:16px 0 0 16px;opacity:.1}
+.rowwrap.open .row.compact{border-radius:16px 16px 0 0}
