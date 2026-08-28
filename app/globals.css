@@ -1601,3 +1601,135 @@ button{cursor:pointer}
   .ripple,.caret,.resultline .rv,.calcpad.v2 .ckey{animation:none}
   .calcdisplay.v2.solved{animation:none}
 }
+
+/* ============================================================
+   CALENDAR v2 — the colour is the day's shape
+   ============================================================ */
+.calendar.v2 .calrow{gap:6px;margin-bottom:6px}
+.calendar.v2 .cell{
+  position:relative;overflow:hidden;
+  aspect-ratio:1;border:1px solid var(--line);background:var(--card);
+  border-radius:14px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;padding:0;
+  animation:cellIn .42s cubic-bezier(.2,.9,.3,1) both;
+  transition:transform .16s cubic-bezier(.2,1.4,.4,1), border-color .18s ease, box-shadow .2s ease;
+}
+@keyframes cellIn{
+  0%{opacity:0;transform:translateY(9px) scale(.9)}
+  100%{opacity:1;transform:none}
+}
+.calendar.v2 .cell:active{transform:scale(.9)}
+
+/* the wash grows with the size of the day */
+.cwash{
+  position:absolute;inset:0;opacity:0;
+  transform:scale(.6);border-radius:inherit;
+  animation:washIn .55s cubic-bezier(.2,.85,.25,1) both;
+  animation-delay:inherit;
+}
+@keyframes washIn{to{opacity:1;transform:none}}
+.cell.t-in    .cwash{background:linear-gradient(160deg,color-mix(in srgb,var(--in) calc(16% + var(--w) * 44%),transparent),color-mix(in srgb,var(--in) calc(8% + var(--w) * 26%),transparent))}
+.cell.t-out   .cwash{background:linear-gradient(160deg,color-mix(in srgb,var(--out) calc(16% + var(--w) * 44%),transparent),color-mix(in srgb,var(--out) calc(8% + var(--w) * 26%),transparent))}
+.cell.t-mixed .cwash{background:linear-gradient(160deg,color-mix(in srgb,var(--amber) calc(20% + var(--w) * 46%),transparent),color-mix(in srgb,var(--g2) calc(10% + var(--w) * 28%),transparent))}
+
+.cell.t-in{border-color:color-mix(in srgb,var(--in) 32%,transparent)}
+.cell.t-out{border-color:color-mix(in srgb,var(--out) 32%,transparent)}
+.cell.t-mixed{border-color:color-mix(in srgb,var(--amber) 40%,transparent)}
+
+.calendar.v2 .cnum{
+  position:relative;z-index:1;font-size:13px;font-weight:650;letter-spacing:-.02em;
+}
+.cell.t-out .cnum{color:color-mix(in srgb,var(--out) 82%,var(--ink))}
+.cell.t-in  .cnum{color:color-mix(in srgb,var(--in) 82%,var(--ink))}
+.cell.t-mixed .cnum{color:color-mix(in srgb,var(--amber) 80%,var(--ink))}
+
+/* twin bars: what came in, what went out */
+.cbars{
+  position:relative;z-index:1;display:flex;align-items:flex-end;gap:2px;height:14px;
+}
+.cb{
+  display:block;width:3px;border-radius:2px;
+  transform-origin:bottom;
+  animation:barPop .5s cubic-bezier(.2,1.2,.35,1) both;
+  animation-delay:inherit;
+}
+@keyframes barPop{from{transform:scaleY(0);opacity:0}to{transform:none;opacity:1}}
+.cb.in{background:var(--in)}
+.cb.out{background:var(--out)}
+
+/* today keeps the brand marker on top of any tone */
+.calendar.v2 .cell.today{
+  border-color:transparent;
+  box-shadow:0 0 0 2px var(--brand), 0 8px 18px -8px var(--brand);
+}
+.calendar.v2 .cell.today .cnum{color:var(--brand)}
+.calendar.v2 .cell.today::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 55%,transparent);
+  animation:todayPing 2.6s cubic-bezier(.2,.7,.3,1) infinite;
+}
+@keyframes todayPing{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 50%,transparent)}
+  70%{box-shadow:0 0 0 10px transparent}
+  100%{box-shadow:0 0 0 0 transparent}
+}
+.calendar.v2 .cell.outside{opacity:.3}
+.calendar.v2 .cell.outside .cwash{display:none}
+
+.callegend{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  margin-top:12px;font-size:11px;color:var(--ink-3);
+}
+.callegend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:9px;height:9px;border-radius:3px;display:inline-block}
+.lg.in{background:var(--in)}
+.lg.out{background:var(--out)}
+.lg.mixed{background:linear-gradient(135deg,var(--amber),var(--g2))}
+
+@media (prefers-reduced-motion:reduce){
+  .calendar.v2 .cell,.cwash,.cb{animation:none;opacity:1;transform:none}
+  .calendar.v2 .cell.today::after{animation:none}
+}
+
+/* ============================================================
+   SCHEDULE IMPORT
+   ============================================================ */
+.importsheet{max-height:92dvh}
+.field textarea{
+  width:100%;background:var(--card-2);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.6;
+  outline:none;resize:vertical;color:var(--ink);
+}
+.field textarea:focus{border-color:var(--brand)}
+.field textarea::placeholder{color:var(--ink-3)}
+
+.parsehead{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:13px;color:var(--ink-2);margin:6px 0 10px;
+}
+.parsehead b{font-size:16px;color:var(--ink)}
+.ptot{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  background:var(--brand-soft);color:var(--brand);padding:4px 9px;border-radius:8px;
+}
+.parsewarn{
+  background:var(--amber-soft);border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);
+  border-radius:14px;padding:11px 13px;margin-bottom:10px;
+  font-size:11.5px;line-height:1.6;color:var(--amber);
+}
+.parselist{
+  max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;
+  margin-bottom:12px;scrollbar-width:none;
+}
+.parselist::-webkit-scrollbar{display:none}
+.prow{
+  display:grid;grid-template-columns:44px 1fr auto auto;gap:9px;align-items:center;
+  padding:9px 12px;border-bottom:1px solid var(--line-2);
+  font-size:12px;
+  animation:rowIn .3s cubic-bezier(.2,.85,.25,1) both;
+}
+.prow:last-child{border-bottom:0}
+.pd{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3)}
+.pt{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3)}
+.pa{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}

@@ -244,43 +244,80 @@ export default function EntriesView({ onEdit }) {
 function MonthGrid({ anchor, perDay, onPick }) {
   const weeks = useMemo(() => monthGrid(anchor), [anchor]);
   const today = isoDay(new Date());
-  const max = useMemo(() => {
+
+  const peak = useMemo(() => {
     let m = 0;
     weeks.flat().forEach((c) => {
-      const v = perDay[isoDay(c.date)]?.out || 0;
-      if (v > m) m = v;
+      const d = perDay[isoDay(c.date)];
+      if (!d) return;
+      m = Math.max(m, d.in || 0, d.out || 0);
     });
     return m || 1;
   }, [weeks, perDay]);
 
+  // A day is red if only money left, green if only money came in, amber when
+  // both happened — the colour tells you the shape of the day at a glance.
+  const toneOf = (d) => {
+    if (!d) return null;
+    const hasIn = (d.in || 0) > 0;
+    const hasOut = (d.out || 0) > 0;
+    if (hasIn && hasOut) return 'mixed';
+    if (hasOut) return 'out';
+    if (hasIn) return 'in';
+    return null;
+  };
+
   return (
-    <div className="calendar">
+    <div className="calendar v2">
       <div className="calhead">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={i}>{d}</span>)}
       </div>
+
       {weeks.map((w, wi) => (
         <div className="calrow" key={wi}>
           {w.map((c, ci) => {
             const iso = isoDay(c.date);
             const d = perDay[iso];
-            const intensity = d?.out ? 0.18 + (d.out / max) * 0.82 : 0;
+            const tone = toneOf(d);
+            const weight = d ? Math.max(d.in || 0, d.out || 0) / peak : 0;
+            const isToday = iso === today;
             return (
               <button
                 key={ci}
-                className={'cell' + (c.outside ? ' outside' : '') + (iso === today ? ' today' : '')}
+                className={
+                  'cell' + (c.outside ? ' outside' : '') + (isToday ? ' today' : '') +
+                  (tone ? ' t-' + tone : '')
+                }
                 onClick={() => onPick(c.date)}
-                style={{ animationDelay: (wi * 7 + ci) * 8 + 'ms' }}
+                style={{
+                  animationDelay: (wi * 7 + ci) * 14 + 'ms',
+                  '--w': weight.toFixed(3),
+                }}
+                title={d ? `In ${money(d.in || 0)} · Out ${money(d.out || 0)}` : ''}
               >
+                <span className="cwash" />
                 <span className="cnum">{c.date.getDate()}</span>
-                {intensity > 0 && (
-                  <span className="cdot" style={{ opacity: intensity }} />
+                {d && (
+                  <span className="cbars">
+                    {(d.in || 0) > 0 && (
+                      <i className="cb in" style={{ height: Math.max(3, ((d.in || 0) / peak) * 13) + 'px' }} />
+                    )}
+                    {(d.out || 0) > 0 && (
+                      <i className="cb out" style={{ height: Math.max(3, ((d.out || 0) / peak) * 13) + 'px' }} />
+                    )}
+                  </span>
                 )}
-                {d?.in > 0 && !d?.out && <span className="cdot cin" />}
               </button>
             );
           })}
         </div>
       ))}
+
+      <div className="callegend">
+        <span><i className="lg in" />Money in</span>
+        <span><i className="lg out" />Money out</span>
+        <span><i className="lg mixed" />Both</span>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Refresh, Check, Close, Plus, Back } from './Icons';
 import Portal from './Portal';
+import ImportSchedule from './ImportSchedule';
 import { money } from '@/lib/finance';
 
 const THERAPY_TONE = { Speech: 'th-speech', Occupational: 'th-occ' };
@@ -19,10 +20,11 @@ const fmtDay = (iso) => {
 };
 
 export default function PaariView() {
-  const { appointments, setAppointmentStatus, addAppointment, reload, loading, say } = useStore();
+  const { appointments, setAppointmentStatus, addAppointment, importAppointments, reload, loading, say } = useStore();
   const [monthKey, setMonthKey] = useState('2026-09');
   const [filter, setFilter] = useState('all');
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [openId, setOpenId] = useState(null);
 
   const months = useMemo(() => {
@@ -92,6 +94,7 @@ export default function PaariView() {
           <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
             <Refresh width="16" height="16" />
           </button>
+          <button className="mini ghosty" onClick={() => setImporting(true)}>Import</button>
           <button className="icobtn" onClick={() => setAdding(true)} aria-label="Add session">
             <Plus width="16" height="16" />
           </button>
@@ -240,6 +243,13 @@ export default function PaariView() {
             <b>{money(shown.reduce((t, a) => t + (Number(a.amount) || 0), 0))}</b>
           </div>
         </div>
+      )}
+
+      {importing && (
+        <ImportSchedule
+          onClose={() => setImporting(false)}
+          onImport={(rows) => importAppointments(rows)}
+        />
       )}
 
       {adding && (
