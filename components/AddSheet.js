@@ -20,7 +20,15 @@ export default function AddSheet({ onClose, presetAccount }) {
   const [picker, setPicker] = useState(null); // 'cat' | 'acct' | 'to' | 'date'
   const [saving, setSaving] = useState(false);
 
-  const amount = Number(raw || 0) / 100;
+  const amount = Number(raw || 0) || 0;
+  // Show the number exactly as typed, only grouping the rupee part.
+  const typed = (() => {
+    if (raw === '') return { whole: '0', dec: null };
+    const [w, d] = raw.split('.');
+    const grouped = w === '' ? '0' : Number(w).toLocaleString('en-IN');
+    return { whole: grouped, dec: d === undefined ? null : d };
+  })();
+
   const live = accounts.filter((a) => !a.archived);
   const cats = categories.filter((c) => !c.archived && (dir === 'in' ? c.direction === 'in' : c.direction === 'out'));
   const recall = useMemo(() => frequentMerchants(txs, dir, 5), [txs, dir]);
@@ -50,9 +58,22 @@ export default function AddSheet({ onClose, presetAccount }) {
   }, [txs, dir, amount]);
 
   const press = (k) => {
-    if (k === 'del') return setRaw((p) => p.slice(0, -1));
-    if (raw.length >= 9) return;
-    setRaw((p) => (p === '' && k === '0' ? '' : p + k));
+    if (k === 'del') { setRaw((p) => p.slice(0, -1)); return; }
+
+    setRaw((p) => {
+      if (k === '.') {
+        if (p.includes('.')) return p;       // only one decimal point
+        return p === '' ? '0.' : p + '.';
+      }
+      const [whole = '', dec] = p.split('.');
+      if (dec !== undefined) {
+        if (dec.length >= 2) return p;       // paise stop at two digits
+        return p + k;
+      }
+      if (whole.replace(/\D/g, '').length >= 9) return p;
+      if (p === '0') return k;               // no leading zeros
+      return p + k;
+    });
   };
 
   const commit = async () => {
@@ -110,8 +131,8 @@ export default function AddSheet({ onClose, presetAccount }) {
 
             <div className={'amount' + (dir === 'in' ? ' credit' : '')}>
               {dir !== 'transfer' && <span className="sgn">{dir === 'in' ? '+' : '−'}</span>}
-              ₹{Math.floor(amount).toLocaleString('en-IN')}
-              <span className="ghost">.{String(Math.round((amount % 1) * 100)).padStart(2, '0')}</span>
+              ₹{typed.whole}
+              {typed.dec !== null && <span className="ghost">.{typed.dec}</span>}
             </div>
 
             <div className="who">
@@ -169,7 +190,7 @@ export default function AddSheet({ onClose, presetAccount }) {
             )}
 
             <div className="pad">
-              {['1','2','3','4','5','6','7','8','9','00','0'].map((k) => (
+              {['1','2','3','4','5','6','7','8','9','.','0'].map((k) => (
                 <button key={k} className="key" onClick={() => press(k)}>{k}</button>
               ))}
               <button className="key" onClick={() => press('del')} aria-label="Delete">⌫</button>
