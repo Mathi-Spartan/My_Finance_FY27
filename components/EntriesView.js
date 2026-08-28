@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search, Refresh, Back } from './Icons';
+import EditSheet from './EditSheet';
 import {
   money, rangeOf, inRange, rangeTotals, monthGrid, dailyMap,
   isoDay, dayLabel, timeLabel, initials, colorOf,
@@ -10,12 +11,12 @@ import {
 const MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
 
 export default function EntriesView() {
-  const { txs, accounts, categories, deleteTx, reload, loading } = useStore();
+  const { txs, accounts, categories, reload, loading } = useStore();
   const [mode, setMode] = useState('month');
   const [anchor, setAnchor] = useState(new Date());
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
-  const [open, setOpen] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
   const acctName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name.split('—')[0].trim()])), [accounts]);
@@ -158,7 +159,7 @@ export default function EntriesView() {
                 const isIn = tx.direction === 'in';
                 return (
                   <div key={tx.id}>
-                    <button className="row" onClick={() => setOpen(open === tx.id ? null : tx.id)}>
+                    <button className="row" onClick={() => setEditing(tx)}>
                       <span className="av" style={{
                         background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
                         color: isIn ? 'var(--in)' : `var(--${c})`,
@@ -176,19 +177,19 @@ export default function EntriesView() {
                         </span>
                       </span>
                     </button>
-                    {open === tx.id && (
-                      <div className="btnrow" style={{ margin: '-2px 0 12px' }}>
-                        <button className="btn danger" onClick={() => { deleteTx(tx.id); setOpen(null); }}>
-                          Delete this entry
-                        </button>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           );
         })
+      )}
+
+      {editing && (
+        <EditSheet
+          tx={txs.find((t) => t.id === editing.id) || editing}
+          onClose={() => setEditing(null)}
+        />
       )}
     </div>
   );

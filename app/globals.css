@@ -827,3 +827,14 @@ button{cursor:pointer}
 .sechead span em{font-style:normal;font-family:'IBM Plex Mono',monospace;margin-left:8px}
 .sechead .pin{color:var(--in)}
 .sechead .pout{color:var(--out)}
+
+/* edit sheet */
+.sheet .field select{
+  appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),
+                   linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 22px, calc(100% - 13px) 22px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  padding-right:38px;
+}
+.btn:disabled{opacity:.5;box-shadow:none}
