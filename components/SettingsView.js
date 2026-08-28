@@ -73,31 +73,7 @@ export default function SettingsView({ theme, toggleTheme }) {
             <div className="cardhead"><h4>Accounts</h4><span>{accounts.length}</span></div>
             {accounts.map((a) =>
               a.kind === 'card' ? (
-                <div className="acctedit" key={a.id}>
-                  <div className="aename">{a.name}</div>
-                  <div className="field">
-                    <label>Total credit limit (₹)</label>
-                    <input type="number" inputMode="decimal" defaultValue={a.credit_limit || ''}
-                           placeholder="e.g. 200000"
-                           onBlur={(e) => saveAccount({ id: a.id, credit_limit: Number(e.target.value) || 0 })} />
-                  </div>
-                  <div className="field">
-                    <label>Available limit right now (₹)</label>
-                    <input type="number" inputMode="decimal"
-                           defaultValue={Math.max(0, Number(a.credit_limit || 0) + Number(a.opening || 0)) || ''}
-                           placeholder="e.g. 175000"
-                           onBlur={(e) => {
-                             const avail = Number(e.target.value) || 0;
-                             const limit = Number(a.credit_limit) || 0;
-                             // whatever isn't available is already owed
-                             saveAccount({ id: a.id, opening: -(Math.max(0, limit - avail)) });
-                           }} />
-                  </div>
-                  <p className="note" style={{ marginTop: 4 }}>
-                    Enter both once. After that, every card spend lowers the available limit and every
-                    payment raises it, on its own.
-                  </p>
-                </div>
+                <CardEditor key={a.id} account={a} onSave={saveAccount} />
               ) : (
                 <div className="field" key={a.id}>
                   <label>{a.name} · {rupees(balances[a.id] || 0, { decimals: false })}</label>
@@ -184,6 +160,46 @@ export default function SettingsView({ theme, toggleTheme }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+
+// Limit and available balance have to move together: computing the amount
+// already owed needs both numbers at once, so a stale prop here silently
+// produces a zero outstanding.
+function CardEditor({ account, onSave }) {
+  const [limit, setLimit] = useState(String(Number(account.credit_limit) || ''));
+  const [avail, setAvail] = useState(
+    String(Math.max(0, Number(account.credit_limit || 0) + Number(account.opening || 0)) || '')
+  );
+
+  const commit = (nextLimit, nextAvail) => {
+    const L = Number(nextLimit) || 0;
+    const A = Number(nextAvail) || 0;
+    if (!L && !A) return;
+    onSave({ id: account.id, credit_limit: L, opening: -Math.max(0, L - A) });
+  };
+
+  return (
+    <div className="acctedit">
+      <div className="aename">{account.name}</div>
+      <div className="field">
+        <label>Total credit limit (₹)</label>
+        <input type="number" inputMode="decimal" value={limit} placeholder="e.g. 200000"
+               onChange={(e) => setLimit(e.target.value)}
+               onBlur={(e) => commit(e.target.value, avail)} />
+      </div>
+      <div className="field">
+        <label>Available limit right now (₹)</label>
+        <input type="number" inputMode="decimal" value={avail} placeholder="e.g. 175000"
+               onChange={(e) => setAvail(e.target.value)}
+               onBlur={(e) => commit(limit, e.target.value)} />
+      </div>
+      <p className="note" style={{ marginTop: 4 }}>
+        Enter both once. After that every card spend lowers the available limit and every
+        payment raises it, on its own.
+      </p>
     </div>
   );
 }
