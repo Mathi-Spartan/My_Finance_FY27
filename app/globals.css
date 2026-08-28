@@ -1020,3 +1020,39 @@ button{cursor:pointer}
 
 /* clear button sits with the other header actions */
 .pagehead .icobtn:disabled{opacity:.35}
+
+/* ============================================================
+   ENTRY ROWS — one line, details on tap
+   ============================================================ */
+.rowwrap{margin-bottom:9px}
+.rowwrap.open{
+  background:var(--card);border:1px solid var(--brand);border-radius:18px;
+  box-shadow:0 10px 26px -14px rgba(13,19,33,.3);overflow:hidden;
+}
+.rowwrap.open .row{border:0;border-radius:0;box-shadow:none;background:transparent;margin-bottom:0}
+
+.row.compact{padding:12px 15px;margin-bottom:0}
+.row.compact .rmain{display:flex;align-items:center}
+.row.compact .rtop{width:100%}
+.row.compact .rname{font-size:14.5px}
+
+.rowdetail{
+  padding:2px 15px 14px;
+  animation:reveal .26s cubic-bezier(.2,.85,.25,1) both;
+}
+@keyframes reveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.rdgrid{
+  display:grid;grid-template-columns:auto 1fr;gap:7px 14px;align-items:baseline;
+  padding:11px 0 13px;border-top:1px dashed var(--line);
+}
+.rdk{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.rdv{font-size:13px;font-weight:600;text-align:right}
+.rdedit{
+  width:100%;border:0;border-radius:12px;padding:11px;
+  background:var(--brand-soft);color:var(--brand);font-size:13px;font-weight:700;
+  transition:transform .14s ease;
+}
+.rdedit:active{transform:scale(.98)}

@@ -16,6 +16,7 @@ export default function EntriesView({ onEdit }) {
   const [anchor, setAnchor] = useState(new Date());
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
+  const [openId, setOpenId] = useState(null);
   const [wipe, setWipe] = useState(false);
   const [wiping, setWiping] = useState(false);
 
@@ -164,8 +165,11 @@ export default function EntriesView({ onEdit }) {
                 const c = colorOf(catName[tx.category_id] || tx.merchant);
                 const isIn = tx.direction === 'in';
                 return (
-                  <div key={tx.id}>
-                    <button className="row" onClick={() => onEdit(tx)}>
+                  <div key={tx.id} className={'rowwrap' + (openId === tx.id ? ' open' : '')}>
+                    <button
+                      className={'row compact' + (openId === tx.id ? ' open' : '')}
+                      onClick={() => setOpenId(openId === tx.id ? null : tx.id)}
+                    >
                       <span className="av" style={{
                         background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
                         color: isIn ? 'var(--in)' : `var(--${c})`,
@@ -177,12 +181,27 @@ export default function EntriesView({ onEdit }) {
                             {isIn ? '+' : '−'}{money(tx.amount)}
                           </span>
                         </span>
-                        <span className="rbot">
-                          <span className="tag">{catName[tx.category_id] || 'Uncategorised'}</span>
-                          <span className="rmeta">{acctName[tx.account_id] || '—'} · {timeLabel(tx.occurred_at)}</span>
-                        </span>
                       </span>
                     </button>
+
+                    {openId === tx.id && (
+                      <div className="rowdetail">
+                        <div className="rdgrid">
+                          <span className="rdk">Account</span>
+                          <span className="rdv">{acctName[tx.account_id] || '—'}</span>
+                          <span className="rdk">Category</span>
+                          <span className="rdv">{catName[tx.category_id] || 'Uncategorised'}</span>
+                          <span className="rdk">Time</span>
+                          <span className="rdv">
+                            {new Date(tx.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {' · '}{timeLabel(tx.occurred_at)}
+                          </span>
+                        </div>
+                        <button className="rdedit" onClick={() => { onEdit(tx); setOpenId(null); }}>
+                          Edit entry
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
