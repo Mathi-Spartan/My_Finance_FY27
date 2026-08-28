@@ -6,11 +6,11 @@ import {
   rupees, frequentMerchants, isoDay, totals,
 } from '@/lib/finance';
 
-export default function AddSheet({ onClose, presetAccount }) {
+export default function AddSheet({ onClose, presetAccount, presetAmount }) {
   const { accounts, categories, txs, addTx, say } = useStore();
 
   const [dir, setDir] = useState('out');
-  const [raw, setRaw] = useState('');
+  const [raw, setRaw] = useState(presetAmount ? String(presetAmount) : '');
   const [merchant, setMerchant] = useState('');
   const [catId, setCatId] = useState(null);
   const [autoCat, setAutoCat] = useState(false);

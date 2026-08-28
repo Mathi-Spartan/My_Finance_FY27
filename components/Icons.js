@@ -15,3 +15,4 @@ export const Sun = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><circle cx="12
 export const Back = (p) => (<svg viewBox="0 0 24 24" {...s} strokeWidth="2.2" {...p}><path d="M15 5l-7 7 7 7" /></svg>);
 export const Trash = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13" /></svg>);
 export const Refresh = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M21 12a9 9 0 11-2.64-6.36" /><path d="M21 3v6h-6" /></svg>);
+export const Calc = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><rect x="4" y="2" width="16" height="20" rx="3"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h4M16 19h.01"/></svg>);

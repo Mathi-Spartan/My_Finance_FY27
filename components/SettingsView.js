@@ -11,7 +11,7 @@ export default function SettingsView({ theme, toggleTheme }) {
   } = useStore();
   const [tab, setTab] = useState('money');
   const [newAcct, setNewAcct] = useState('');
-  const [newCat, setNewCat] = useState('');
+  
   const file = useRef(null);
   const [importing, setImporting] = useState(false);
   const balances = accountBalances(accounts, txs);
@@ -58,7 +58,6 @@ export default function SettingsView({ theme, toggleTheme }) {
       <div className="apphead">
         <div className="seg">
           <button className={tab === 'money' ? 'on' : ''} onClick={() => setTab('money')}>Money</button>
-          <button className={tab === 'cats' ? 'on' : ''} onClick={() => setTab('cats')}>Budgets</button>
           <button className={tab === 'app' ? 'on' : ''} onClick={() => setTab('app')}>App</button>
         </div>
         <div className="spacer" />
@@ -103,27 +102,6 @@ export default function SettingsView({ theme, toggleTheme }) {
             <p className="note">Set each balance to what the account actually holds today. Entries take it from there.</p>
           </div>
         </>
-      )}
-
-      {tab === 'cats' && (
-        <div className="card">
-          <div className="cardhead"><h4>Monthly budgets</h4><span>0 = untracked</span></div>
-          {categories.filter((c) => c.direction === 'out').map((c) => (
-            <div className="field" key={c.id}>
-              <label>{c.name}</label>
-              <input type="number" defaultValue={c.budget}
-                     onBlur={(e) => saveCategory({ id: c.id, budget: Number(e.target.value) || 0 })} />
-            </div>
-          ))}
-          <div className="btnrow">
-            <input style={{ flex: 1, background: 'var(--card-2)', border: '1px solid var(--line)', borderRadius: 14, padding: '13px 14px' }}
-                   value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="New category" />
-            <button className="btn" style={{ width: 'auto', padding: '13px 18px' }}
-                    onClick={() => { if (newCat.trim()) { saveCategory({ name: newCat.trim(), direction: 'out', sort: categories.length + 1 }); setNewCat(''); } }}>
-              Add
-            </button>
-          </div>
-        </div>
       )}
 
       {tab === 'app' && (

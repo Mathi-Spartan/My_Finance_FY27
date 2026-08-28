@@ -7,9 +7,10 @@ import InsightsView from './InsightsView';
 import SettingsView from './SettingsView';
 import AddSheet from './AddSheet';
 import EditSheet from './EditSheet';
+import CalculatorView from './CalculatorView';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Gear, Plus, Calendar } from './Icons';
+import { Home, Chart, Gear, Plus, Calendar, Calc } from './Icons';
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
@@ -17,6 +18,7 @@ export default function App() {
   const [adding, setAdding] = useState(false);
   const [presetAccount, setPresetAccount] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [presetAmount, setPresetAmount] = useState(null);
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
 
@@ -48,6 +50,9 @@ export default function App() {
         {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'insights' && <InsightsView />}
+        {tab === 'calc' && (
+          <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
+        )}
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
       </div>
 
@@ -61,15 +66,18 @@ export default function App() {
         <button className={'navbtn' + (tab === 'insights' ? ' on' : '')} onClick={() => setTab('insights')}>
           <Chart /> Patterns
         </button>
+        <button className={'navbtn' + (tab === 'calc' ? ' on' : '')} onClick={() => setTab('calc')}>
+          <Calc /> Calc
+        </button>
         <button className={'navbtn' + (tab === 'settings' ? ' on' : '')} onClick={() => setTab('settings')}>
           <Gear /> Settings
         </button>
-        <button className="addbtn" onClick={() => { setPresetAccount(null); setAdding(true); }}>
+        <button className="addbtn" onClick={() => { setPresetAccount(null); setPresetAmount(null); setAdding(true); }}>
           <Plus width="16" height="16" /> Add
         </button>
       </nav>
 
-      {adding && <AddSheet presetAccount={presetAccount} onClose={() => { setAdding(false); setPresetAccount(null); }} />}
+      {adding && <AddSheet presetAccount={presetAccount} presetAmount={presetAmount} onClose={() => { setAdding(false); setPresetAccount(null); setPresetAmount(null); }} />}
       {editing && <EditSheet tx={editing} onClose={() => setEditing(null)} />}
     </div>
   );
