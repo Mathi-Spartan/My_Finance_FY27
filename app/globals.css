@@ -940,3 +940,11 @@ button{cursor:pointer}
 .nav .navbtn{font-size:9.5px;gap:3px}
 .nav .navbtn svg{width:18px;height:18px}
 .nav .addbtn{padding:12px 15px;font-size:13px}
+
+/* calculator layout corrections after review */
+.ckey.wide{grid-column:auto;aspect-ratio:1/.82}
+.ckey.del{display:none}
+.calcdisplay{padding:14px 18px 18px}
+.calcvalue{margin-top:6px}
+.calcpad{gap:10px}
+.ckey{aspect-ratio:1/.78;font-size:24px}

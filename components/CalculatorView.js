@@ -134,11 +134,11 @@ export default function CalculatorView({ onUse }) {
   const size = display.length > 12 ? 'sm' : display.length > 8 ? 'md' : 'lg';
 
   const KEYS = [
-    ['AC', 'fn'], ['±', 'fn'], ['%', 'fn'], ['÷', 'op'],
-    ['7', ''], ['8', ''], ['9', ''], ['×', 'op'],
-    ['4', ''], ['5', ''], ['6', ''], ['−', 'op'],
-    ['1', ''], ['2', ''], ['3', ''], ['+', 'op'],
-    ['0', 'wide'], ['.', ''], ['=', 'eq'],
+    ['AC', 'fn'], ['⌫', 'fn'], ['%', 'fn'], ['÷', 'op'],
+    ['7', ''],    ['8', ''],   ['9', ''],   ['×', 'op'],
+    ['4', ''],    ['5', ''],   ['6', ''],   ['−', 'op'],
+    ['1', ''],    ['2', ''],   ['3', ''],   ['+', 'op'],
+    ['±', 'fn'],  ['0', ''],   ['.', ''],   ['=', 'eq'],
   ];
 
   return (
@@ -192,7 +192,6 @@ export default function CalculatorView({ onUse }) {
             {k}
           </button>
         ))}
-        <button className={'ckey fn del' + (flash === '⌫' ? ' hit' : '')} onClick={() => press('⌫')}>⌫</button>
       </div>
     </div>
   );
