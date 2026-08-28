@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { Refresh } from './Icons';
 import SalaryView from './SalaryView';
+import LoansView from './LoansView';
 import { useStore } from '@/lib/store';
 import {
   rupees, money, totals, lastMonthTotals, whereItWent, biggestChanges,
@@ -57,9 +58,10 @@ export default function InsightsView() {
       <div className="seg modeseg">
         <button className={tab === 'spending' ? 'on' : ''} onClick={() => setTab('spending')}>Spending</button>
         <button className={tab === 'salary' ? 'on' : ''} onClick={() => setTab('salary')}>Salary</button>
+        <button className={tab === 'debt' ? 'on' : ''} onClick={() => setTab('debt')}>Debt</button>
       </div>
 
-      {tab === 'salary' ? <SalaryView /> : txs.length === 0 ? (
+      {tab === 'debt' ? <LoansView /> : tab === 'salary' ? <SalaryView /> : txs.length === 0 ? (
         <div className="card" style={{ marginTop: 14 }}>
           <p className="note" style={{ margin: 0 }}>Nothing to read yet. Add a few entries and this fills in on its own.</p>
         </div>
