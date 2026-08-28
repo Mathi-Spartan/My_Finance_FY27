@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search } from './Icons';
 import {
-  rupees, totals, totalCash, accountBalances, accountFlow, splitName, cardStatus, isCard,
+  rupees, money, totals, totalCash, accountBalances, accountFlow, splitName, cardStatus, isCard,
   dayLabel, timeLabel, isoDay, initials, colorOf,
 } from '@/lib/finance';
 
@@ -123,19 +123,19 @@ export default function HomeView({ onAddTo }) {
         <div className="flow">
           <div className="flowcell">
             <span className="fl">Money in</span>
-            <span className="fv in">+{rupees(month.in, { decimals: false })}</span>
+            <span className="fv in">+{money(month.in)}</span>
           </div>
           <div className="flowdiv" />
           <div className="flowcell">
             <span className="fl">Money out</span>
-            <span className="fv out">−{rupees(month.out, { decimals: false })}</span>
+            <span className="fv out">−{money(month.out)}</span>
           </div>
         </div>
 
         <div className="netline">
           <span>This month</span>
           <b className={month.net >= 0 ? 'up' : 'down'}>
-            {month.net >= 0 ? '+' : '−'}{rupees(month.net, { decimals: false })}
+            {month.net >= 0 ? '+' : '−'}{money(month.net)}
           </b>
         </div>
       </div>
@@ -173,12 +173,12 @@ export default function HomeView({ onAddTo }) {
                 </span>
                 {isCard(a) ? (
                   <span className="abal">
-                    {rupees(cardStatus(a, balances).available, { decimals: false })}
+                    {money(cardStatus(a, balances).available)}
                     <small>available</small>
                   </span>
                 ) : (
                   <span className="abal" style={{ color: (balances[a.id] || 0) < 0 ? 'var(--out)' : undefined }}>
-                    {rupees(balances[a.id] || 0, { decimals: false })}
+                    {money(balances[a.id] || 0)}
                   </span>
                 )}
               </span>
@@ -189,15 +189,15 @@ export default function HomeView({ onAddTo }) {
                     <span className="limitfill" style={{ width: cardStatus(a, balances).used + '%' }} />
                   </span>
                   <span className="limitmeta">
-                    <span>{rupees(cardStatus(a, balances).owed, { decimals: false })} used</span>
-                    <span>of {rupees(cardStatus(a, balances).limit, { decimals: false })}</span>
+                    <span>{money(cardStatus(a, balances).owed)} used</span>
+                    <span>of {money(cardStatus(a, balances).limit)}</span>
                   </span>
                 </span>
               )}
 
               <span className="aflow">
-                <span className="af in">↓ {rupees(f.in, { decimals: false })}</span>
-                <span className="af out">↑ {rupees(f.out, { decimals: false })}</span>
+                <span className="af in">↓ {money(f.in)}</span>
+                <span className="af out">↑ {money(f.out)}</span>
                 <span className="aplus">+ Add</span>
               </span>
             </button>
@@ -232,7 +232,7 @@ export default function HomeView({ onAddTo }) {
                     <span className="rtop">
                       <span className="rname">{t.merchant}</span>
                       <span className={'ramt' + (isIn ? ' in' : '')}>
-                        {isIn ? '+' : isTr ? '' : '−'}{rupees(t.amount, { decimals: false })}
+                        {isIn ? '+' : isTr ? '' : '−'}{money(t.amount)}
                       </span>
                     </span>
                     <span className="rbot">

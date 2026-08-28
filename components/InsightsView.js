@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import {
-  rupees, totals, lastMonthTotals, whereItWent, biggestChanges,
+  rupees, money, totals, lastMonthTotals, whereItWent, biggestChanges,
   spendingRhythm, repeatPayments, initials, colorOf,
 } from '@/lib/finance';
 
@@ -45,24 +45,24 @@ export default function InsightsView() {
         <div className="statgrid">
           <div className="stat">
             <div className="k">In</div>
-            <div className="v" style={{ color: 'var(--in)' }}>{rupees(month.in, { decimals: false })}</div>
+            <div className="v" style={{ color: 'var(--in)' }}>{money(month.in)}</div>
             <div className="d">{inChange === null ? 'no last month to compare' : `${inChange >= 0 ? '+' : ''}${inChange}% vs last month`}</div>
           </div>
           <div className="stat">
             <div className="k">Out</div>
-            <div className="v" style={{ color: 'var(--out)' }}>{rupees(month.out, { decimals: false })}</div>
+            <div className="v" style={{ color: 'var(--out)' }}>{money(month.out)}</div>
             <div className="d">{outChange === null ? 'no last month to compare' : `${outChange >= 0 ? '+' : ''}${outChange}% vs last month`}</div>
           </div>
           <div className="stat">
             <div className="k">Kept</div>
             <div className="v" style={{ color: month.net >= 0 ? 'var(--in)' : 'var(--out)' }}>
-              {month.net < 0 ? '−' : ''}{rupees(month.net, { decimals: false })}
+              {month.net < 0 ? '−' : ''}{money(month.net)}
             </div>
             <div className="d">{savedPct === null ? 'nothing came in yet' : `${savedPct}% of what came in`}</div>
           </div>
           <div className="stat">
             <div className="k">Per day</div>
-            <div className="v">{rupees(rhythm.perDay, { decimals: false })}</div>
+            <div className="v">{money(rhythm.perDay)}</div>
             <div className="d">average over 60 days</div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function InsightsView() {
             <div className="drift" key={c.id}>
               <div className="drifttop">
                 <span className="lab">{c.name}</span>
-                <span className="val">{Math.round(c.share)}% · {rupees(c.total, { decimals: false })}</span>
+                <span className="val">{Math.round(c.share)}% · {money(c.total)}</span>
               </div>
               <div className="track">
                 <div className="fillbar" style={{
@@ -98,7 +98,7 @@ export default function InsightsView() {
             <div className="moveline" key={c.id}>
               <span className="mname">{c.name}</span>
               <span className={'mval ' + (c.diff > 0 ? 'up' : 'down')}>
-                {c.diff > 0 ? '+' : '−'}{rupees(Math.abs(c.diff), { decimals: false })}
+                {c.diff > 0 ? '+' : '−'}{money(Math.abs(c.diff))}
                 {c.pct !== null && <small> ({c.pct > 0 ? '+' : ''}{c.pct}%)</small>}
               </span>
             </div>
@@ -123,7 +123,7 @@ export default function InsightsView() {
           </div>
           <p className="note" style={{ marginTop: 14 }}>
             {rhythm.peakDay
-              ? <>Most of your spending lands on <b>{rhythm.peakDay}</b> — {rupees(rhythm.peakAmount, { decimals: false })} over the period. Typical payment is {rupees(rhythm.perEntry, { decimals: false })}.</>
+              ? <>Most of your spending lands on <b>{rhythm.peakDay}</b> — {money(rhythm.peakAmount)} over the period. Typical payment is {money(rhythm.perEntry)}.</>
               : <>Not enough spending yet to see a pattern.</>}
           </p>
         </div>
@@ -143,11 +143,11 @@ export default function InsightsView() {
                 <span className="rmain">
                   <span className="rtop">
                     <span className="rname">{r.name}</span>
-                    <span className="ramt">{rupees(r.total, { decimals: false })}</span>
+                    <span className="ramt">{money(r.total)}</span>
                   </span>
                   <span className="rbot">
                     <span className="tag">{r.times} times{r.steady ? ' · same amount' : ''}</span>
-                    <span className="rmeta">{rupees(r.avg, { decimals: false })} each</span>
+                    <span className="rmeta">{money(r.avg)} each</span>
                   </span>
                 </span>
               </div>
@@ -156,7 +156,7 @@ export default function InsightsView() {
           {steady.length > 0 && (
             <div className="summary">
               <span>{steady.length} look like regular payments</span>
-              <b>{rupees(monthlyRepeat, { decimals: false })}</b>
+              <b>{money(monthlyRepeat)}</b>
             </div>
           )}
         </div>
