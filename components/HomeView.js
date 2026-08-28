@@ -35,6 +35,7 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(null);
+  const [pickedDay, setPickedDay] = useState(null); // iso string or null = whole month
 
   const scoped = useMemo(() => txs.filter((t) => t.context === context), [txs, context]);
   const sts = useMemo(() => safeToSpend({ accounts, txs, recurring, settings, context }), [accounts, txs, recurring, settings, context]);
@@ -44,6 +45,34 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
   const balances = useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
   const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
   const acctName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name])), [accounts]);
+
+  // A week centred on today, like a calendar strip.
+  const week = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay()); // back to Sunday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return {
+        iso: isoDay(d),
+        dow: d.toLocaleDateString('en-IN', { weekday: 'short' }),
+        num: d.getDate(),
+        isToday: isoDay(d) === isoDay(now),
+        future: d > now,
+      };
+    });
+  }, []);
+
+  const spentOn = useMemo(() => {
+    const m = {};
+    scoped.forEach((t) => {
+      if (t.direction !== 'out') return;
+      const k = isoDay(t.occurred_at);
+      m[k] = (m[k] || 0) + Number(t.amount);
+    });
+    return m;
+  }, [scoped]);
 
   const today = new Date().getDate();
   const dim = daysInMonth();
@@ -58,8 +87,9 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
           (t.merchant || '').toLowerCase().includes(q.toLowerCase()) ||
           (catName[t.category_id] || '').toLowerCase().includes(q.toLowerCase()))
       : scoped;
-    return list.slice(0, 120);
-  }, [q, txs, scoped, catName]);
+    const byDay = pickedDay ? list.filter((t) => isoDay(t.occurred_at) === pickedDay) : list;
+    return byDay.slice(0, 120);
+  }, [q, txs, scoped, catName, pickedDay]);
 
   const groups = useMemo(() => {
     const g = {};
@@ -94,6 +124,26 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries" />
         </div>
       )}
+
+      <div className="weekstrip">
+        {week.map((d, i) => (
+          <button
+            key={d.iso}
+            className={
+              'day' +
+              (d.isToday ? ' today' : '') +
+              (pickedDay === d.iso ? ' picked' : '') +
+              (d.future ? ' future' : '')
+            }
+            style={{ animationDelay: i * 45 + 'ms' }}
+            onClick={() => setPickedDay(pickedDay === d.iso ? null : d.iso)}
+          >
+            <span className="dow">{d.dow}</span>
+            <span className="num">{d.num}</span>
+            {spentOn[d.iso] ? <span className="tick" /> : null}
+          </button>
+        ))}
+      </div>
 
       <div className="hero rise d1">
         <div className="eyebrow">

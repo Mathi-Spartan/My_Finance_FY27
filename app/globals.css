@@ -554,3 +554,60 @@ button{cursor:pointer}
   .hero .bar.today::after{animation:none}
   .hero .eyebrow .dot{animation:none}
 }
+
+/* ============================================================
+   WEEK STRIP — calendar row, tap a day to filter
+   ============================================================ */
+.weekstrip{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+  margin:2px 0 18px;
+}
+.day{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  border:0;background:transparent;padding:2px 0 8px;position:relative;
+  animation:dayIn .5s cubic-bezier(.2,.85,.25,1) both;
+}
+@keyframes dayIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.day .dow{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.day .num{
+  width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;
+  font-size:15px;font-weight:600;letter-spacing:-.02em;
+  color:var(--ink);background:var(--card);
+  border:1px solid var(--line);
+  transition:transform .22s cubic-bezier(.2,1.5,.4,1), background .22s ease,
+             color .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.day:active .num{transform:scale(.88)}
+.day.future .num{color:var(--ink-3);background:transparent;border-style:dashed}
+.day.today .num{
+  background:linear-gradient(135deg,var(--g1),var(--g2));
+  color:#fff;border-color:transparent;
+  box-shadow:0 8px 18px -8px var(--g1);
+}
+.day.picked .num{
+  transform:scale(1.1);
+  background:var(--ink);color:var(--paper);border-color:transparent;
+  box-shadow:0 8px 20px -8px rgba(13,19,33,.5);
+}
+.day.today.picked .num{
+  background:linear-gradient(135deg,var(--g1),var(--g2));
+  box-shadow:0 10px 22px -8px var(--g1);
+}
+/* a dot under any day that has spending */
+.day .tick{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;
+  background:var(--g2);
+  animation:dayIn .4s ease both .2s;
+}
+.day.picked .tick{background:var(--ink)}
+.day.today .tick{background:var(--g1)}
+
+@media (prefers-reduced-motion:reduce){
+  .day,.day .tick{animation:none}
+  .day .num{transition:none}
+}
