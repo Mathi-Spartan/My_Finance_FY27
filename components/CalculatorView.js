@@ -158,12 +158,15 @@ export default function CalculatorView({ onUse }) {
         )}
       </div>
 
-      {history.length > 0 && (
+      {history.length > 0 ? (
         <button className="lastline" onClick={() => setShowTape(true)}>
           <span className="tl">{history[0].line}</span>
           <span className="tr">{group(history[0].result)}</span>
           <span className="more">{history.length}</span>
         </button>
+      ) : (
+        // reserved so the keypad never shifts once the first result lands
+        <div className="lastline empty"><span className="tl">No calculations yet</span></div>
       )}
 
       <div className="calcdisplay">

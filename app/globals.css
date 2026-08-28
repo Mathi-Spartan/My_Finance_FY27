@@ -1011,3 +1011,9 @@ button{cursor:pointer}
   max-height:56dvh;overflow-y:auto;scrollbar-width:none;
 }
 .tapesheet .tapelist::-webkit-scrollbar{display:none}
+
+/* nothing above the keypad may change height */
+.lastline{height:42px;box-sizing:border-box;align-items:center}
+.lastline.empty{opacity:.55;background:var(--card-2);border-style:dashed}
+.calcdisplay{height:104px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between}
+.calcvalue{margin-top:0}
