@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { supabase, configured } from '@/lib/supabase';
+import { supabase, configured, apiBase } from '@/lib/supabase';
 
 export default function Login() {
   const [mode, setMode] = useState('password'); // password | link
@@ -15,7 +15,7 @@ export default function Login() {
     setBusy(true);
     setMsg(null);
 
-    const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const base = apiBase;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const ctl = new AbortController();
     const kill = setTimeout(() => ctl.abort(), 15000);
