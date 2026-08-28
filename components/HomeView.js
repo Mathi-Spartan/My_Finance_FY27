@@ -66,7 +66,14 @@ export default function HomeView({ onAddTo }) {
 
   // Money arriving deserves to look like money arriving.
   useEffect(() => {
-    if (prev.current !== null && headline > prev.current + 0.005) setBurst((b) => b + 1);
+    if (prev.current !== null && headline > prev.current + 0.005) {
+      const id = Date.now();
+      setBurst(id);
+      // take the notes back out once they've flown, so nothing lingers
+      const t = setTimeout(() => setBurst((b) => (b === id ? 0 : b)), 2100);
+      prev.current = headline;
+      return () => clearTimeout(t);
+    }
     prev.current = headline;
   }, [headline]);
 
