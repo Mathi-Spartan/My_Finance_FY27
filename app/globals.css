@@ -1405,3 +1405,70 @@ button{cursor:pointer}
   font-size:12px;color:var(--ink-2);
 }
 .stfoot b{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ink)}
+
+/* ============================================================
+   MONEY MOTION — notes drifting, notes arriving
+   ============================================================ */
+.drift-notes,.cashfly{
+  position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+  border-radius:inherit;
+}
+.hero.wallet > *:not(.drift-notes):not(.cashfly){position:relative;z-index:1}
+
+/* slow ambient drift, barely there */
+.dnote{
+  position:absolute;width:34px;height:20px;color:#fff;opacity:.10;
+  animation:driftNote linear infinite;
+  will-change:transform;
+}
+.dn0{top:8%;  left:-14%; animation-duration:26s; animation-delay:0s;    transform:rotate(-12deg)}
+.dn1{top:52%; left:-20%; animation-duration:34s; animation-delay:-6s;   transform:rotate(8deg)}
+.dn2{top:74%; left:-16%; animation-duration:29s; animation-delay:-14s;  transform:rotate(-5deg)}
+.dn3{top:26%; left:-24%; animation-duration:40s; animation-delay:-22s;  transform:rotate(16deg)}
+.dn4{top:88%; left:-12%; animation-duration:31s; animation-delay:-9s;   transform:rotate(-9deg)}
+@keyframes driftNote{
+  0%{transform:translateX(0) translateY(0) rotate(-10deg);opacity:0}
+  12%{opacity:.13}
+  88%{opacity:.13}
+  100%{transform:translateX(150vw) translateY(-14px) rotate(12deg);opacity:0}
+}
+
+/* the flurry when the balance rises */
+.flynote{
+  position:absolute;width:30px;height:18px;color:#fff;opacity:0;
+  bottom:16%;
+  animation:flyUp 1.5s cubic-bezier(.16,.7,.3,1) both;
+  will-change:transform,opacity;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.18));
+}
+.fn0{left:12%; animation-delay:0ms;   --sway:-26px; --spin:-22deg}
+.fn1{left:28%; animation-delay:70ms;  --sway:18px;  --spin:15deg}
+.fn2{left:44%; animation-delay:140ms; --sway:-14px; --spin:24deg}
+.fn3{left:60%; animation-delay:40ms;  --sway:22px;  --spin:-18deg}
+.fn4{left:74%; animation-delay:190ms; --sway:-20px; --spin:10deg}
+.fn5{left:86%; animation-delay:110ms; --sway:12px;  --spin:-26deg}
+@keyframes flyUp{
+  0%  {opacity:0;   transform:translate(0,26px) rotate(0deg) scale(.7)}
+  18% {opacity:.95}
+  70% {opacity:.75}
+  100%{opacity:0;   transform:translate(var(--sway),-140px) rotate(var(--spin)) scale(1.05)}
+}
+
+/* the figure reacts when it lands on a new number */
+.hero.wallet .bignum{transition:text-shadow .3s ease}
+.hero.wallet.rising .bignum{text-shadow:0 0 26px rgba(255,255,255,.55)}
+
+/* segments settle with a soft bounce when they resize */
+.seg-piece{transition:flex-grow .6s cubic-bezier(.34,1.3,.4,1), transform .16s ease}
+
+/* refresh spinner gets a coin flip rather than a plain rotate */
+.icobtn.spinning svg{animation:coin 1s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes coin{
+  0%{transform:rotateY(0deg)}
+  100%{transform:rotateY(360deg)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .dnote,.flynote{animation:none;display:none}
+  .icobtn.spinning svg{animation:none}
+}

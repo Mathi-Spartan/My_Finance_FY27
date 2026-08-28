@@ -9,6 +9,17 @@ import {
 
 const TONES = ['tone-a', 'tone-b', 'tone-c', 'tone-d', 'tone-e', 'tone-f'];
 
+// A little banknote, drawn rather than an emoji so it takes our colours.
+const Note = ({ className, style }) => (
+  <svg className={className} style={style} viewBox="0 0 34 20" fill="none" aria-hidden="true">
+    <rect x="0.6" y="0.6" width="32.8" height="18.8" rx="3" fill="currentColor" opacity="0.9" />
+    <circle cx="17" cy="10" r="5" fill="none" stroke="#fff" strokeWidth="1.1" opacity=".85" />
+    <path d="M14.8 7.4h4.4M14.8 9.4h4.4M18.4 7.4c1 0 1.6.8 1.6 1.7 0 1-.7 1.6-1.9 1.6h-1.3l3 3.1"
+          stroke="#fff" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" opacity=".95" />
+    <path d="M3.5 3.5v13M30.5 3.5v13" stroke="#fff" strokeWidth="1" opacity=".5" />
+  </svg>
+);
+
 function useCountUp(target, ms = 700) {
   const [v, setV] = useState(0);
   const from = useRef(0);
@@ -33,6 +44,8 @@ function useCountUp(target, ms = 700) {
 export default function HomeView({ onAddTo }) {
   const { accounts, txs, reload, loading } = useStore();
   const [focus, setFocus] = useState(null); // null = everything
+  const [burst, setBurst] = useState(0);
+  const prev = useRef(null);
 
   const live = useMemo(() => accounts.filter((a) => !a.archived), [accounts]);
   const month = useMemo(() => totals(txs), [txs]);
@@ -50,6 +63,12 @@ export default function HomeView({ onAddTo }) {
   const flowNow = selected
     ? (flow[selected.id] || { in: 0, out: 0 })
     : { in: month.in, out: month.out };
+
+  // Money arriving deserves to look like money arriving.
+  useEffect(() => {
+    if (prev.current !== null && headline > prev.current + 0.005) setBurst((b) => b + 1);
+    prev.current = headline;
+  }, [headline]);
 
   const shown = useCountUp(Math.abs(headline));
   const whole = Math.floor(shown);
@@ -77,6 +96,22 @@ export default function HomeView({ onAddTo }) {
       </div>
 
       <div className={'hero wallet' + (selected ? ' focused' : '')}>
+        {/* ambient notes drifting behind the figures */}
+        <div className="drift-notes" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Note key={i} className={'dnote dn' + i} />
+          ))}
+        </div>
+
+        {/* a short flurry whenever the balance goes up */}
+        {burst > 0 && (
+          <div className="cashfly" key={burst} aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <Note key={i} className={'flynote fn' + i} />
+            ))}
+          </div>
+        )}
+
         <div className="eyebrow">
           <span className="dot" />
           {selected
