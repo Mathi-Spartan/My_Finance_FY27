@@ -13,11 +13,11 @@ const PADS = {
     ['%', 'fn'],  ['0', ''],   ['.', ''],   ['=', 'eq'],
   ],
   more: [
-    ['√', 'fn'], ['^', 'fn'], ['1/x', 'fn'], ['÷', 'op'],
-    ['7', ''],   ['8', ''],   ['9', ''],     ['×', 'op'],
-    ['4', ''],   ['5', ''],   ['6', ''],     ['−', 'op'],
-    ['1', ''],   ['2', ''],   ['3', ''],     ['+', 'op'],
-    ['±', 'fn'], ['0', ''],   ['.', ''],     ['=', 'eq'],
+    ['AC', 'fn'],  ['√', 'fn'], ['^', 'fn'], ['÷', 'op'],
+    ['7', ''],     ['8', ''],   ['9', ''],   ['×', 'op'],
+    ['4', ''],     ['5', ''],   ['6', ''],   ['−', 'op'],
+    ['1', ''],     ['2', ''],   ['3', ''],   ['+', 'op'],
+    ['1/x', 'fn'], ['0', ''],   ['.', ''],   ['=', 'eq'],
   ],
 };
 
@@ -172,6 +172,7 @@ export default function CalculatorView({ onUse }) {
 
         <div className="dispacts">
           <button className="mini" onClick={() => press('⌫')}>⌫</button>
+          <button className="mini" onClick={() => press('±')}>±</button>
           <button className="mini" onClick={() => press('MC')} disabled={mem === 0}>MC</button>
           <button className="mini" onClick={() => press('M+')}>M+</button>
           <button className="mini" onClick={() => press('M−')}>M−</button>
