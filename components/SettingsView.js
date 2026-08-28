@@ -70,26 +70,6 @@ export default function SettingsView({ theme, toggleTheme }) {
       {tab === 'money' && (
         <>
           <div className="card">
-            <div className="cardhead"><h4>Targets</h4><span>drives safe-to-spend</span></div>
-            <div className="field">
-              <label>Monthly income (₹)</label>
-              <input type="number" defaultValue={settings?.monthly_income || ''}
-                     onBlur={(e) => saveSettings({ monthly_income: Number(e.target.value) || 0 })}
-                     placeholder="0" />
-            </div>
-            <div className="field">
-              <label>Want to keep each month (₹)</label>
-              <input type="number" defaultValue={settings?.savings_target || ''}
-                     onBlur={(e) => saveSettings({ savings_target: Number(e.target.value) || 0 })}
-                     placeholder="0" />
-            </div>
-            <p className="note">
-              Safe-to-spend takes your cash, removes commitments still due this month and whatever is
-              left of this savings figure, then divides by the days remaining.
-            </p>
-          </div>
-
-          <div className="card">
             <div className="cardhead"><h4>Accounts</h4><span>{accounts.length}</span></div>
             {accounts.map((a) => (
               <div className="field" key={a.id}>

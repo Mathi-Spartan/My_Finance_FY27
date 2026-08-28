@@ -1,143 +1,166 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import {
-  rupees, categoryDrift, burnRate, monthTotals, topMerchants,
-  committedMonthly, initials, colorOf,
+  rupees, totals, lastMonthTotals, whereItWent, biggestChanges,
+  spendingRhythm, repeatPayments, initials, colorOf,
 } from '@/lib/finance';
 
-export default function InsightsView({ context }) {
-  const { txs, categories, recurring } = useStore();
-  const [scope, setScope] = useState('month');
+export default function InsightsView() {
+  const { txs, categories } = useStore();
 
-  const scoped = useMemo(() => txs.filter((t) => t.context === context), [txs, context]);
-  const drift = useMemo(() => categoryDrift(scoped, categories), [scoped, categories]);
-  const burn = useMemo(() => burnRate(scoped), [scoped]);
-  const prevBurn = useMemo(() => {
-    const cut1 = new Date(); cut1.setDate(cut1.getDate() - 60);
-    const cut2 = new Date(); cut2.setDate(cut2.getDate() - 30);
-    const spent = scoped.filter((t) => t.direction === 'out' &&
-      new Date(t.occurred_at) >= cut1 && new Date(t.occurred_at) < cut2)
-      .reduce((s, t) => s + Number(t.amount), 0);
-    return spent / 30;
-  }, [scoped]);
-  const totals = useMemo(() => monthTotals(scoped), [scoped]);
-  const leaks = useMemo(() => topMerchants(scoped), [scoped]);
-  const committed = committedMonthly(recurring);
-  const saved = totals.in - totals.out;
-  const savedPct = totals.in > 0 ? Math.round((saved / totals.in) * 100) : 0;
-  const maxDrift = Math.max(...drift.map((d) => Math.max(d.spent, d.avg)), 1);
+  const month = useMemo(() => totals(txs), [txs]);
+  const prev = useMemo(() => lastMonthTotals(txs), [txs]);
+  const spend = useMemo(() => whereItWent(txs, categories), [txs, categories]);
+  const changes = useMemo(() => biggestChanges(txs, categories), [txs, categories]);
+  const rhythm = useMemo(() => spendingRhythm(txs), [txs]);
+  const repeats = useMemo(() => repeatPayments(txs), [txs]);
 
-  if (scoped.length === 0) {
+  if (txs.length === 0) {
     return (
       <div className="body">
-        <div className="apphead"><div className="seg"><button className="on">Insights</button></div></div>
-        <div className="empty">
-          <b>Nothing to read yet</b>
-          Insights compare this month against your own three-month average. File entries for a few weeks and this fills in.
+        <div className="pagehead"><h2>Patterns</h2></div>
+        <div className="card">
+          <p className="note" style={{ margin: 0 }}>
+            Nothing to read yet. Add a few entries and this fills in on its own.
+          </p>
         </div>
       </div>
     );
   }
 
+  const outChange = prev.out > 0 ? Math.round(((month.out - prev.out) / prev.out) * 100) : null;
+  const inChange = prev.in > 0 ? Math.round(((month.in - prev.in) / prev.in) * 100) : null;
+  const savedPct = month.in > 0 ? Math.round((month.net / month.in) * 100) : null;
+  const steady = repeats.filter((r) => r.steady);
+  const monthlyRepeat = steady.reduce((s, r) => s + r.avg, 0);
+
   return (
     <div className="body">
-      <div className="apphead">
-        <div className="seg">
-          <button className={scope === 'month' ? 'on' : ''} onClick={() => setScope('month')}>This month</button>
-          <button className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>All time</button>
-        </div>
-      </div>
+      <div className="pagehead"><h2>Patterns</h2></div>
 
-      <div className="wide">
-        <div>
-          <div className="card rise d1">
-            <div className="cardhead"><h4>Category drift</h4><span>vs your 3-mo avg</span></div>
-            {drift.slice(0, 7).map((d) => {
-              const w = Math.max(4, (d.spent / maxDrift) * 100);
-              const mark = Math.max(2, Math.min(98, (d.avg / maxDrift) * 100));
-              const tone = d.pct === null ? 'var(--ink-3)'
-                : d.pct > 40 ? 'var(--out)' : d.pct > 10 ? 'var(--amber)'
-                : d.pct < -10 ? 'var(--in)' : 'var(--ink-3)';
-              return (
-                <div className="drift" key={d.id}>
-                  <div className="drifttop">
-                    <span className="lab">{d.name}</span>
-                    <span className={'val ' + (d.pct > 0 ? 'up' : d.pct < 0 ? 'down' : '')}>
-                      {d.pct === null ? 'new' : (d.pct > 0 ? '+' : '') + d.pct + '%'} · {rupees(d.spent, { decimals: false })}
-                    </span>
-                  </div>
-                  <div className="track">
-                    <div className="fillbar" style={{ width: w + '%', background: tone }} />
-                    {d.avg > 0 && <div className="avgmark" style={{ left: mark + '%' }} />}
-                  </div>
-                  <div className="driftfoot">
-                    {d.count} {d.count === 1 ? 'entry' : 'entries'}
-                    {d.avg > 0 && ` · usually ${rupees(d.avg, { decimals: false })}`}
-                    {d.budget > 0 && ` · budget ${rupees(d.budget, { decimals: false })}`}
-                  </div>
-                </div>
-              );
-            })}
+      {/* headline */}
+      <div className="card">
+        <div className="cardhead"><h4>This month</h4><span>{month.count} entries</span></div>
+        <div className="statgrid">
+          <div className="stat">
+            <div className="k">In</div>
+            <div className="v" style={{ color: 'var(--in)' }}>{rupees(month.in, { decimals: false })}</div>
+            <div className="d">{inChange === null ? 'no last month to compare' : `${inChange >= 0 ? '+' : ''}${inChange}% vs last month`}</div>
           </div>
-        </div>
-
-        <div>
-          <div className="card">
-            <div className="cardhead"><h4>Burn rate</h4><span>last 30 days</span></div>
-            <div className="statgrid">
-              <div className="stat">
-                <div className="k">Per day</div>
-                <div className="v">{rupees(burn.perDay, { decimals: false })}</div>
-                <div className="d">{prevBurn > 0
-                  ? `was ${rupees(prevBurn, { decimals: false })} the month before`
-                  : 'no earlier data yet'}</div>
-              </div>
-              <div className="stat">
-                <div className="k">Committed</div>
-                <div className="v">{rupees(committed, { decimals: false })}</div>
-                <div className="d">fixed every month</div>
-              </div>
-              <div className="stat">
-                <div className="k">In this month</div>
-                <div className="v" style={{ color: 'var(--in)' }}>{rupees(totals.in, { decimals: false })}</div>
-                <div className="d">across {scoped.filter((t) => t.direction === 'in').length} entries</div>
-              </div>
-              <div className="stat">
-                <div className="k">Kept</div>
-                <div className="v" style={{ color: saved >= 0 ? 'var(--in)' : 'var(--out)' }}>
-                  {saved < 0 ? '−' : ''}{rupees(saved, { decimals: false })}
-                </div>
-                <div className="d">{savedPct}% of what came in</div>
-              </div>
+          <div className="stat">
+            <div className="k">Out</div>
+            <div className="v" style={{ color: 'var(--out)' }}>{rupees(month.out, { decimals: false })}</div>
+            <div className="d">{outChange === null ? 'no last month to compare' : `${outChange >= 0 ? '+' : ''}${outChange}% vs last month`}</div>
+          </div>
+          <div className="stat">
+            <div className="k">Kept</div>
+            <div className="v" style={{ color: month.net >= 0 ? 'var(--in)' : 'var(--out)' }}>
+              {month.net < 0 ? '−' : ''}{rupees(month.net, { decimals: false })}
             </div>
+            <div className="d">{savedPct === null ? 'nothing came in yet' : `${savedPct}% of what came in`}</div>
           </div>
+          <div className="stat">
+            <div className="k">Per day</div>
+            <div className="v">{rupees(rhythm.perDay, { decimals: false })}</div>
+            <div className="d">average over 60 days</div>
+          </div>
+        </div>
+      </div>
 
-          <div className="card">
-            <div className="cardhead"><h4>Biggest leaks</h4><span>this month</span></div>
-            {leaks.map((m) => {
-              const c = colorOf(m.name);
+      {/* where it goes */}
+      {spend.length > 0 && (
+        <div className="card">
+          <div className="cardhead"><h4>Where it goes</h4><span>this month</span></div>
+          {spend.slice(0, 8).map((c) => (
+            <div className="drift" key={c.id}>
+              <div className="drifttop">
+                <span className="lab">{c.name}</span>
+                <span className="val">{Math.round(c.share)}% · {rupees(c.total, { decimals: false })}</span>
+              </div>
+              <div className="track">
+                <div className="fillbar" style={{
+                  width: Math.max(3, c.share) + '%',
+                  background: `linear-gradient(90deg,var(--g1),var(--g3))`,
+                }} />
+              </div>
+              <div className="driftfoot">{c.count} {c.count === 1 ? 'payment' : 'payments'}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* what moved */}
+      {changes.length > 0 && prev.out > 0 && (
+        <div className="card">
+          <div className="cardhead"><h4>What moved</h4><span>vs last month</span></div>
+          {changes.slice(0, 5).map((c) => (
+            <div className="moveline" key={c.id}>
+              <span className="mname">{c.name}</span>
+              <span className={'mval ' + (c.diff > 0 ? 'up' : 'down')}>
+                {c.diff > 0 ? '+' : '−'}{rupees(Math.abs(c.diff), { decimals: false })}
+                {c.pct !== null && <small> ({c.pct > 0 ? '+' : ''}{c.pct}%)</small>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* rhythm */}
+      {rhythm.count > 0 && (
+        <div className="card">
+          <div className="cardhead"><h4>Your rhythm</h4><span>last 60 days</span></div>
+          <div className="dowrow">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((l, i) => {
+              const max = Math.max(...rhythm.byDow, 1);
               return (
-                <div className="row" key={m.name} style={{ marginBottom: 8 }}>
-                  <span className="av" style={{ background: `var(--${c}-soft)`, color: `var(--${c})` }}>
-                    {initials(m.name)}
-                  </span>
-                  <span className="rmain">
-                    <span className="rtop">
-                      <span className="rname">{m.name}</span>
-                      <span className="ramt">{rupees(m.total, { decimals: false })}</span>
-                    </span>
-                    <span className="rbot">
-                      <span className="tag">{m.count} {m.count === 1 ? 'time' : 'times'}</span>
-                      <span className="rmeta">{rupees(m.total / m.count, { decimals: false })} avg</span>
-                    </span>
-                  </span>
+                <div className="dowbar" key={i}>
+                  <div className="dowfill" style={{ height: Math.max(6, (rhythm.byDow[i] / max) * 100) + '%' }} />
+                  <span>{l}</span>
                 </div>
               );
             })}
           </div>
+          <p className="note" style={{ marginTop: 14 }}>
+            {rhythm.peakDay
+              ? <>Most of your spending lands on <b>{rhythm.peakDay}</b> — {rupees(rhythm.peakAmount, { decimals: false })} over the period. Typical payment is {rupees(rhythm.perEntry, { decimals: false })}.</>
+              : <>Not enough spending yet to see a pattern.</>}
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* repeats */}
+      {repeats.length > 0 && (
+        <div className="card">
+          <div className="cardhead"><h4>Paid again and again</h4><span>3+ times</span></div>
+          {repeats.slice(0, 6).map((r) => {
+            const c = colorOf(r.name);
+            return (
+              <div className="row" key={r.name} style={{ marginBottom: 8 }}>
+                <span className="av" style={{ background: `var(--${c}-soft)`, color: `var(--${c})` }}>
+                  {initials(r.name)}
+                </span>
+                <span className="rmain">
+                  <span className="rtop">
+                    <span className="rname">{r.name}</span>
+                    <span className="ramt">{rupees(r.total, { decimals: false })}</span>
+                  </span>
+                  <span className="rbot">
+                    <span className="tag">{r.times} times{r.steady ? ' · same amount' : ''}</span>
+                    <span className="rmeta">{rupees(r.avg, { decimals: false })} each</span>
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+          {steady.length > 0 && (
+            <div className="summary">
+              <span>{steady.length} look like regular payments</span>
+              <b>{rupees(monthlyRepeat, { decimals: false })}</b>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

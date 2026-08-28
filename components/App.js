@@ -3,17 +3,15 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import HomeView from './HomeView';
 import InsightsView from './InsightsView';
-import UpcomingView from './UpcomingView';
 import SettingsView from './SettingsView';
 import AddSheet from './AddSheet';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Calendar, Gear, Plus } from './Icons';
+import { Home, Chart, Gear, Plus } from './Icons';
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
   const [tab, setTab] = useState('home');
-  const [context, setContext] = useState('personal');
   const [adding, setAdding] = useState(false);
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
@@ -22,11 +20,7 @@ export default function App() {
     const saved = localStorage.getItem('ll-theme') || 'light';
     setTheme(saved);
     document.documentElement.dataset.theme = saved;
-    const ctx = localStorage.getItem('ll-context');
-    if (ctx) setContext(ctx);
   }, []);
-
-  useEffect(() => { localStorage.setItem('ll-context', context); }, [context]);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -36,9 +30,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }, []);
 
   if (!ready) return <Splash />;
@@ -48,20 +40,18 @@ export default function App() {
 
   return (
     <div className="shell">
-      {tab === 'home' && <HomeView context={context} setContext={setContext} goTo={setTab} onAdd={() => setAdding(true)} />}
-      {tab === 'insights' && <InsightsView context={context} />}
-      {tab === 'upcoming' && <UpcomingView context={context} />}
-      {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
+      <div key={tab} className="viewfade">
+        {tab === 'home' && <HomeView />}
+        {tab === 'insights' && <InsightsView />}
+        {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
+      </div>
 
       <nav className="nav">
         <button className={'navbtn' + (tab === 'home' ? ' on' : '')} onClick={() => setTab('home')}>
           <Home /> Home
         </button>
         <button className={'navbtn' + (tab === 'insights' ? ' on' : '')} onClick={() => setTab('insights')}>
-          <Chart /> Insights
-        </button>
-        <button className={'navbtn' + (tab === 'upcoming' ? ' on' : '')} onClick={() => setTab('upcoming')}>
-          <Calendar /> Upcoming
+          <Chart /> Patterns
         </button>
         <button className={'navbtn' + (tab === 'settings' ? ' on' : '')} onClick={() => setTab('settings')}>
           <Gear /> Settings
@@ -71,7 +61,7 @@ export default function App() {
         </button>
       </nav>
 
-      {adding && <AddSheet context={context} onClose={() => setAdding(false)} />}
+      {adding && <AddSheet onClose={() => setAdding(false)} />}
     </div>
   );
 }

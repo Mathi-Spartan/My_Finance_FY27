@@ -3,11 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Close, Arrow, Check, Bolt } from './Icons';
 import {
-  rupees, frequentMerchants, safeToSpend, monthTotals, isoDay,
+  rupees, frequentMerchants, isoDay, totals,
 } from '@/lib/finance';
 
-export default function AddSheet({ context, onClose }) {
-  const { accounts, categories, txs, recurring, settings, addTx, say } = useStore();
+export default function AddSheet({ onClose }) {
+  const { accounts, categories, txs, addTx, say } = useStore();
 
   const [dir, setDir] = useState('out');
   const [raw, setRaw] = useState('');
@@ -41,21 +41,13 @@ export default function AddSheet({ context, onClose }) {
   const toAcct = live.find((a) => a.id === toAcctId);
 
   // what this entry does to your day
+  // What this entry does to the month's running totals.
   const impact = useMemo(() => {
-    const base = safeToSpend({ accounts, txs, recurring, settings, context });
-    const after = dir === 'out' ? base.pool - amount : dir === 'in' ? base.pool + amount : base.pool;
-    const perDay = after / Math.max(1, base.daysLeft);
-    let budgetLine = null;
-    if (cat && Number(cat.budget) > 0) {
-      const spent = txs
-        .filter((t) => t.category_id === cat.id && t.direction === 'out' &&
-          new Date(t.occurred_at) >= new Date(new Date().getFullYear(), new Date().getMonth(), 1))
-        .reduce((s, t) => s + Number(t.amount), 0);
-      const pct = Math.round(((spent + (dir === 'out' ? amount : 0)) / Number(cat.budget)) * 100);
-      budgetLine = `${cat.name.toLowerCase()} budget ${pct}% used`;
-    }
-    return { perDay, budgetLine };
-  }, [accounts, txs, recurring, settings, context, dir, amount, cat]);
+    const m = totals(txs);
+    const nextIn = dir === 'in' ? m.in + amount : m.in;
+    const nextOut = dir === 'out' ? m.out + amount : m.out;
+    return { nextIn, nextOut, net: nextIn - nextOut };
+  }, [txs, dir, amount]);
 
   const press = (k) => {
     if (k === 'del') return setRaw((p) => p.slice(0, -1));
@@ -77,7 +69,7 @@ export default function AddSheet({ context, onClose }) {
       direction: dir,
       amount,
       occurred_at: when.toISOString(),
-      context,
+      context: 'personal',
       transfer_to: dir === 'transfer' ? toAcctId : null,
     };
     const ok = await addTx(row);
@@ -165,8 +157,14 @@ export default function AddSheet({ context, onClose }) {
 
             {dir !== 'transfer' && amount > 0 && (
               <div className="impact">
-                Leaves <b className={impact.perDay >= 0 ? 'ok' : ''}>{rupees(impact.perDay, { decimals: false })}</b> safe to spend today
-                {impact.budgetLine ? ` · ${impact.budgetLine}` : ''}
+                {dir === 'in' ? 'In' : 'Out'} this month becomes{' '}
+                <b className={dir === 'in' ? 'ok' : ''}>
+                  {rupees(dir === 'in' ? impact.nextIn : impact.nextOut, { decimals: false })}
+                </b>
+                {' · net '}
+                <b className={impact.net >= 0 ? 'ok' : ''}>
+                  {impact.net < 0 ? '−' : ''}{rupees(impact.net, { decimals: false })}
+                </b>
               </div>
             )}
 

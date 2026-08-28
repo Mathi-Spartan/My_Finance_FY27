@@ -611,3 +611,69 @@ button{cursor:pointer}
   .day,.day .tick{animation:none}
   .day .num{transition:none}
 }
+
+/* ============================================================
+   SIMPLE MODEL — in / out on the hero, plain analysis
+   ============================================================ */
+.apphead .hi .k{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.pagehead{padding:14px 0 16px}
+.pagehead h2{
+  font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.035em;
+}
+
+/* money in / money out row inside the hero */
+.flow{
+  display:flex;align-items:stretch;gap:0;margin-top:20px;
+  background:rgba(255,255,255,.14);border-radius:18px;padding:14px 4px;
+  backdrop-filter:blur(6px);
+}
+.flowcell{flex:1;display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center}
+.flowdiv{width:1px;background:rgba(255,255,255,.26);margin:2px 0}
+.flow .fl{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(255,255,255,.7);
+}
+.flow .fv{
+  font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500;letter-spacing:-.02em;color:#fff;
+}
+.netline{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:14px;padding-top:13px;border-top:1px dashed rgba(255,255,255,.28);
+  font-size:12.5px;color:rgba(255,255,255,.8);
+}
+.netline b{font-family:'IBM Plex Mono',monospace;font-size:15px;color:#fff}
+
+.clearday{
+  width:100%;margin:14px 0 2px;border:1px dashed var(--line);background:var(--card);
+  color:var(--ink-2);font-size:12.5px;font-weight:600;padding:11px;border-radius:14px;
+}
+.clearday:active{transform:scale(.99)}
+
+/* what moved */
+.moveline{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line-2);font-size:13.5px;
+}
+.moveline:last-child{border-bottom:0}
+.mname{font-weight:600}
+.mval{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.mval small{font-weight:400;opacity:.7}
+
+/* weekday rhythm */
+.dowrow{display:flex;align-items:flex-end;gap:8px;height:110px}
+.dowbar{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:8px;height:100%;
+}
+.dowfill{
+  width:100%;border-radius:8px;
+  background:linear-gradient(180deg,var(--g2),var(--g1));
+  animation:growUp .7s cubic-bezier(.2,.85,.25,1) both;
+}
+@keyframes growUp{from{height:0 !important;opacity:0}}
+.dowbar span{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);
+}
