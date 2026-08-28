@@ -1323,3 +1323,85 @@ button{cursor:pointer}
 }
 .sesscard.s-cancelled::before{background:linear-gradient(180deg,#4FD1A5,#00A36C)}
 .sessstat.cancelled{background:var(--in-soft);color:var(--in)}
+
+/* ============================================================
+   SESSION TABLE
+   ============================================================ */
+.stable{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  overflow:hidden;box-shadow:var(--shadow);margin-top:14px;
+  animation:rowIn .45s cubic-bezier(.2,.85,.25,1) both;
+}
+.sthead{
+  display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;
+  padding:11px 14px;background:var(--card-2);border-bottom:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);
+  position:sticky;top:0;z-index:2;
+}
+.ta-r{text-align:right}
+
+.strow-wrap{border-bottom:1px solid var(--line-2)}
+.strow-wrap:last-of-type{border-bottom:0}
+.strow-wrap.open{background:var(--card-2)}
+
+.strow{
+  display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;
+  width:100%;text-align:left;background:transparent;border:0;
+  padding:11px 14px;position:relative;
+  transition:background .16s ease;
+}
+.strow::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;
+}
+.strow.s-attended::before{background:var(--in)}
+.strow.s-missed::before{background:var(--out)}
+.strow.s-cancelled::before{background:#2DBE8A}
+.strow:active{background:var(--card-2)}
+
+.stdate{
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:var(--card-2);border-radius:11px;padding:6px 0;
+}
+.strow-wrap.open .stdate{background:var(--card)}
+.stdate b{font-size:15px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.stdate em{
+  font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+}
+
+.stmain{display:flex;flex-direction:column;gap:3px;min-width:0}
+.stname{
+  display:flex;align-items:center;gap:7px;
+  font-size:13.5px;font-weight:650;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tdot{width:7px;height:7px;border-radius:2px;flex:0 0 auto}
+.tdot.th-speech{background:linear-gradient(135deg,var(--g1),var(--g2))}
+.tdot.th-occ{background:linear-gradient(135deg,#5B9BFF,#2D6FE0)}
+.sttime{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3)}
+
+.stright{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto}
+.stamt{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:-.02em}
+.stpill{
+  font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:6px;
+  background:var(--card-2);color:var(--ink-3);border:1px solid var(--line-2);
+}
+.strow-wrap.open .stpill{background:var(--card)}
+.stpill.attended{background:var(--in-soft);color:var(--in);border-color:transparent}
+.stpill.missed{background:var(--out-soft);color:var(--out);border-color:transparent}
+.stpill.cancelled{background:var(--in-soft);color:var(--in);border-color:transparent}
+
+.stacts{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  padding:0 14px 12px;
+  animation:reveal .24s cubic-bezier(.2,.85,.25,1) both;
+}
+.stacts .sessbtn{font-size:11.5px;padding:9px 4px;gap:4px}
+
+.stfoot{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 14px;background:var(--card-2);border-top:1px solid var(--line);
+  font-size:12px;color:var(--ink-2);
+}
+.stfoot b{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ink)}

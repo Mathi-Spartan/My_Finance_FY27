@@ -23,6 +23,7 @@ export default function PaariView() {
   const [monthKey, setMonthKey] = useState('2026-09');
   const [filter, setFilter] = useState('all');
   const [adding, setAdding] = useState(false);
+  const [openId, setOpenId] = useState(null);
 
   const months = useMemo(() => {
     const set = [...new Set(appointments.map((a) => a.on_date.slice(0, 7)))].sort();
@@ -77,11 +78,6 @@ export default function PaariView() {
     return Object.values(m);
   }, [inMonth]);
 
-  const groups = useMemo(() => {
-    const g = {};
-    shown.forEach((a) => (g[a.on_date] = g[a.on_date] || []).push(a));
-    return Object.entries(g);
-  }, [shown]);
 
   const idx = months.indexOf(monthKey);
   const label = fmtDay(monthKey + '-01').month;
@@ -174,60 +170,77 @@ export default function PaariView() {
         ))}
       </div>
 
-      {groups.length === 0 ? (
+      {shown.length === 0 ? (
         <div className="card" style={{ marginTop: 16 }}>
           <p className="note" style={{ margin: 0 }}>Nothing here for this filter.</p>
         </div>
-      ) : groups.map(([iso, list]) => {
-        const d = fmtDay(iso);
-        return (
-          <div key={iso}>
-            <div className="sechead">
-              <h4>{d.long}</h4>
-              <span>{list.length} {list.length === 1 ? 'SESSION' : 'SESSIONS'}</span>
-            </div>
-            {list.map((a) => (
-              <div key={a.id} className={'sesscard ' + (THERAPY_TONE[a.therapy] || '') + ' s-' + a.status}>
-                <div className="sessmain">
-                  <div className="sesstop">
-                    <span className="sessname">{a.therapy} therapy</span>
-                    <span className="sessamt">{money(a.amount)}</span>
-                  </div>
-                  <div className="sessbot">
-                    <span className="sesstime">{a.slot}</span>
-                    <span className={'sessstat ' + a.status}>
-                      {a.status === 'attended' ? 'Attended'
-                        : a.status === 'missed' ? 'Missed · no refund'
-                        : a.status === 'cancelled' ? `Refund ${money(a.amount)}`
-                        : 'Not marked'}
-                    </span>
-                  </div>
-                </div>
-                <div className="sessacts three">
-                  <button
-                    className={'sessbtn yes' + (a.status === 'attended' ? ' on' : '')}
-                    onClick={() => setAppointmentStatus(a.id, a.status === 'attended' ? 'planned' : 'attended')}
-                  >
-                    <Check width="13" height="13" /> Attended
-                  </button>
-                  <button
-                    className={'sessbtn no' + (a.status === 'missed' ? ' on' : '')}
-                    onClick={() => setAppointmentStatus(a.id, a.status === 'missed' ? 'planned' : 'missed')}
-                  >
-                    <Close width="12" height="12" /> I missed
-                  </button>
-                  <button
-                    className={'sessbtn back' + (a.status === 'cancelled' ? ' on' : '')}
-                    onClick={() => setAppointmentStatus(a.id, a.status === 'cancelled' ? 'planned' : 'cancelled')}
-                  >
-                    Trainer off
-                  </button>
-                </div>
-              </div>
-            ))}
+      ) : (
+        <div className="stable">
+          <div className="sthead">
+            <span>Date</span>
+            <span>Session</span>
+            <span className="ta-r">Amount</span>
           </div>
-        );
-      })}
+
+          {shown.map((a) => {
+            const d = fmtDay(a.on_date);
+            const isOpen = openId === a.id;
+            return (
+              <div key={a.id} className={'strow-wrap' + (isOpen ? ' open' : '')}>
+                <button
+                  className={'strow s-' + a.status}
+                  onClick={() => setOpenId(isOpen ? null : a.id)}
+                >
+                  <span className="stdate">
+                    <b>{d.num}</b>
+                    <em>{d.dow}</em>
+                  </span>
+
+                  <span className="stmain">
+                    <span className="stname">
+                      <i className={'tdot ' + (THERAPY_TONE[a.therapy] || '')} />
+                      {a.therapy}
+                    </span>
+                    <span className="sttime">{a.slot}</span>
+                  </span>
+
+                  <span className="stright">
+                    <span className="stamt">{money(a.amount)}</span>
+                    <span className={'stpill ' + a.status}>
+                      {a.status === 'attended' ? 'Attended'
+                        : a.status === 'missed' ? 'Missed'
+                        : a.status === 'cancelled' ? 'Refund'
+                        : '—'}
+                    </span>
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="stacts">
+                    <button className={'sessbtn yes' + (a.status === 'attended' ? ' on' : '')}
+                            onClick={() => { setAppointmentStatus(a.id, a.status === 'attended' ? 'planned' : 'attended'); setOpenId(null); }}>
+                      <Check width="13" height="13" /> Attended
+                    </button>
+                    <button className={'sessbtn no' + (a.status === 'missed' ? ' on' : '')}
+                            onClick={() => { setAppointmentStatus(a.id, a.status === 'missed' ? 'planned' : 'missed'); setOpenId(null); }}>
+                      <Close width="12" height="12" /> I missed
+                    </button>
+                    <button className={'sessbtn back' + (a.status === 'cancelled' ? ' on' : '')}
+                            onClick={() => { setAppointmentStatus(a.id, a.status === 'cancelled' ? 'planned' : 'cancelled'); setOpenId(null); }}>
+                      Trainer off
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="stfoot">
+            <span>{shown.length} {shown.length === 1 ? 'session' : 'sessions'}</span>
+            <b>{money(shown.reduce((t, a) => t + (Number(a.amount) || 0), 0))}</b>
+          </div>
+        </div>
+      )}
 
       {adding && (
         <AddSession
