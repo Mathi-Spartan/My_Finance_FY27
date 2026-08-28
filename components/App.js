@@ -9,9 +9,10 @@ import AddSheet from './AddSheet';
 import EditSheet from './EditSheet';
 import CalculatorView from './CalculatorView';
 import PaariView from './PaariView';
+import DriversView from './DriversView';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Gear, Plus, Calendar, Calc, Heart } from './Icons';
+import { Home, Chart, Gear, Plus, Calendar, Calc, Heart, Car } from './Icons';
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
@@ -51,6 +52,7 @@ export default function App() {
         {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={setTab} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'paari' && <PaariView />}
+        {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
@@ -68,14 +70,14 @@ export default function App() {
         <button className={'navbtn' + (tab === 'paari' ? ' on' : '')} onClick={() => setTab('paari')}>
           <Heart /> Paari
         </button>
+        <button className={'navbtn' + (tab === 'drivers' ? ' on' : '')} onClick={() => setTab('drivers')}>
+          <Car /> Drivers
+        </button>
         <button className={'navbtn' + (tab === 'insights' ? ' on' : '')} onClick={() => setTab('insights')}>
           <Chart /> Patterns
         </button>
         <button className={'navbtn' + (tab === 'calc' ? ' on' : '')} onClick={() => setTab('calc')}>
           <Calc /> Calc
-        </button>
-        <button className={'navbtn' + (tab === 'settings' ? ' on' : '')} onClick={() => setTab('settings')}>
-          <Gear /> Settings
         </button>
         <button className="addbtn" onClick={() => { setPresetAccount(null); setPresetAmount(null); setAdding(true); }}>
           <Plus width="16" height="16" /> Add

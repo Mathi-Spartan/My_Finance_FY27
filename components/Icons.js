@@ -17,3 +17,4 @@ export const Trash = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M4 
 export const Refresh = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M21 12a9 9 0 11-2.64-6.36" /><path d="M21 3v6h-6" /></svg>);
 export const Calc = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><rect x="4" y="2" width="16" height="20" rx="3"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h4M16 19h.01"/></svg>);
 export const Heart = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0112 8.4a4.2 4.2 0 017 2.3c0 4.9-7 9.3-7 9.3z"/></svg>);
+export const Car = (p) => (<svg viewBox="0 0 24 24" {...s} {...p}><path d="M5 17h14M4 17v-4.2a2 2 0 01.2-.9l1.9-3.8A2 2 0 018 7h8a2 2 0 011.8 1.1l1.9 3.8a2 2 0 01.3.9V17M4 12.5h16"/><circle cx="7.5" cy="17" r="1.6"/><circle cx="16.5" cy="17" r="1.6"/></svg>);

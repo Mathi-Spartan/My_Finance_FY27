@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Refresh, Plus } from './Icons';
+import { Refresh, Plus, Gear } from './Icons';
 import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
@@ -92,6 +92,9 @@ export default function HomeView({ onAddTo, goTo }) {
         <div className="spacer" />
         <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
           <Refresh width="16" height="16" />
+        </button>
+        <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
+          <Gear width="16" height="16" />
         </button>
       </div>
 
