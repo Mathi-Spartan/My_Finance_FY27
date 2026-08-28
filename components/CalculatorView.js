@@ -58,15 +58,17 @@ export default function CalculatorView({ onUse }) {
   }, [expr]);
 
   const ripple = (e) => {
-    const box = e.currentTarget.getBoundingClientRect();
+    // Read everything off the event synchronously: React pools the event and
+    // currentTarget is null by the time the state updater runs.
+    const el = e.currentTarget;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const key = el.dataset.k;
+    const x = (e.clientX ?? box.left + box.width / 2) - box.left;
+    const y = (e.clientY ?? box.top + box.height / 2) - box.top;
     const id = Date.now() + Math.random();
-    setRipples((r) => [...r, {
-      id,
-      x: (e.clientX ?? box.left + box.width / 2) - box.left,
-      y: (e.clientY ?? box.top + box.height / 2) - box.top,
-      key: e.currentTarget.dataset.k,
-    }]);
-    setTimeout(() => setRipples((r) => r.filter((x) => x.id !== id)), 520);
+    setRipples((r) => [...r.slice(-8), { id, x, y, key }]);
+    setTimeout(() => setRipples((r) => r.filter((v) => v.id !== id)), 520);
   };
 
   const solve = useCallback(() => {
