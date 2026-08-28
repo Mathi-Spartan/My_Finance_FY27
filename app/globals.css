@@ -763,3 +763,67 @@ button{cursor:pointer}
 .icobtn:disabled{opacity:.6}
 .icobtn.spinning svg{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   ENTRIES TAB — day / week / month
+   ============================================================ */
+.modeseg{width:100%;display:grid;grid-template-columns:repeat(3,1fr);margin-bottom:4px}
+.modeseg button{padding:9px 0}
+
+.periodbar{
+  display:flex;align-items:center;gap:10px;margin:16px 0 14px;
+}
+.periodtitle{
+  flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.periodtitle > span{font-size:15px;font-weight:650;letter-spacing:-.015em}
+.jump{
+  border:0;background:var(--brand-soft);color:var(--brand);
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;
+}
+
+.periodsums{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:14px 10px;box-shadow:var(--shadow);
+}
+.ps{display:flex;flex-direction:column;align-items:center;gap:5px}
+.ps .k{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.ps .v{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;letter-spacing:-.02em}
+.ps .v.in{color:var(--in)}
+.ps .v.out{color:var(--out)}
+
+/* month calendar */
+.calendar{margin-top:16px}
+.calhead{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:7px;
+}
+.calhead span{
+  text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.08em;color:var(--ink-3);
+}
+.calrow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
+.cell{
+  position:relative;aspect-ratio:1;border:1px solid var(--line);background:var(--card);
+  border-radius:13px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:0;
+  animation:dayIn .4s cubic-bezier(.2,.85,.25,1) both;
+  transition:transform .14s ease,border-color .14s ease;
+}
+.cell:active{transform:scale(.92);border-color:var(--brand)}
+.cell.outside{opacity:.32}
+.cell .cnum{font-size:13px;font-weight:600;letter-spacing:-.02em}
+.cell.today{border-color:transparent;background:linear-gradient(135deg,var(--g1),var(--g2))}
+.cell.today .cnum{color:#fff}
+.cdot{
+  width:5px;height:5px;border-radius:50%;background:var(--g1);
+}
+.cell.today .cdot{background:#fff}
+.cdot.cin{background:var(--in)}
+
+.sechead span em{font-style:normal;font-family:'IBM Plex Mono',monospace;margin-left:8px}
+.sechead .pin{color:var(--in)}
+.sechead .pout{color:var(--out)}

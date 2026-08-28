@@ -1,0 +1,270 @@
+'use client';
+import { useMemo, useState } from 'react';
+import { useStore } from '@/lib/store';
+import { Search, Refresh, Back } from './Icons';
+import {
+  money, rangeOf, inRange, rangeTotals, monthGrid, dailyMap,
+  isoDay, dayLabel, timeLabel, initials, colorOf,
+} from '@/lib/finance';
+
+const MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
+
+export default function EntriesView() {
+  const { txs, accounts, categories, deleteTx, reload, loading } = useStore();
+  const [mode, setMode] = useState('month');
+  const [anchor, setAnchor] = useState(new Date());
+  const [q, setQ] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(null);
+
+  const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
+  const acctName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name.split('—')[0].trim()])), [accounts]);
+  const perDay = useMemo(() => dailyMap(txs), [txs]);
+
+  const [from, to] = useMemo(() => rangeOf(mode, anchor), [mode, anchor]);
+
+  const scoped = useMemo(() => {
+    let list = inRange(txs, from, to);
+    if (q) {
+      const s = q.toLowerCase();
+      list = list.filter((t) =>
+        (t.merchant || '').toLowerCase().includes(s) ||
+        (catName[t.category_id] || '').toLowerCase().includes(s));
+    }
+    return list.sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at));
+  }, [txs, from, to, q, catName]);
+
+  const sums = useMemo(() => rangeTotals(scoped), [scoped]);
+
+  const groups = useMemo(() => {
+    const g = {};
+    scoped.forEach((t) => {
+      const k = isoDay(t.occurred_at);
+      (g[k] = g[k] || []).push(t);
+    });
+    return Object.entries(g).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [scoped]);
+
+  const step = (dir) => {
+    const d = new Date(anchor);
+    if (mode === 'day') d.setDate(d.getDate() + dir);
+    else if (mode === 'week') d.setDate(d.getDate() + dir * 7);
+    else d.setMonth(d.getMonth() + dir);
+    setAnchor(d);
+  };
+
+  const title = useMemo(() => {
+    if (mode === 'day') {
+      return anchor.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+    if (mode === 'week') {
+      const opts = { day: 'numeric', month: 'short' };
+      return `${from.toLocaleDateString('en-IN', opts)} – ${to.toLocaleDateString('en-IN', opts)}`;
+    }
+    return anchor.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  }, [mode, anchor, from, to]);
+
+  const isThisPeriod = useMemo(() => {
+    const now = new Date();
+    return now >= from && now <= to;
+  }, [from, to]);
+
+  return (
+    <div className="body">
+      <div className="pagehead">
+        <h2>Entries</h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
+            <Refresh width="16" height="16" />
+          </button>
+          <button className="icobtn" onClick={() => setSearching((s) => !s)} aria-label="Search">
+            <Search width="16" height="16" />
+          </button>
+        </div>
+      </div>
+
+      <div className="seg modeseg">
+        {MODES.map(([id, label]) => (
+          <button key={id} className={mode === id ? 'on' : ''} onClick={() => setMode(id)}>{label}</button>
+        ))}
+      </div>
+
+      {searching && (
+        <div className="field" style={{ marginTop: 12 }}>
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries" />
+        </div>
+      )}
+
+      <div className="periodbar">
+        <button className="icobtn" onClick={() => step(-1)} aria-label="Previous">
+          <Back width="15" height="15" />
+        </button>
+        <div className="periodtitle">
+          <span>{title}</span>
+          {!isThisPeriod && (
+            <button className="jump" onClick={() => setAnchor(new Date())}>Back to today</button>
+          )}
+        </div>
+        <button className="icobtn" onClick={() => step(1)} aria-label="Next">
+          <Back width="15" height="15" style={{ transform: 'rotate(180deg)' }} />
+        </button>
+      </div>
+
+      <div className="periodsums">
+        <div className="ps">
+          <span className="k">In</span>
+          <span className="v in">+{money(sums.in)}</span>
+        </div>
+        <div className="ps">
+          <span className="k">Out</span>
+          <span className="v out">−{money(sums.out)}</span>
+        </div>
+        <div className="ps">
+          <span className="k">Net</span>
+          <span className={'v ' + (sums.net >= 0 ? 'in' : 'out')}>
+            {sums.net < 0 ? '−' : '+'}{money(sums.net)}
+          </span>
+        </div>
+      </div>
+
+      {mode === 'month' && (
+        <MonthGrid anchor={anchor} perDay={perDay} onPick={(d) => { setAnchor(d); setMode('day'); }} />
+      )}
+
+      {mode === 'week' && (
+        <WeekRow anchor={anchor} from={from} perDay={perDay} onPick={(d) => { setAnchor(d); setMode('day'); }} />
+      )}
+
+      {groups.length === 0 ? (
+        <div className="card" style={{ marginTop: 16 }}>
+          <p className="note" style={{ margin: 0 }}>
+            No entries in this {mode}. Use the arrows to look at another one.
+          </p>
+        </div>
+      ) : (
+        groups.map(([day, list]) => {
+          const t = rangeTotals(list);
+          return (
+            <div key={day}>
+              <div className="sechead">
+                <h4>{dayLabel(day)}</h4>
+                <span>
+                  {t.in > 0 && <em className="pin">+{money(t.in)}</em>}
+                  {t.out > 0 && <em className="pout">−{money(t.out)}</em>}
+                </span>
+              </div>
+              {list.map((tx) => {
+                const c = colorOf(catName[tx.category_id] || tx.merchant);
+                const isIn = tx.direction === 'in';
+                return (
+                  <div key={tx.id}>
+                    <button className="row" onClick={() => setOpen(open === tx.id ? null : tx.id)}>
+                      <span className="av" style={{
+                        background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
+                        color: isIn ? 'var(--in)' : `var(--${c})`,
+                      }}>{initials(tx.merchant)}</span>
+                      <span className="rmain">
+                        <span className="rtop">
+                          <span className="rname">{tx.merchant}</span>
+                          <span className={'ramt' + (isIn ? ' in' : '')}>
+                            {isIn ? '+' : '−'}{money(tx.amount)}
+                          </span>
+                        </span>
+                        <span className="rbot">
+                          <span className="tag">{catName[tx.category_id] || 'Uncategorised'}</span>
+                          <span className="rmeta">{acctName[tx.account_id] || '—'} · {timeLabel(tx.occurred_at)}</span>
+                        </span>
+                      </span>
+                    </button>
+                    {open === tx.id && (
+                      <div className="btnrow" style={{ margin: '-2px 0 12px' }}>
+                        <button className="btn danger" onClick={() => { deleteTx(tx.id); setOpen(null); }}>
+                          Delete this entry
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+function MonthGrid({ anchor, perDay, onPick }) {
+  const weeks = useMemo(() => monthGrid(anchor), [anchor]);
+  const today = isoDay(new Date());
+  const max = useMemo(() => {
+    let m = 0;
+    weeks.flat().forEach((c) => {
+      const v = perDay[isoDay(c.date)]?.out || 0;
+      if (v > m) m = v;
+    });
+    return m || 1;
+  }, [weeks, perDay]);
+
+  return (
+    <div className="calendar">
+      <div className="calhead">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={i}>{d}</span>)}
+      </div>
+      {weeks.map((w, wi) => (
+        <div className="calrow" key={wi}>
+          {w.map((c, ci) => {
+            const iso = isoDay(c.date);
+            const d = perDay[iso];
+            const intensity = d?.out ? 0.18 + (d.out / max) * 0.82 : 0;
+            return (
+              <button
+                key={ci}
+                className={'cell' + (c.outside ? ' outside' : '') + (iso === today ? ' today' : '')}
+                onClick={() => onPick(c.date)}
+                style={{ animationDelay: (wi * 7 + ci) * 8 + 'ms' }}
+              >
+                <span className="cnum">{c.date.getDate()}</span>
+                {intensity > 0 && (
+                  <span className="cdot" style={{ opacity: intensity }} />
+                )}
+                {d?.in > 0 && !d?.out && <span className="cdot cin" />}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WeekRow({ from, perDay, onPick, anchor }) {
+  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(from);
+    d.setDate(from.getDate() + i);
+    return d;
+  }), [from]);
+  const today = isoDay(new Date());
+  const picked = isoDay(anchor);
+
+  return (
+    <div className="weekstrip">
+      {days.map((d, i) => {
+        const iso = isoDay(d);
+        const rec = perDay[iso];
+        return (
+          <button
+            key={iso}
+            className={'day' + (iso === today ? ' today' : '') + (iso === picked ? ' picked' : '')}
+            style={{ animationDelay: i * 40 + 'ms' }}
+            onClick={() => onPick(d)}
+          >
+            <span className="dow">{d.toLocaleDateString('en-IN', { weekday: 'short' })}</span>
+            <span className="num">{d.getDate()}</span>
+            {rec ? <span className="tick" /> : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

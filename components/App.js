@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import HomeView from './HomeView';
+import EntriesView from './EntriesView';
 import InsightsView from './InsightsView';
 import SettingsView from './SettingsView';
 import AddSheet from './AddSheet';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Gear, Plus } from './Icons';
+import { Home, Chart, Gear, Plus, Calendar } from './Icons';
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
@@ -43,6 +44,7 @@ export default function App() {
     <div className="shell">
       <div key={tab} className="viewfade">
         {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
+        {tab === 'entries' && <EntriesView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
       </div>
@@ -50,6 +52,9 @@ export default function App() {
       <nav className="nav">
         <button className={'navbtn' + (tab === 'home' ? ' on' : '')} onClick={() => setTab('home')}>
           <Home /> Home
+        </button>
+        <button className={'navbtn' + (tab === 'entries' ? ' on' : '')} onClick={() => setTab('entries')}>
+          <Calendar /> Entries
         </button>
         <button className={'navbtn' + (tab === 'insights' ? ' on' : '')} onClick={() => setTab('insights')}>
           <Chart /> Patterns
