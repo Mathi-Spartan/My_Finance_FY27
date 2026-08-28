@@ -91,47 +91,50 @@ export default function EntriesView({ onEdit }) {
         </div>
       </div>
 
-      <div className="seg modeseg">
-        {MODES.map(([id, label]) => (
-          <button key={id} className={mode === id ? 'on' : ''} onClick={() => setMode(id)}>{label}</button>
-        ))}
-      </div>
-
       {searching && (
-        <div className="field" style={{ marginTop: 12 }}>
+        <div className="field" style={{ marginBottom: 10 }}>
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search entries" />
         </div>
       )}
 
-      <div className="periodbar">
-        <button className="icobtn" onClick={() => step(-1)} aria-label="Previous">
-          <Back width="15" height="15" />
-        </button>
-        <div className="periodtitle">
-          <span>{title}</span>
-          {!isThisPeriod && (
-            <button className="jump" onClick={() => setAnchor(new Date())}>Back to today</button>
-          )}
+      {/* period control: scale on the left, stepper on the right */}
+      <div className="toolbar">
+        <div className="scaleseg">
+          {MODES.map(([id, label]) => (
+            <button key={id} className={mode === id ? 'on' : ''} onClick={() => setMode(id)}>{label}</button>
+          ))}
         </div>
-        <button className="icobtn" onClick={() => step(1)} aria-label="Next">
-          <Back width="15" height="15" style={{ transform: 'rotate(180deg)' }} />
-        </button>
+        <div className="stepper">
+          <button onClick={() => step(-1)} aria-label="Previous"><Back width="14" height="14" /></button>
+          <button onClick={() => step(1)} aria-label="Next">
+            <Back width="14" height="14" style={{ transform: 'rotate(180deg)' }} />
+          </button>
+        </div>
       </div>
 
-      <div className="periodsums">
-        <div className="ps">
-          <span className="k">In</span>
-          <span className="v in">+{money(sums.in)}</span>
+      {/* the period itself, with its numbers on one surface */}
+      <div className="periodcard">
+        <div className="pctop">
+          <div className="pctitle">
+            <b>{title}</b>
+            {!isThisPeriod && <button className="jump" onClick={() => setAnchor(new Date())}>Today</button>}
+          </div>
+          <div className="pcnet">
+            <span className={sums.net >= 0 ? 'up' : 'down'}>
+              {sums.net < 0 ? '−' : '+'}{money(sums.net)}
+            </span>
+            <em>{sums.count} {sums.count === 1 ? 'entry' : 'entries'}</em>
+          </div>
         </div>
-        <div className="ps">
-          <span className="k">Out</span>
-          <span className="v out">−{money(sums.out)}</span>
+
+        <div className="splitbar">
+          <span className="sp in" style={{ flexGrow: Math.max(sums.in, 0.0001) }} />
+          <span className="sp out" style={{ flexGrow: Math.max(sums.out, 0.0001) }} />
         </div>
-        <div className="ps">
-          <span className="k">Net</span>
-          <span className={'v ' + (sums.net >= 0 ? 'in' : 'out')}>
-            {sums.net < 0 ? '−' : '+'}{money(sums.net)}
-          </span>
+
+        <div className="pcflow">
+          <span className="pf in"><i />In {money(sums.in)}</span>
+          <span className="pf out"><i />Out {money(sums.out)}</span>
         </div>
       </div>
 
@@ -151,6 +154,7 @@ export default function EntriesView({ onEdit }) {
         </div>
       ) : (
         groups.map(([day, list]) => {
+          const dayPeak = Math.max(...list.map((t) => Number(t.amount) || 0), 1);
           const t = rangeTotals(list);
           return (
             <div key={day}>
@@ -167,9 +171,10 @@ export default function EntriesView({ onEdit }) {
                 return (
                   <div key={tx.id} className={'rowwrap' + (openId === tx.id ? ' open' : '')}>
                     <button
-                      className={'row compact' + (openId === tx.id ? ' open' : '')}
+                      className={'row compact ' + (isIn ? 'r-in' : 'r-out') + (openId === tx.id ? ' open' : '')}
                       onClick={() => setOpenId(openId === tx.id ? null : tx.id)}
                     >
+                      <span className="rowsize" style={{ width: ((Number(tx.amount) || 0) / dayPeak) * 100 + '%' }} />
                       <span className="av" style={{
                         background: isIn ? 'var(--in-soft)' : `var(--${c}-soft)`,
                         color: isIn ? 'var(--in)' : `var(--${c})`,
