@@ -402,3 +402,26 @@ button{cursor:pointer}
 /* flat-line runway when there's nothing to draw */
 .bars.idle{opacity:.45}
 .bars.idle .bar{animation:none;height:6px !important}
+
+/* --- corrections after reviewing the rendered desktop layout --- */
+.step .t, .step .s{display:block}
+.step > span:last-child{min-width:0}
+
+@media (min-width:1024px){
+  /* accounts belong in a grid on desktop, not a scrolling strip that clips */
+  .rail{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    overflow:visible;padding:0;
+  }
+  .acct{min-width:0;padding:14px 16px}
+  .acct .bal{font-size:18px}
+
+  /* give the hero room to breathe */
+  .hero{padding:26px 26px 22px}
+  .bignum{font-size:56px}
+  .bars{height:76px}
+  .runway{margin-top:22px}
+
+  .startcard{padding:30px}
+  .sechead{margin-top:6px}
+}
