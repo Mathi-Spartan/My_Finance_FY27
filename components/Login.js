@@ -14,38 +14,50 @@ export default function Login() {
     if (!password) { setMsg({ t: 'err', m: 'Enter your password.' }); return; }
     setBusy(true);
     setMsg(null);
-    // Never leave the button spinning with nothing to read. If it does stall,
-    // work out whether Supabase is reachable at all so the message is useful.
-    const stall = setTimeout(async () => {
-      setBusy(false);
-      let reachable = false;
-      try {
-        const ctl = new AbortController();
-        const kill = setTimeout(() => ctl.abort(), 6000);
-        const res = await fetch(
-          process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/',
-          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY }, cache: 'no-store', signal: ctl.signal }
-        );
-        clearTimeout(kill);
-        reachable = res.status > 0;
-      } catch {
-        reachable = false;
+
+    const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const ctl = new AbortController();
+    const kill = setTimeout(() => ctl.abort(), 15000);
+
+    try {
+      // Ask for the token directly rather than through the client library,
+      // so a stall here is ours to time out and report.
+      const res = await fetch(base + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { apikey: key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        cache: 'no-store',
+        signal: ctl.signal,
+      });
+      clearTimeout(kill);
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.access_token) {
+        setMsg({
+          t: 'err',
+          m: data.error_description || data.msg || data.message || `Sign in failed (${res.status}).`,
+        });
+        setBusy(false);
+        return;
       }
+
+      // Hand the tokens to the client so it persists them and wakes the app.
+      const { error } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+      if (error) { setMsg({ t: 'err', m: error.message }); setBusy(false); }
+      // On success the auth listener swaps this screen out.
+    } catch (e) {
+      clearTimeout(kill);
+      setBusy(false);
       setMsg({
         t: 'err',
-        m: reachable
-          ? 'The database is reachable but sign in stalled. Try once more.'
-          : "Can't reach the database from this network. A firewall, VPN, proxy or browser extension is blocking it — try mobile data, or a different network.",
+        m: e?.name === 'AbortError'
+          ? 'Sign in timed out after 15 seconds. Try again, or use the email link.'
+          : `Sign in failed: ${e?.message || 'unknown error'}`,
       });
-    }, 12000);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMsg({ t: 'err', m: error.message });
-    } catch (e) {
-      setMsg({ t: 'err', m: e?.message || 'Sign in failed.' });
-    } finally {
-      clearTimeout(stall);
-      setBusy(false);
     }
   };
 
