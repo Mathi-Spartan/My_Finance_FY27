@@ -276,3 +276,129 @@ button{cursor:pointer}
 
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ============================================================
+   DESKTOP SHELL — sidebar, not a stretched phone
+   ============================================================ */
+.layout{display:flex;min-height:100dvh}
+.side{display:none}
+
+@media (min-width:1024px){
+  .layout{gap:0}
+  .side{
+    display:flex;flex-direction:column;gap:6px;
+    width:264px;flex:0 0 264px;padding:26px 18px;
+    border-right:1px solid var(--line);
+    background:
+      radial-gradient(120% 60% at 0% 0%, color-mix(in srgb,var(--brand) 9%, transparent) 0%, transparent 60%),
+      var(--card);
+    position:sticky;top:0;height:100dvh;
+  }
+  .shell{max-width:none;margin:0;flex:1;min-width:0}
+  .body{
+    padding:34px 40px 60px;
+    max-width:1180px;margin:0 auto;
+    display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+    gap:22px;align-items:start;
+  }
+  .body > .full{grid-column:1 / -1}
+  .body > .apphead{grid-column:1 / -1;padding-top:0}
+  .nav{display:none}
+  .wide{display:contents}
+}
+@media (min-width:1500px){
+  .body{max-width:1320px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+}
+
+.sidebrand{display:flex;align-items:baseline;gap:8px;padding:4px 10px 22px}
+.sidebrand b{font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:800;letter-spacing:-.04em}
+.sidebrand span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase}
+
+.sidebtn{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:0;background:transparent;color:var(--ink-2);
+  font-size:14px;font-weight:600;padding:11px 12px;border-radius:13px;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+  position:relative;
+}
+.sidebtn svg{width:18px;height:18px;flex:0 0 auto}
+.sidebtn:hover{background:var(--card-2);color:var(--ink);transform:translateX(2px)}
+.sidebtn.on{background:var(--ink);color:var(--paper)}
+.sidebtn.on:hover{transform:none}
+.sideadd{
+  margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  border:0;background:var(--brand);color:#fff;font-size:14.5px;font-weight:700;
+  padding:14px;border-radius:15px;box-shadow:0 10px 24px -10px var(--brand);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.sideadd:hover{transform:translateY(-2px);box-shadow:0 16px 30px -12px var(--brand)}
+.sideadd:active{transform:scale(.97)}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.sidemeta{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);
+  letter-spacing:.06em;padding:0 12px 4px;
+}
+.sidecash{
+  background:var(--card-2);border:1px solid var(--line-2);border-radius:16px;padding:14px;
+}
+.sidecash .k{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.sidecash .v{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:500;margin-top:5px;letter-spacing:-.03em}
+
+/* ============================================================
+   MOTION — entrance, count-up, hover
+   ============================================================ */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.rise{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.04s} .d2{animation-delay:.09s} .d3{animation-delay:.15s} .d4{animation-delay:.21s}
+.viewfade{animation:fadein .32s ease both}
+
+.hero{position:relative;overflow:hidden}
+.hero::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(90% 130% at 100% 0%, color-mix(in srgb,var(--brand) 10%, transparent) 0%, transparent 55%);
+}
+.hero > *{position:relative;z-index:1}
+.card,.row,.acct{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+@media (hover:hover){
+  .card:hover{transform:translateY(-2px)}
+  .acct:hover{transform:translateY(-3px);border-color:var(--brand)}
+}
+
+/* ============================================================
+   EMPTY / ONBOARDING — designed, not an apology
+   ============================================================ */
+.startcard{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.startcard::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 120% at 0% 0%, color-mix(in srgb,var(--brand) 8%, transparent), transparent 60%);
+}
+.startcard > *{position:relative}
+.startcard h3{
+  font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:700;
+  letter-spacing:-.03em;margin-bottom:6px;
+}
+.startcard p.lede{font-size:14px;color:var(--ink-2);line-height:1.55;margin-bottom:20px}
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{
+  display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;
+  background:var(--card-2);border:1px solid var(--line-2);border-radius:16px;padding:14px 16px;
+  transition:border-color .18s ease,transform .18s ease;
+}
+.step:hover{border-color:var(--brand);transform:translateX(3px)}
+.step .n{
+  width:26px;height:26px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  background:var(--brand-soft);color:var(--brand);
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+}
+.step .t{font-size:14px;font-weight:650;letter-spacing:-.01em}
+.step .s{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.step.done .n{background:var(--in-soft);color:var(--in)}
+.step.done .t{color:var(--ink-3);text-decoration:line-through}
+
+/* flat-line runway when there's nothing to draw */
+.bars.idle{opacity:.45}
+.bars.idle .bar{animation:none;height:6px !important}

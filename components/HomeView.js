@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search, Trash } from './Icons';
 import {
@@ -7,7 +7,30 @@ import {
   accountBalances, dayLabel, timeLabel, isoDay, initials, colorOf,
 } from '@/lib/finance';
 
-export default function HomeView({ context, setContext, theme, toggleTheme }) {
+
+// Counts a number up on mount so the hero lands rather than just appears.
+function useCountUp(target, ms = 800) {
+  const [v, setV] = useState(0);
+  const from = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setV(target); return; }
+    const start = performance.now();
+    const a = from.current;
+    let raf;
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / ms);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setV(a + (target - a) * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else from.current = target;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return v;
+}
+
+export default function HomeView({ context, setContext, goTo, onAdd }) {
   const { accounts, categories, txs, recurring, settings, deleteTx } = useStore();
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
@@ -47,8 +70,11 @@ export default function HomeView({ context, setContext, theme, toggleTheme }) {
     return Object.entries(g);
   }, [visible]);
 
-  const whole = Math.floor(Math.abs(sts.perDay));
-  const cents = String(Math.round((Math.abs(sts.perDay) % 1) * 100)).padStart(2, '0');
+  const shown = useCountUp(Math.abs(sts.perDay));
+  const whole = Math.floor(shown);
+  const cents = String(Math.round((shown % 1) * 100)).padStart(2, '0');
+  const hasData = txs.length > 0;
+  const hasTargets = Number(settings?.monthly_income) > 0 || Number(settings?.savings_target) > 0;
 
   return (
     <div className="body">
@@ -69,7 +95,7 @@ export default function HomeView({ context, setContext, theme, toggleTheme }) {
         </div>
       )}
 
-      <div className="hero">
+      <div className="hero rise d1">
         <div className="eyebrow">
           <span className={'dot' + (sts.perDay < 0 ? ' warn' : '')} />
           Safe to spend today
@@ -89,7 +115,7 @@ export default function HomeView({ context, setContext, theme, toggleTheme }) {
           <div className="runlabels">
             <span>1</span><span>TODAY · {today}</span><span>{dim}</span>
           </div>
-          <div className="bars">
+          <div className={'bars' + (hasData ? '' : ' idle')}>
             {spendByDay.map((v, i) => {
               const h = Math.max(6, Math.min(100, (v / Math.max(avg * 2, 1)) * 100));
               const cls = i + 1 === today ? 'today' : i + 1 > today ? '' : v > avg * 1.6 ? 'over' : 'spent';
@@ -111,7 +137,7 @@ export default function HomeView({ context, setContext, theme, toggleTheme }) {
         </div>
       </div>
 
-      <div className="rail">
+      <div className="rail rise d2">
         {accounts.filter((a) => !a.archived).map((a) => (
           <div key={a.id} className="acct">
             <div className="nm">{a.name}</div>
@@ -123,13 +149,39 @@ export default function HomeView({ context, setContext, theme, toggleTheme }) {
       </div>
 
       {groups.length === 0 ? (
-        <div className="empty">
-          <b>Nothing filed yet</b>
-          Tap Add and put in the last thing you paid for. Two taps, four seconds — that's the whole habit.
+        <div className="startcard rise d3 full">
+          <h3>Three things and it starts working</h3>
+          <p className="lede">
+            Safe-to-spend, drift and runway all read from your own numbers. Give it these
+            and the screen above stops showing zero.
+          </p>
+          <div className="steps">
+            <button className={'step' + (hasTargets ? ' done' : '')} onClick={() => goTo && goTo('settings')}>
+              <span className="n">1</span>
+              <span>
+                <span className="t">Set your income and what you want to keep</span>
+                <span className="s">These two numbers are what safe-to-spend divides up. Without them it has nothing to work from.</span>
+              </span>
+            </button>
+            <button className="step" onClick={() => goTo && goTo('settings')}>
+              <span className="n">2</span>
+              <span>
+                <span className="t">Put today's balance on each account</span>
+                <span className="s">HDFC, UPI, card, cash. Enter what they actually hold right now and entries take it from there.</span>
+              </span>
+            </button>
+            <button className="step" onClick={() => onAdd && onAdd()}>
+              <span className="n">3</span>
+              <span>
+                <span className="t">File the last thing you paid for</span>
+                <span className="s">Amount, who it was for, done. Four seconds. That single habit is the whole point of this.</span>
+              </span>
+            </button>
+          </div>
         </div>
       ) : groups.map(([day, list]) => (
         <div key={day}>
-          <div className="sechead">
+          <div className="sechead full">
             <h4>{dayLabel(day)}</h4>
             <span>{list.length} {list.length === 1 ? 'ENTRY' : 'ENTRIES'}</span>
           </div>

@@ -51,7 +51,7 @@ export default function InsightsView({ context }) {
 
       <div className="wide">
         <div>
-          <div className="card">
+          <div className="card rise d1">
             <div className="cardhead"><h4>Category drift</h4><span>vs your 3-mo avg</span></div>
             {drift.slice(0, 7).map((d) => {
               const w = Math.max(4, (d.spent / maxDrift) * 100);

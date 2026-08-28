@@ -57,7 +57,7 @@ export default function UpcomingView({ context }) {
         </div>
       )}
 
-      <div className="card">
+      <div className="card rise d2">
         <div className="cardhead">
           <h4>Next 14 days</h4>
           <span>{rupees(committed, { decimals: false })} / mo committed</span>
