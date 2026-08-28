@@ -6,7 +6,7 @@ import {
   rupees, frequentMerchants, isoDay, totals,
 } from '@/lib/finance';
 
-export default function AddSheet({ onClose }) {
+export default function AddSheet({ onClose, presetAccount }) {
   const { accounts, categories, txs, addTx, say } = useStore();
 
   const [dir, setDir] = useState('out');
@@ -14,7 +14,7 @@ export default function AddSheet({ onClose }) {
   const [merchant, setMerchant] = useState('');
   const [catId, setCatId] = useState(null);
   const [autoCat, setAutoCat] = useState(false);
-  const [acctId, setAcctId] = useState(accounts[0]?.id || null);
+  const [acctId, setAcctId] = useState(presetAccount || accounts[0]?.id || null);
   const [toAcctId, setToAcctId] = useState(accounts[1]?.id || null);
   const [date, setDate] = useState(isoDay(new Date()));
   const [picker, setPicker] = useState(null); // 'cat' | 'acct' | 'to' | 'date'
@@ -118,7 +118,7 @@ export default function AddSheet({ onClose }) {
               <input
                 value={merchant}
                 onChange={(e) => setMerchant(e.target.value)}
-                placeholder={dir === 'in' ? 'Who paid you?' : dir === 'transfer' ? 'Note (optional)' : "Who's it for?"}
+                placeholder={dir === 'in' ? 'Where did it come from?' : dir === 'transfer' ? 'Note (optional)' : 'What was it for?'}
                 enterKeyHint="done"
               />
             </div>
@@ -193,8 +193,32 @@ function Picker({ kind, cats, accounts, date, onPick, onBack }) {
         <div style={{ width: 36 }} />
       </div>
       {kind === 'date' ? (
-        <div className="field">
-          <input type="date" defaultValue={date} onChange={(e) => onPick(e.target.value)} />
+        <div>
+          <div className="field">
+            <input
+              type="date"
+              autoFocus
+              defaultValue={date}
+              min={`${new Date().getFullYear() - 20}-01-01`}
+              max={`${new Date().getFullYear() + 20}-12-31`}
+              onChange={(e) => e.target.value && onPick(e.target.value)}
+            />
+          </div>
+          <div className="quickdates">
+            {[
+              ['Today', 0], ['Yesterday', -1], ['2 days ago', -2],
+              ['A week ago', -7], ['A month ago', -30],
+            ].map(([label, off]) => {
+              const d = new Date();
+              d.setDate(d.getDate() + off);
+              const iso = d.toISOString().slice(0, 10);
+              return (
+                <button key={label} className="chip small" onClick={() => onPick(iso)}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="picker">
@@ -205,7 +229,7 @@ function Picker({ kind, cats, accounts, date, onPick, onBack }) {
                 {kind === 'cat' && Number(x.budget) > 0 && (
                   <span className="sub">Budget {rupees(x.budget, { decimals: false })}/mo</span>
                 )}
-                {kind !== 'cat' && <span className="sub">{x.kind}</span>}
+                {kind !== 'cat' && <span className="sub">{x.kind === 'card' ? 'Credit card' : 'Bank account'}</span>}
               </span>
             </button>
           ))}

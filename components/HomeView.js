@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Search } from './Icons';
 import {
-  rupees, totals, totalCash, accountBalances,
+  rupees, totals, totalCash, accountBalances, accountFlow, splitName,
   dayLabel, timeLabel, isoDay, initials, colorOf,
 } from '@/lib/finance';
 
@@ -28,7 +28,7 @@ function useCountUp(target, ms = 750) {
   return v;
 }
 
-export default function HomeView() {
+export default function HomeView({ onAddTo }) {
   const { accounts, categories, txs, deleteTx } = useStore();
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
@@ -38,6 +38,7 @@ export default function HomeView() {
   const month = useMemo(() => totals(txs), [txs]);
   const balance = useMemo(() => totalCash(accounts, txs), [accounts, txs]);
   const balances = useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
+  const flow = useMemo(() => accountFlow(txs), [txs]);
   const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
   const acctName = useMemo(() => Object.fromEntries(accounts.map((a) => [a.id, a.name])), [accounts]);
 
@@ -154,15 +155,34 @@ export default function HomeView() {
         ))}
       </div>
 
-      <div className="rail">
-        {accounts.filter((a) => !a.archived).map((a) => (
-          <div key={a.id} className="acct">
-            <div className="nm">{a.name}</div>
-            <div className="bal" style={{ color: (balances[a.id] || 0) < 0 ? 'var(--out)' : undefined }}>
-              {rupees(balances[a.id] || 0, { decimals: false })}
-            </div>
-          </div>
-        ))}
+      <div className="accounts">
+        {accounts.filter((a) => !a.archived).map((a, i) => {
+          const nm = splitName(a.name);
+          const f = flow[a.id] || { in: 0, out: 0 };
+          return (
+            <button
+              key={a.id}
+              className="acctcard"
+              style={{ animationDelay: i * 50 + 'ms' }}
+              onClick={() => onAddTo && onAddTo(a.id)}
+            >
+              <span className="ahead">
+                <span className="atitle">
+                  {nm.title}
+                  {nm.sub && <small>{nm.sub}</small>}
+                </span>
+                <span className="abal" style={{ color: (balances[a.id] || 0) < 0 ? 'var(--out)' : undefined }}>
+                  {rupees(balances[a.id] || 0, { decimals: false })}
+                </span>
+              </span>
+              <span className="aflow">
+                <span className="af in">↓ {rupees(f.in, { decimals: false })}</span>
+                <span className="af out">↑ {rupees(f.out, { decimals: false })}</span>
+                <span className="aplus">+ Add</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {pickedDay && (

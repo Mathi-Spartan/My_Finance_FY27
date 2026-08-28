@@ -13,6 +13,7 @@ export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
   const [tab, setTab] = useState('home');
   const [adding, setAdding] = useState(false);
+  const [presetAccount, setPresetAccount] = useState(null);
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
 
@@ -41,7 +42,7 @@ export default function App() {
   return (
     <div className="shell">
       <div key={tab} className="viewfade">
-        {tab === 'home' && <HomeView />}
+        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
       </div>
@@ -56,12 +57,12 @@ export default function App() {
         <button className={'navbtn' + (tab === 'settings' ? ' on' : '')} onClick={() => setTab('settings')}>
           <Gear /> Settings
         </button>
-        <button className="addbtn" onClick={() => setAdding(true)}>
+        <button className="addbtn" onClick={() => { setPresetAccount(null); setAdding(true); }}>
           <Plus width="16" height="16" /> Add
         </button>
       </nav>
 
-      {adding && <AddSheet onClose={() => setAdding(false)} />}
+      {adding && <AddSheet presetAccount={presetAccount} onClose={() => { setAdding(false); setPresetAccount(null); }} />}
     </div>
   );
 }
