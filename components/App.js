@@ -8,9 +8,10 @@ import SettingsView from './SettingsView';
 import AddSheet from './AddSheet';
 import EditSheet from './EditSheet';
 import CalculatorView from './CalculatorView';
+import PaariView from './PaariView';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Gear, Plus, Calendar, Calc } from './Icons';
+import { Home, Chart, Gear, Plus, Calendar, Calc, Heart } from './Icons';
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
@@ -49,6 +50,7 @@ export default function App() {
       <div key={tab} className="viewfade">
         {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
+        {tab === 'paari' && <PaariView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
@@ -62,6 +64,9 @@ export default function App() {
         </button>
         <button className={'navbtn' + (tab === 'entries' ? ' on' : '')} onClick={() => setTab('entries')}>
           <Calendar /> Entries
+        </button>
+        <button className={'navbtn' + (tab === 'paari' ? ' on' : '')} onClick={() => setTab('paari')}>
+          <Heart /> Paari
         </button>
         <button className={'navbtn' + (tab === 'insights' ? ' on' : '')} onClick={() => setTab('insights')}>
           <Chart /> Patterns
