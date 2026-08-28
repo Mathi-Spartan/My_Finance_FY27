@@ -1501,3 +1501,103 @@ button{cursor:pointer}
   72% {opacity:.8}
   100%{opacity:0;   transform:translate(var(--sway),-148px) rotate(var(--spin)) scale(1.06)}
 }
+
+/* ============================================================
+   CALCULATOR v2 — expression on top, live answer beneath
+   ============================================================ */
+.calcdisplay.v2{
+  height:auto;min-height:132px;padding:14px 16px 10px;
+  display:flex;flex-direction:column;gap:2px;
+  touch-action:pan-y;
+}
+.calcdisplay.v2.solved{animation:solved .5s cubic-bezier(.2,1.2,.4,1)}
+@keyframes solved{
+  0%{transform:scale(1)} 35%{transform:scale(1.014)} 100%{transform:scale(1)}
+}
+
+.exprline{
+  font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;
+  color:rgba(255,255,255,.9);letter-spacing:-.01em;
+  white-space:nowrap;overflow-x:auto;scrollbar-width:none;
+  min-height:24px;display:flex;align-items:center;
+}
+.exprline::-webkit-scrollbar{display:none}
+.exprline .ph{color:rgba(255,255,255,.5);font-size:14px}
+.caret{
+  display:inline-block;width:2px;height:17px;margin-left:3px;flex:0 0 auto;
+  background:#fff;border-radius:1px;animation:blink 1.1s steps(1) infinite;
+}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+.resultline{
+  display:flex;align-items:baseline;justify-content:flex-end;gap:8px;
+  font-family:'IBM Plex Mono',monospace;font-weight:500;color:#fff;
+  letter-spacing:-.04em;margin-top:2px;
+}
+.resultline .eq{font-size:.42em;opacity:.6}
+.resultline .rv{animation:rollIn .3s cubic-bezier(.2,1.2,.4,1)}
+@keyframes rollIn{
+  0%{opacity:.25;transform:translateY(7px)}
+  100%{opacity:1;transform:none}
+}
+.resultline.lg{font-size:42px}
+.resultline.md{font-size:33px}
+.resultline.sm{font-size:25px}
+.resultline.bad .rv{opacity:.45;font-size:.6em}
+
+.dispacts{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.dispacts .mini{padding:5px 10px;font-size:11px}
+.dispacts .mini:disabled{opacity:.4}
+
+/* quick maths */
+.quickrail{
+  display:flex;gap:7px;overflow-x:auto;padding:12px 0 4px;
+  scrollbar-width:none;flex:0 0 auto;
+}
+.quickrail::-webkit-scrollbar{display:none}
+.quickrail::after{content:'';flex:0 0 4px}
+.qchip{
+  flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+  font-size:12px;font-weight:700;padding:8px 13px;border-radius:999px;
+  transition:transform .14s ease,background .18s ease,color .18s ease,border-color .18s ease;
+}
+.qchip:active{transform:scale(.94);background:var(--brand-soft);color:var(--brand);border-color:var(--brand)}
+.qchip:disabled{opacity:.4}
+
+/* basic / more */
+.padswitch{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:3px;margin:10px 0 10px;flex:0 0 auto;
+}
+.padswitch button{
+  border:0;background:transparent;color:var(--ink-2);
+  font-size:12.5px;font-weight:700;padding:8px;border-radius:999px;
+  transition:background .22s cubic-bezier(.2,.8,.2,1),color .2s ease;
+}
+.padswitch button.on{
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  box-shadow:0 6px 14px -7px var(--g1);
+}
+
+/* keypad with ripples */
+.calcpad.v2{gap:9px}
+.calcpad.v2 .ckey{
+  position:relative;overflow:hidden;
+  animation:keyIn .32s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes keyIn{from{opacity:0;transform:translateY(9px) scale(.94)}to{opacity:1;transform:none}}
+.klabel{position:relative;z-index:1}
+.ripple{
+  position:absolute;width:12px;height:12px;border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);
+  background:currentColor;opacity:.28;pointer-events:none;
+  animation:rippleOut .5s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes rippleOut{to{transform:translate(-50%,-50%) scale(14);opacity:0}}
+.ckey.eq .ripple,.ckey.op .ripple{background:#fff;opacity:.35}
+
+@media (prefers-reduced-motion:reduce){
+  .ripple,.caret,.resultline .rv,.calcpad.v2 .ckey{animation:none}
+  .calcdisplay.v2.solved{animation:none}
+}

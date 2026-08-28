@@ -1,191 +1,216 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Trash } from './Icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Trash, Close, Check } from './Icons';
 import Portal from './Portal';
+import { evaluate, prettyExpr, prettyNumber, canAppend, autoClose } from '@/lib/calc';
 
-const MAX_DIGITS = 12;
-
-// Trim floating point noise: 0.1 + 0.2 should read 0.3, not 0.30000000000000004.
-const clean = (n) => {
-  if (!isFinite(n)) return 'Error';
-  const r = Math.round(n * 1e10) / 1e10;
-  return String(r);
+const PADS = {
+  basic: [
+    ['AC', 'fn'], ['(', 'fn'], [')', 'fn'], ['÷', 'op'],
+    ['7', ''],    ['8', ''],   ['9', ''],   ['×', 'op'],
+    ['4', ''],    ['5', ''],   ['6', ''],   ['−', 'op'],
+    ['1', ''],    ['2', ''],   ['3', ''],   ['+', 'op'],
+    ['%', 'fn'],  ['0', ''],   ['.', ''],   ['=', 'eq'],
+  ],
+  more: [
+    ['√', 'fn'], ['^', 'fn'], ['1/x', 'fn'], ['÷', 'op'],
+    ['7', ''],   ['8', ''],   ['9', ''],     ['×', 'op'],
+    ['4', ''],   ['5', ''],   ['6', ''],     ['−', 'op'],
+    ['1', ''],   ['2', ''],   ['3', ''],     ['+', 'op'],
+    ['±', 'fn'], ['0', ''],   ['.', ''],     ['=', 'eq'],
+  ],
 };
 
-const group = (s, maxDec = 6) => {
-  if (s === 'Error') return s;
-  const neg = s.startsWith('-');
-  const body = neg ? s.slice(1) : s;
-  let [w, d] = body.split('.');
-  // 65.6666666667 reads as noise; six places is plenty and still exact for money
-  if (d && d.length > maxDec) {
-    const rounded = Number(body).toFixed(maxDec).replace(/0+$/, '').replace(/\.$/, '');
-    [w, d] = rounded.split('.');
-  }
-  const gw = Number(w).toLocaleString('en-IN');
-  return (neg ? '−' : '') + (d === undefined || d === '' ? gw : `${gw}.${d}`);
-};
-
-const apply = (a, b, op) => {
-  if (op === '+') return a + b;
-  if (op === '−') return a - b;
-  if (op === '×') return a * b;
-  if (op === '÷') return b === 0 ? NaN : a / b;
-  return b;
-};
+// Quick answers that actually come up when you're logging money.
+const QUICK = [
+  { label: '+5% GST', apply: (e) => `(${e})×1.05` },
+  { label: '+12%', apply: (e) => `(${e})×1.12` },
+  { label: '+18%', apply: (e) => `(${e})×1.18` },
+  { label: '÷2', apply: (e) => `(${e})÷2` },
+  { label: '÷3', apply: (e) => `(${e})÷3` },
+  { label: '×12', apply: (e) => `(${e})×12` },
+];
 
 export default function CalculatorView({ onUse }) {
-  const [display, setDisplay] = useState('0');
-  const [acc, setAcc] = useState(null);
-  const [op, setOp] = useState(null);
-  const [fresh, setFresh] = useState(true);
-  const [mem, setMem] = useState(0);
+  const [expr, setExpr] = useState('');
+  const [pad, setPad] = useState('basic');
   const [history, setHistory] = useState([]);
-  const [flash, setFlash] = useState(null);
-  const [copied, setCopied] = useState(false);
   const [showTape, setShowTape] = useState(false);
-  const tape = useRef(null);
+  const [mem, setMem] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [justSolved, setJustSolved] = useState(false);
+  const [ripples, setRipples] = useState([]);
+  const exprRef = useRef(null);
 
-  const value = Number(display) || 0;
-
-  const digit = useCallback((d) => {
-    setDisplay((cur) => {
-      if (fresh) return d === '.' ? '0.' : d;
-      if (d === '.') return cur.includes('.') ? cur : cur + '.';
-      if (cur === '0') return d;
-      if (cur.replace(/[-.]/g, '').length >= MAX_DIGITS) return cur;
-      return cur + d;
-    });
-    setFresh(false);
-  }, [fresh]);
-
-  const chooseOp = useCallback((next) => {
-    const v = Number(display) || 0;
-    if (acc !== null && op && !fresh) {
-      const r = apply(acc, v, op);
-      setAcc(r);
-      setDisplay(clean(r));
-    } else {
-      setAcc(v);
+  // The answer, recomputed on every keystroke — this is the whole point.
+  const live = useMemo(() => {
+    if (!expr) return { ok: true, value: 0, empty: true };
+    try {
+      return { ok: true, value: evaluate(autoClose(expr)) };
+    } catch (e) {
+      return { ok: false, reason: e.message };
     }
-    setOp(next);
-    setFresh(true);
-  }, [display, acc, op, fresh]);
+  }, [expr]);
 
-  const equals = useCallback(() => {
-    if (acc === null || !op) return;
-    const v = Number(display) || 0;
-    const r = apply(acc, v, op);
-    const line = `${clean(acc)} ${op} ${clean(v)}`;
-    setHistory((h) => [{ line, result: clean(r), id: Date.now() }, ...h].slice(0, 30));
-    setDisplay(clean(r));
-    setAcc(null);
-    setOp(null);
-    setFresh(true);
-  }, [acc, op, display]);
+  // keep the long expression scrolled to where you're typing
+  useEffect(() => {
+    if (exprRef.current) exprRef.current.scrollLeft = exprRef.current.scrollWidth;
+  }, [expr]);
 
-  const percent = useCallback(() => {
-    const v = Number(display) || 0;
-    // 200 + 10% means 10% of 200; 200 × 10% just means 0.1
-    const r = (op === '+' || op === '−') && acc !== null ? (acc * v) / 100 : v / 100;
-    setDisplay(clean(r));
-    setFresh(false);
-  }, [display, op, acc]);
-
-  const clearAll = () => { setDisplay('0'); setAcc(null); setOp(null); setFresh(true); };
-  const clearEntry = () => { setDisplay('0'); setFresh(true); };
-  const back = () => setDisplay((c) => (c.length <= 1 || (c.length === 2 && c.startsWith('-')) ? '0' : c.slice(0, -1)));
-  const sign = () => setDisplay((c) => (c.startsWith('-') ? c.slice(1) : c === '0' ? c : '-' + c));
-
-  const press = (key) => {
-    setFlash(key);
-    setTimeout(() => setFlash(null), 140);
-    if (navigator.vibrate) navigator.vibrate(6);
-
-    if (/^[0-9.]$/.test(key)) return digit(key);
-    if (['+', '−', '×', '÷'].includes(key)) return chooseOp(key);
-    if (key === '=') return equals();
-    if (key === '%') return percent();
-    if (key === 'AC') return clearAll();
-    if (key === 'C') return clearEntry();
-    if (key === '⌫') return back();
-    if (key === '±') return sign();
-    if (key === 'M+') return setMem((m) => m + value);
-    if (key === 'M−') return setMem((m) => m - value);
-    if (key === 'MR') { setDisplay(clean(mem)); setFresh(false); return; }
-    if (key === 'MC') return setMem(0);
+  const ripple = (e) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const id = Date.now() + Math.random();
+    setRipples((r) => [...r, {
+      id,
+      x: (e.clientX ?? box.left + box.width / 2) - box.left,
+      y: (e.clientY ?? box.top + box.height / 2) - box.top,
+      key: e.currentTarget.dataset.k,
+    }]);
+    setTimeout(() => setRipples((r) => r.filter((x) => x.id !== id)), 520);
   };
 
-  // physical keyboard, for when you're on a laptop
+  const solve = useCallback(() => {
+    if (!expr || !live.ok) return;
+    const closed = autoClose(expr);
+    const result = prettyNumber(live.value).replace(/,/g, '').replace('−', '-');
+    setHistory((h) => [{ id: Date.now(), expr: closed, result }, ...h].slice(0, 40));
+    setExpr(result);
+    setJustSolved(true);
+    setTimeout(() => setJustSolved(false), 600);
+    if (navigator.vibrate) navigator.vibrate(14);
+  }, [expr, live]);
+
+  const press = useCallback((key) => {
+    if (navigator.vibrate) navigator.vibrate(5);
+
+    if (key === 'AC') { setExpr(''); return; }
+    if (key === '⌫') { setExpr((e) => e.slice(0, -1)); return; }
+    if (key === '=') { solve(); return; }
+    if (key === '1/x') { setExpr((e) => (e ? `1÷(${e})` : '')); return; }
+    if (key === '±') {
+      setExpr((e) => (e.startsWith('−') ? e.slice(1) : e ? `−${e}` : ''));
+      return;
+    }
+    if (key === 'MR') { setExpr((e) => e + String(mem)); return; }
+    if (key === 'M+') { if (live.ok) setMem((m) => m + live.value); return; }
+    if (key === 'M−') { if (live.ok) setMem((m) => m - live.value); return; }
+    if (key === 'MC') { setMem(0); return; }
+
+    setExpr((e) => {
+      // a fresh result gets replaced by a digit, but continued by an operator
+      const base = justSolved && /[0-9.]/.test(key) ? '' : e;
+      const allow = canAppend(base, key);
+      if (allow === 'replace') return base.slice(0, -1) + key;
+      if (!allow) return base;
+      return base + key;
+    });
+    setJustSolved(false);
+  }, [solve, mem, live, justSolved]);
+
+  // physical keyboard
   useEffect(() => {
-    const map = { '*': '×', 'x': '×', '/': '÷', '-': '−', 'Enter': '=', '=': '=', 'Backspace': '⌫', 'Escape': 'AC', '%': '%' };
+    const map = { '*': '×', x: '×', '/': '÷', '-': '−', Enter: '=', '=': '=', Backspace: '⌫', Escape: 'AC' };
     const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey) return;
       const k = map[e.key] || e.key;
-      if (/^[0-9.]$/.test(k) || ['+', '−', '×', '÷', '=', '%', 'AC', '⌫'].includes(k)) {
+      if (/^[0-9.()%^]$/.test(k) || ['×', '÷', '−', '+', '=', '⌫', 'AC'].includes(k)) {
         e.preventDefault();
         press(k);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  });
+  }, [press]);
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(display);
+      await navigator.clipboard.writeText(live.ok ? prettyNumber(live.value).replace(/,/g, '') : '');
       setCopied(true);
-      setTimeout(() => setCopied(false), 1400);
-    } catch { /* clipboard blocked, no harm */ }
+      setTimeout(() => setCopied(false), 1300);
+    } catch { /* clipboard unavailable */ }
   };
 
-  const size = display.length > 12 ? 'sm' : display.length > 8 ? 'md' : 'lg';
+  // swipe left across the display to delete
+  const touch = useRef(null);
+  const onTouchStart = (e) => (touch.current = e.touches[0].clientX);
+  const onTouchEnd = (e) => {
+    if (touch.current === null) return;
+    const dx = e.changedTouches[0].clientX - touch.current;
+    if (dx < -46) press('⌫');
+    touch.current = null;
+  };
 
-  const KEYS = [
-    ['AC', 'fn'], ['⌫', 'fn'], ['%', 'fn'], ['÷', 'op'],
-    ['7', ''],    ['8', ''],   ['9', ''],   ['×', 'op'],
-    ['4', ''],    ['5', ''],   ['6', ''],   ['−', 'op'],
-    ['1', ''],    ['2', ''],   ['3', ''],   ['+', 'op'],
-    ['±', 'fn'],  ['0', ''],   ['.', ''],   ['=', 'eq'],
-  ];
+  const resultText = live.empty ? '0' : live.ok ? prettyNumber(live.value) : '—';
+  const size = resultText.length > 13 ? 'sm' : resultText.length > 9 ? 'md' : 'lg';
 
   return (
     <div className="body calcbody">
       <div className="pagehead calchead">
         <h2>Calculator</h2>
-        {history.length > 0 && (
-          <button className="mini ghosty" onClick={() => setShowTape(true)}>
-            History · {history.length}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {mem !== 0 && <button className="mini ghosty" onClick={() => press('MR')}>M {prettyNumber(mem)}</button>}
+          <button className="mini ghosty" onClick={() => setShowTape(true)} disabled={!history.length}>
+            History{history.length ? ` · ${history.length}` : ''}
           </button>
-        )}
+        </div>
       </div>
 
-      {history.length > 0 ? (
-        <button className="lastline" onClick={() => setShowTape(true)}>
-          <span className="tl">{history[0].line}</span>
-          <span className="tr">{group(history[0].result)}</span>
-          <span className="more">{history.length}</span>
-        </button>
-      ) : (
-        // reserved so the keypad never shifts once the first result lands
-        <div className="lastline empty"><span className="tl">No calculations yet</span></div>
-      )}
+      {/* display: expression on top, live answer underneath */}
+      <div className={'calcdisplay v2' + (justSolved ? ' solved' : '')}
+           onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="exprline" ref={exprRef}>
+          {expr ? prettyExpr(expr) : <span className="ph">Start typing</span>}
+          <span className="caret" />
+        </div>
 
-      <div className="calcdisplay">
-        <div className="calcmeta">
-          {mem !== 0 && <span className="mchip">M {group(clean(mem))}</span>}
-          {acc !== null && op && <span className="pending">{group(clean(acc))} {op}</span>}
+        <div className={'resultline ' + size + (live.ok ? '' : ' bad')}>
+          {!live.empty && live.ok && <span className="eq">=</span>}
+          <span className="rv">{resultText}</span>
+        </div>
+
+        <div className="dispacts">
+          <button className="mini" onClick={() => press('⌫')}>⌫</button>
+          <button className="mini" onClick={() => press('MC')} disabled={mem === 0}>MC</button>
+          <button className="mini" onClick={() => press('M+')}>M+</button>
+          <button className="mini" onClick={() => press('M−')}>M−</button>
           <span className="spacer" />
           <button className="mini" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
-          {onUse && (
-            <button className="mini solid" onClick={() => onUse(Math.abs(value))}>Use as entry</button>
+          {onUse && live.ok && !live.empty && (
+            <button className="mini solid" onClick={() => onUse(Math.abs(live.value))}>Use</button>
           )}
         </div>
-        <div className={'calcvalue ' + size} key={display}>{group(display)}</div>
       </div>
 
-      <div className="memrow">
-        {['MC', 'MR', 'M+', 'M−'].map((k) => (
-          <button key={k} className={'memkey' + (flash === k ? ' hit' : '')} onClick={() => press(k)}>{k}</button>
+      {/* one-tap common maths */}
+      <div className="quickrail">
+        {QUICK.map((q) => (
+          <button key={q.label} className="qchip" disabled={!expr || !live.ok}
+                  onClick={() => { setExpr(q.apply(autoClose(expr))); setJustSolved(false); }}>
+            {q.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="padswitch">
+        <button className={pad === 'basic' ? 'on' : ''} onClick={() => setPad('basic')}>Basic</button>
+        <button className={pad === 'more' ? 'on' : ''} onClick={() => setPad('more')}>More</button>
+      </div>
+
+      <div className={'calcpad v2 ' + pad} key={pad}>
+        {PADS[pad].map(([k, kind], i) => (
+          <button
+            key={k + i}
+            data-k={k}
+            className={`ckey ${kind}`}
+            style={{ animationDelay: i * 12 + 'ms' }}
+            onPointerDown={ripple}
+            onClick={() => press(k)}
+          >
+            <span className="klabel">{k}</span>
+            {ripples.filter((r) => r.key === k).map((r) => (
+              <span key={r.id} className="ripple" style={{ left: r.x, top: r.y }} />
+            ))}
+          </button>
         ))}
       </div>
 
@@ -200,31 +225,22 @@ export default function CalculatorView({ onUse }) {
               <button className="mini ghosty" onClick={() => { setHistory([]); setShowTape(false); }}>
                 <Trash width="13" height="13" /> Clear
               </button>
+              <button className="icobtn" onClick={() => setShowTape(false)} aria-label="Close">
+                <Close width="15" height="15" />
+              </button>
             </div>
             <div className="tapelist">
               {history.map((h) => (
                 <button key={h.id} className="tapeline"
-                        onClick={() => { setDisplay(h.result); setFresh(true); setShowTape(false); }}>
-                  <span className="tl">{h.line}</span>
-                  <span className="tr">{group(h.result)}</span>
+                        onClick={() => { setExpr(h.result); setShowTape(false); setJustSolved(true); }}>
+                  <span className="tl">{prettyExpr(h.expr)}</span>
+                  <span className="tr">{prettyNumber(Number(h.result))}</span>
                 </button>
               ))}
             </div>
           </div>
         </Portal>
       )}
-
-      <div className="calcpad">
-        {KEYS.map(([k, kind]) => (
-          <button
-            key={k}
-            className={`ckey ${kind} ${flash === k ? 'hit' : ''}`}
-            onClick={() => press(k)}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
