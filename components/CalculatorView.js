@@ -11,13 +11,18 @@ const clean = (n) => {
   return String(r);
 };
 
-const group = (s) => {
+const group = (s, maxDec = 6) => {
   if (s === 'Error') return s;
   const neg = s.startsWith('-');
   const body = neg ? s.slice(1) : s;
-  const [w, d] = body.split('.');
+  let [w, d] = body.split('.');
+  // 65.6666666667 reads as noise; six places is plenty and still exact for money
+  if (d && d.length > maxDec) {
+    const rounded = Number(body).toFixed(maxDec).replace(/0+$/, '').replace(/\.$/, '');
+    [w, d] = rounded.split('.');
+  }
   const gw = Number(w).toLocaleString('en-IN');
-  return (neg ? '−' : '') + (d === undefined ? gw : `${gw}.${d}`);
+  return (neg ? '−' : '') + (d === undefined || d === '' ? gw : `${gw}.${d}`);
 };
 
 const apply = (a, b, op) => {
@@ -37,6 +42,7 @@ export default function CalculatorView({ onUse }) {
   const [history, setHistory] = useState([]);
   const [flash, setFlash] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [showTape, setShowTape] = useState(false);
   const tape = useRef(null);
 
   const value = Number(display) || 0;
@@ -143,24 +149,21 @@ export default function CalculatorView({ onUse }) {
 
   return (
     <div className="body calcbody">
-      <div className="pagehead">
+      <div className="pagehead calchead">
         <h2>Calculator</h2>
         {history.length > 0 && (
-          <button className="icobtn" onClick={() => setHistory([])} aria-label="Clear history">
-            <Trash width="15" height="15" />
+          <button className="mini ghosty" onClick={() => setShowTape(true)}>
+            History · {history.length}
           </button>
         )}
       </div>
 
       {history.length > 0 && (
-        <div className="tape" ref={tape}>
-          {history.map((h) => (
-            <button key={h.id} className="tapeline" onClick={() => { setDisplay(h.result); setFresh(true); }}>
-              <span className="tl">{h.line}</span>
-              <span className="tr">{group(h.result)}</span>
-            </button>
-          ))}
-        </div>
+        <button className="lastline" onClick={() => setShowTape(true)}>
+          <span className="tl">{history[0].line}</span>
+          <span className="tr">{group(history[0].result)}</span>
+          <span className="more">{history.length}</span>
+        </button>
       )}
 
       <div className="calcdisplay">
@@ -181,6 +184,31 @@ export default function CalculatorView({ onUse }) {
           <button key={k} className={'memkey' + (flash === k ? ' hit' : '')} onClick={() => press(k)}>{k}</button>
         ))}
       </div>
+
+      {showTape && (
+        <>
+          <div className="scrim" onClick={() => setShowTape(false)} />
+          <div className="sheet tapesheet">
+            <div className="grab" />
+            <div className="flowhead" style={{ marginBottom: 14 }}>
+              <div className="sheettitle">History</div>
+              <div className="spacer" />
+              <button className="mini ghosty" onClick={() => { setHistory([]); setShowTape(false); }}>
+                <Trash width="13" height="13" /> Clear
+              </button>
+            </div>
+            <div className="tapelist">
+              {history.map((h) => (
+                <button key={h.id} className="tapeline"
+                        onClick={() => { setDisplay(h.result); setFresh(true); setShowTape(false); }}>
+                  <span className="tl">{h.line}</span>
+                  <span className="tr">{group(h.result)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="calcpad">
         {KEYS.map(([k, kind]) => (

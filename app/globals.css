@@ -948,3 +948,66 @@ button{cursor:pointer}
 .calcvalue{margin-top:6px}
 .calcpad{gap:10px}
 .ckey{aspect-ratio:1/.78;font-size:24px}
+
+/* ============================================================
+   CALCULATOR — fixed height, keypad never moves
+   ============================================================ */
+.calcbody{
+  height:100dvh;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+  padding-top:calc(6px + env(safe-area-inset-top));
+  overflow:hidden;
+  display:flex;flex-direction:column;gap:9px;
+}
+.calchead{padding:8px 0 2px;flex:0 0 auto}
+.calchead h2{font-size:22px}
+.mini.ghosty{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--card);border:1px solid var(--line);color:var(--ink-2);
+}
+
+/* one-line summary of the last calculation */
+.lastline{
+  flex:0 0 auto;display:flex;align-items:baseline;gap:10px;
+  background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:9px 13px;width:100%;text-align:left;
+  animation:rowIn .3s cubic-bezier(.2,.85,.25,1) both;
+}
+.lastline .tl{
+  flex:1;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.lastline .tr{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.lastline .more{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  background:var(--brand-soft);color:var(--brand);padding:3px 7px;border-radius:7px;
+}
+
+.calcdisplay{flex:0 0 auto;margin-bottom:0;padding:12px 18px 14px}
+.calcvalue{margin-top:4px}
+.calcvalue.lg{font-size:clamp(34px,10.5vw,44px)}
+.calcvalue.md{font-size:clamp(28px,8.5vw,36px)}
+.calcvalue.sm{font-size:clamp(21px,6vw,27px)}
+
+.memrow{flex:0 0 auto;margin-bottom:0;gap:7px}
+.memkey{padding:8px 0;font-size:12px}
+
+/* the keypad takes whatever height is left, never overflows */
+.calcpad{
+  flex:1 1 auto;min-height:0;
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(5,1fr);
+  gap:8px;padding-bottom:0;
+}
+.ckey{
+  aspect-ratio:auto;height:100%;min-height:0;
+  font-size:clamp(18px,5.4vw,23px);border-radius:16px;
+}
+.ckey.fn{font-size:clamp(15px,4.4vw,19px)}
+.ckey.op{font-size:clamp(19px,5.8vw,25px)}
+
+/* history sheet */
+.tapesheet .tapelist{
+  display:flex;flex-direction:column;gap:6px;
+  max-height:56dvh;overflow-y:auto;scrollbar-width:none;
+}
+.tapesheet .tapelist::-webkit-scrollbar{display:none}
