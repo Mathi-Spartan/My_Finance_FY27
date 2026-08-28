@@ -89,6 +89,18 @@ export default function CalculatorView({ onUse }) {
     if (key === '⌫') { setExpr((e) => e.slice(0, -1)); return; }
     if (key === '=') { solve(); return; }
     if (key === '1/x') { setExpr((e) => (e ? `1÷(${e})` : '')); return; }
+    if (key === '√') {
+      // apply to whatever you just typed, the way a calculator should
+      setExpr((e) => {
+        if (e === '' || /[+−×÷^(]$/.test(e)) return e + '√';
+        const tail = e.match(/(\d+\.?\d*)$/);
+        if (tail) return e.slice(0, e.length - tail[1].length) + `√(${tail[1]})`;
+        if (e.endsWith(')')) return `√(${e})`;
+        return e + '√';
+      });
+      setJustSolved(false);
+      return;
+    }
     if (key === '±') {
       setExpr((e) => (e.startsWith('−') ? e.slice(1) : e ? `−${e}` : ''));
       return;
