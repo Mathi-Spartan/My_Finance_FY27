@@ -14,10 +14,29 @@ export default function Login() {
     if (!password) { setMsg({ t: 'err', m: 'Enter your password.' }); return; }
     setBusy(true);
     setMsg(null);
-    // Never leave the button spinning with nothing to read.
-    const stall = setTimeout(() => {
+    // Never leave the button spinning with nothing to read. If it does stall,
+    // work out whether Supabase is reachable at all so the message is useful.
+    const stall = setTimeout(async () => {
       setBusy(false);
-      setMsg({ t: 'err', m: 'That took too long. Check your connection and try again.' });
+      let reachable = false;
+      try {
+        const ctl = new AbortController();
+        const kill = setTimeout(() => ctl.abort(), 6000);
+        const res = await fetch(
+          process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/',
+          { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY }, cache: 'no-store', signal: ctl.signal }
+        );
+        clearTimeout(kill);
+        reachable = res.status > 0;
+      } catch {
+        reachable = false;
+      }
+      setMsg({
+        t: 'err',
+        m: reachable
+          ? 'The database is reachable but sign in stalled. Try once more.'
+          : "Can't reach the database from this network. A firewall, VPN, proxy or browser extension is blocking it — try mobile data, or a different network.",
+      });
     }, 12000);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
