@@ -422,3 +422,37 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   .hero,.row,.card,.acct,.startcard,.viewfade{animation:none !important}
 }
+
+/* --- start card base styles (were lost in the layout revert) --- */
+.startcard{
+  background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:22px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  margin-top:22px;text-align:left;
+}
+.startcard::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 120% at 0% 0%, color-mix(in srgb,var(--g1) 9%, transparent), transparent 62%);
+}
+.startcard > *{position:relative}
+.startcard h3{
+  font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;
+  letter-spacing:-.03em;margin-bottom:6px;line-height:1.2;
+}
+.startcard p.lede{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin-bottom:18px}
+.steps{display:flex;flex-direction:column;gap:9px}
+.step{
+  display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;
+  background:var(--card-2);border:1px solid var(--line-2);border-radius:16px;
+  padding:14px 15px;transition:border-color .18s ease,transform .16s ease;
+}
+.step .n{
+  width:25px;height:25px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+}
+.step .t{display:block;font-size:14px;font-weight:650;letter-spacing:-.01em;line-height:1.35}
+.step .s{display:block;font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+.step > span:last-child{min-width:0;flex:1}
+.step.done .n{background:linear-gradient(135deg,#00A36C,#3FD6A0)}
+.step.done .t{color:var(--ink-3);text-decoration:line-through}
+.step:active{transform:scale(.985);border-color:var(--g1)}
