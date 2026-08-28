@@ -1898,3 +1898,23 @@ button{cursor:pointer}
 
 /* calendar sits tighter under the period card */
 .calendar.v2{margin-top:18px}
+
+/* legend swatch went muddy once the ramp turned blue */
+.lg.mixed{background:linear-gradient(135deg,#E0A63C,#F2C572)}
+.cell.t-mixed .cwash{
+  background:linear-gradient(160deg,
+    color-mix(in srgb,#E0A63C calc(20% + var(--w) * 46%),transparent),
+    color-mix(in srgb,#F2C572 calc(10% + var(--w) * 26%),transparent));
+}
+.cell.t-mixed{border-color:color-mix(in srgb,#E0A63C 42%,transparent)}
+.cell.t-mixed .cnum{color:#8A5F12}
+[data-theme="dark"] .cell.t-mixed .cnum{color:#F2C572}
+
+/* the grid was wider than it needed to be */
+.calendar.v2 .calrow{gap:5px;margin-bottom:5px}
+.calendar.v2 .cell{border-radius:12px}
+.calendar.v2 .cnum{font-size:12.5px}
+.callegend{margin-top:14px;font-size:10.5px}
+
+/* keep the last rows clear of the floating nav */
+.body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
