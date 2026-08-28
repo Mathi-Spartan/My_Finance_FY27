@@ -8,12 +8,15 @@ export default function SettingsView({ theme, toggleTheme }) {
   const {
     accounts, categories, txs, settings, session,
     saveAccount, saveCategory, saveSettings, bulkTx, signOut, say,
+    clearAllTx, reload,
   } = useStore();
   const [tab, setTab] = useState('money');
   const [newAcct, setNewAcct] = useState('');
   
   const file = useRef(null);
   const [importing, setImporting] = useState(false);
+  const [confirmWipe, setConfirmWipe] = useState('');
+  const [busy, setBusy] = useState(false);
   const balances = accountBalances(accounts, txs);
 
   const exportCSV = () => {
@@ -119,6 +122,57 @@ export default function SettingsView({ theme, toggleTheme }) {
               and optionally direction, category, account and context. Anything it can't match lands
               in your first account, uncategorised, for you to fix.
             </p>
+          </div>
+
+          <div className="card">
+            <div className="cardhead"><h4>App cache</h4><span>this device</span></div>
+            <button className="btn ghost" onClick={async () => {
+              setBusy(true);
+              try {
+                if ('serviceWorker' in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map((r) => r.unregister()));
+                }
+                if (window.caches) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map((k) => caches.delete(k)));
+                }
+              } catch { /* nothing cached, nothing to clear */ }
+              location.reload(true);
+            }} disabled={busy}>
+              {busy ? 'Clearing…' : 'Clear cache and reload'}
+            </button>
+            <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => reload()}>
+              Reload data only
+            </button>
+            <p className="note">
+              Use the first one if the app looks out of date after an update. It removes the
+              stored copy of the app and fetches a fresh one. Your entries are on the server and
+              are not touched.
+            </p>
+          </div>
+
+          <div className="card">
+            <div className="cardhead"><h4>Danger</h4><span>{txs.length} entries</span></div>
+            <p className="note" style={{ marginTop: 0 }}>
+              Deletes every entry across all accounts and all dates. Your accounts and their
+              opening balances stay. There is no undo.
+            </p>
+            <div className="field" style={{ marginTop: 12 }}>
+              <label>Type DELETE to confirm</label>
+              <input value={confirmWipe} onChange={(e) => setConfirmWipe(e.target.value)}
+                     placeholder="DELETE" autoCapitalize="characters" />
+            </div>
+            <button className="btn danger" disabled={confirmWipe !== 'DELETE' || busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      const ok = await clearAllTx();
+                      setBusy(false);
+                      setConfirmWipe('');
+                      if (ok) say('All entries deleted');
+                    }}>
+              {busy ? 'Deleting…' : 'Delete all entries'}
+            </button>
           </div>
 
           <div className="card">

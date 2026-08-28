@@ -1017,3 +1017,6 @@ button{cursor:pointer}
 .lastline.empty{opacity:.55;background:var(--card-2);border-style:dashed}
 .calcdisplay{height:104px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between}
 .calcvalue{margin-top:0}
+
+/* clear button sits with the other header actions */
+.pagehead .icobtn:disabled{opacity:.35}

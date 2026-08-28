@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Search, Refresh, Back } from './Icons';
+import { Search, Refresh, Back, Trash } from './Icons';
 import {
   money, rangeOf, inRange, rangeTotals, monthGrid, dailyMap,
   isoDay, dayLabel, timeLabel, initials, colorOf,
@@ -10,11 +10,13 @@ import {
 const MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
 
 export default function EntriesView({ onEdit }) {
-  const { txs, accounts, categories, reload, loading } = useStore();
+  const { txs, accounts, categories, reload, loading, deleteMany } = useStore();
   const [mode, setMode] = useState('month');
   const [anchor, setAnchor] = useState(new Date());
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
+  const [wipe, setWipe] = useState(false);
+  const [wiping, setWiping] = useState(false);
 
 
   const catName = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c.name])), [categories]);
@@ -79,6 +81,10 @@ export default function EntriesView({ onEdit }) {
           </button>
           <button className="icobtn" onClick={() => setSearching((s) => !s)} aria-label="Search">
             <Search width="16" height="16" />
+          </button>
+          <button className="icobtn" onClick={() => setWipe(true)} aria-label="Clear entries"
+                  disabled={scoped.length === 0}>
+            <Trash width="16" height="16" />
           </button>
         </div>
       </div>
@@ -182,6 +188,34 @@ export default function EntriesView({ onEdit }) {
             </div>
           );
         })
+      )}
+
+      {wipe && (
+        <>
+          <div className="scrim" onClick={() => setWipe(false)} />
+          <div className="sheet">
+            <div className="grab" />
+            <div className="sheettitle">
+              Clear {scoped.length} {scoped.length === 1 ? 'entry' : 'entries'}?
+            </div>
+            <div className="sheetsub">
+              Everything in <b>{title}</b> will be deleted — {money(sums.in)} in and{' '}
+              {money(sums.out)} out. Account balances will change. This can&apos;t be undone.
+            </div>
+            <button className="btn danger" disabled={wiping}
+                    onClick={async () => {
+                      setWiping(true);
+                      await deleteMany(scoped.map((t) => t.id));
+                      setWiping(false);
+                      setWipe(false);
+                    }}>
+              {wiping ? 'Deleting…' : `Yes, delete these ${scoped.length}`}
+            </button>
+            <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => setWipe(false)}>
+              Keep them
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
