@@ -120,7 +120,7 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
               const h = Math.max(6, Math.min(100, (v / Math.max(avg * 2, 1)) * 100));
               const cls = i + 1 === today ? 'today' : i + 1 > today ? '' : v > avg * 1.6 ? 'over' : 'spent';
               return <div key={i} className={'bar ' + cls}
-                          style={{ height: (i + 1 > today ? 6 : h) + '%', animationDelay: i * 12 + 'ms' }}
+                          style={{ height: (i + 1 > today ? 6 : h) + '%', animationDelay: i * 12 + 'ms', '--i': i }}
                           title={`${i + 1}: ${rupees(v, { decimals: false })}`} />;
             })}
           </div>
@@ -148,38 +148,7 @@ export default function HomeView({ context, setContext, goTo, onAdd }) {
         ))}
       </div>
 
-      {groups.length === 0 ? (
-        <div className="startcard rise d3 full">
-          <h3>Three things and it starts working</h3>
-          <p className="lede">
-            Safe-to-spend, drift and runway all read from your own numbers. Give it these
-            and the screen above stops showing zero.
-          </p>
-          <div className="steps">
-            <button className={'step' + (hasTargets ? ' done' : '')} onClick={() => goTo && goTo('settings')}>
-              <span className="n">1</span>
-              <span>
-                <span className="t">Set your income and what you want to keep</span>
-                <span className="s">These two numbers are what safe-to-spend divides up. Without them it has nothing to work from.</span>
-              </span>
-            </button>
-            <button className="step" onClick={() => goTo && goTo('settings')}>
-              <span className="n">2</span>
-              <span>
-                <span className="t">Put today's balance on each account</span>
-                <span className="s">HDFC, UPI, card, cash. Enter what they actually hold right now and entries take it from there.</span>
-              </span>
-            </button>
-            <button className="step" onClick={() => onAdd && onAdd()}>
-              <span className="n">3</span>
-              <span>
-                <span className="t">File the last thing you paid for</span>
-                <span className="s">Amount, who it was for, done. Four seconds. That single habit is the whole point of this.</span>
-              </span>
-            </button>
-          </div>
-        </div>
-      ) : groups.map(([day, list]) => (
+      {groups.length === 0 ? null : groups.map(([day, list]) => (
         <div key={day}>
           <div className="sechead full">
             <h4>{dayLabel(day)}</h4>
