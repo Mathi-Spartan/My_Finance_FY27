@@ -48,7 +48,7 @@ export default function App() {
   return (
     <div className="shell">
       <div key={tab} className="viewfade">
-        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} />}
+        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={setTab} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'paari' && <PaariView />}
         {tab === 'insights' && <InsightsView />}

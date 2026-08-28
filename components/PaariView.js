@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { Refresh, Check, Close, Plus, Back } from './Icons';
 import Portal from './Portal';
 import ImportSchedule from './ImportSchedule';
-import { money } from '@/lib/finance';
+import { money, sessionReport, monthLabel } from '@/lib/finance';
 
 const THERAPY_TONE = { Speech: 'th-speech', Occupational: 'th-occ' };
 
@@ -26,6 +26,7 @@ export default function PaariView() {
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [view, setView] = useState('month');
 
   const months = useMemo(() => {
     const set = [...new Set(appointments.map((a) => a.on_date.slice(0, 7)))].sort();
@@ -101,6 +102,13 @@ export default function PaariView() {
         </div>
       </div>
 
+      <div className="seg modeseg" style={{ marginBottom: 4 }}>
+        <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>This month</button>
+        <button className={view === 'all' ? 'on' : ''} onClick={() => setView('all')}>All months</button>
+      </div>
+
+      {view === 'all' ? <AllMonths appointments={appointments} /> : (
+      <>
       <div className="periodbar">
         <button className="icobtn" disabled={idx <= 0} onClick={() => setMonthKey(months[idx - 1])} aria-label="Previous month">
           <Back width="15" height="15" />
@@ -245,6 +253,9 @@ export default function PaariView() {
         </div>
       )}
 
+      </>
+      )}
+
       {importing && (
         <ImportSchedule
           onClose={() => setImporting(false)}
@@ -309,5 +320,111 @@ function AddSession({ onSave, onClose }) {
         <button className="btn ghost" style={{ marginTop: 8 }} onClick={onClose}>Cancel</button>
       </div>
     </Portal>
+  );
+}
+
+
+function AllMonths({ appointments }) {
+  const r = useMemo(() => sessionReport(appointments), [appointments]);
+  const t = r.total;
+  if (t.sessions === 0) {
+    return <div className="card" style={{ marginTop: 16 }}>
+      <p className="note" style={{ margin: 0 }}>No sessions loaded yet.</p>
+    </div>;
+  }
+  const peak = Math.max(...r.months.map((m) => m.paid), 1);
+
+  return (
+    <>
+      <div className="hero paarihero" style={{ marginTop: 14 }}>
+        <div className="eyebrow"><span className="dot" />{r.months.length} months · {t.sessions} sessions</div>
+        <div className="bignum"><span className="cur">₹</span>{Math.round(t.paid).toLocaleString('en-IN')}</div>
+        <div className="sublabel">paid since {monthLabel(r.months[0].month)}</div>
+
+        <div className="attbar">
+          <span className="attfill used" style={{ width: (t.attendedAmt / t.paid) * 100 + '%' }} />
+          <span className="attfill lost" style={{ width: (t.missedAmt / t.paid) * 100 + '%' }} />
+          <span className="attfill back" style={{ width: (t.refund / t.paid) * 100 + '%' }} />
+        </div>
+
+        <div className="paarigrid">
+          <div className="pg"><span className="k">Used</span><span className="v">{money(t.attendedAmt)}</span><span className="d">{t.attended} attended</span></div>
+          <div className="pg"><span className="k">Lost</span><span className="v">{money(t.missedAmt)}</span><span className="d">{t.missed} missed</span></div>
+          <div className="pg"><span className="k">Coming back</span><span className="v">{money(t.refund)}</span><span className="d">{t.cancelled} cancelled</span></div>
+        </div>
+
+        {r.attendanceRate !== null && (
+          <div className="netline" style={{ marginTop: 12 }}>
+            <span>Attendance where the class ran</span>
+            <b>{Math.round(r.attendanceRate)}%</b>
+          </div>
+        )}
+      </div>
+
+      {t.planned > 0 && (
+        <div className="refundbar" style={{ background: 'var(--card)', borderColor: 'var(--line)' }}>
+          <span className="rbk" style={{ color: 'var(--ink-3)' }}>Still to mark</span>
+          <span className="rbv" style={{ color: 'var(--ink)' }}>{t.planned}</span>
+          <span className="rbd">{money(t.plannedAmt)} of sessions not yet marked attended, missed or cancelled</span>
+        </div>
+      )}
+
+      <div className="stable" style={{ marginTop: 14 }}>
+        <div className="sthead" style={{ gridTemplateColumns: '64px 1fr auto' }}>
+          <span>Month</span><span>Sessions</span><span className="ta-r">Paid</span>
+        </div>
+        {r.months.map((m) => (
+          <div className="strow-wrap" key={m.month}>
+            <div className="strow" style={{ gridTemplateColumns: '64px 1fr auto', cursor: 'default' }}>
+              <span className="stdate" style={{ padding: '7px 4px' }}>
+                <b style={{ fontSize: 12 }}>{monthLabel(m.month).split(' ')[0]}</b>
+                <em>{monthLabel(m.month).split(' ')[1]}</em>
+              </span>
+              <span className="stmain">
+                <span className="mbar">
+                  <i className="mb used" style={{ flexGrow: Math.max(m.attendedAmt, 0.001) }} />
+                  <i className="mb lost" style={{ flexGrow: Math.max(m.missedAmt, 0.001) }} />
+                  <i className="mb back" style={{ flexGrow: Math.max(m.refund, 0.001) }} />
+                  <i className="mb open" style={{ flexGrow: Math.max(m.plannedAmt, 0.001) }} />
+                </span>
+                <span className="sttime">
+                  {m.sessions} booked · {m.attended} attended · {m.missed} missed · {m.cancelled} cancelled
+                </span>
+              </span>
+              <span className="stright">
+                <span className="stamt">{money(m.paid)}</span>
+                <span className="stpill" style={{ opacity: m.paid / peak > 0.99 ? 1 : 0.55 }}>
+                  {Math.round((m.paid / peak) * 100)}%
+                </span>
+              </span>
+            </div>
+          </div>
+        ))}
+        <div className="stfoot"><span>{r.months.length} months</span><b>{money(t.paid)}</b></div>
+      </div>
+
+      <div className="card" style={{ marginTop: 12 }}>
+        <div className="cardhead"><h4>By therapy</h4><span>all months</span></div>
+        {r.therapies.map((th) => (
+          <div className="drift" key={th.name}>
+            <div className="drifttop">
+              <span className="lab">{th.name}</span>
+              <span className="val">{th.sessions} sessions · {money(th.paid)}</span>
+            </div>
+            <div className="track">
+              <div className="fillbar" style={{
+                width: Math.max(4, (th.paid / t.paid) * 100) + '%',
+                background: th.name === 'Speech'
+                  ? 'linear-gradient(90deg,var(--g1),var(--g3))'
+                  : 'linear-gradient(90deg,#2D6FE0,#7CB4FF)',
+              }} />
+            </div>
+            <div className="driftfoot">
+              {th.attended} attended · {th.missed} missed · {th.cancelled} cancelled
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

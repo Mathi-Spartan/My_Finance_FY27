@@ -1733,3 +1733,45 @@ button{cursor:pointer}
 .pt{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ps{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3)}
 .pa{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+
+/* ============================================================
+   PAARI SUMMARY ON HOME + ALL-MONTHS REPORT
+   ============================================================ */
+.paaristrip{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:15px 16px;margin-top:16px;box-shadow:var(--shadow);
+  animation:rowIn .45s cubic-bezier(.2,.85,.25,1) both;
+  transition:transform .16s ease,border-color .18s ease;
+}
+.paaristrip:active{transform:scale(.985);border-color:var(--brand)}
+.psleft{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+.psk{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.psv{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;letter-spacing:-.03em}
+.psd{font-size:10.5px;color:var(--ink-3)}
+.psright{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.psbar{display:flex;gap:2px;height:8px;border-radius:5px;overflow:hidden}
+.pb{display:block;border-radius:5px}
+.pb.used{background:var(--in)}
+.pb.lost{background:var(--out)}
+.pb.back{background:#2DBE8A}
+.pb.open{background:var(--line)}
+.pstags{display:flex;flex-wrap:wrap;gap:5px}
+.pstags em{
+  font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  background:var(--card-2);color:var(--ink-3);padding:3px 7px;border-radius:6px;
+}
+.pstags em.ok{background:var(--in-soft);color:var(--in)}
+.pstags em.bad{background:var(--out-soft);color:var(--out)}
+.pstags em.ref{background:var(--in-soft);color:var(--in)}
+
+/* per-month composition bar in the report */
+.mbar{display:flex;gap:2px;height:7px;border-radius:5px;overflow:hidden;margin-bottom:5px}
+.mb{display:block;border-radius:5px;min-width:2px}
+.mb.used{background:var(--in)}
+.mb.lost{background:var(--out)}
+.mb.back{background:#2DBE8A}
+.mb.open{background:var(--line)}
