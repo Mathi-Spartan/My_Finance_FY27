@@ -26,7 +26,7 @@ export default function PaariView() {
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [openId, setOpenId] = useState(null);
-  const [view, setView] = useState('month');
+  const [view, setView] = useState('all');
 
   const months = useMemo(() => {
     const set = [...new Set(appointments.map((a) => a.on_date.slice(0, 7)))].sort();
@@ -104,11 +104,11 @@ export default function PaariView() {
       </div>
 
       <div className="seg modeseg" style={{ marginBottom: 4 }}>
-        <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>This month</button>
-        <button className={view === 'all' ? 'on' : ''} onClick={() => setView('all')}>All months</button>
+        <button className={view === 'all' ? 'on' : ''} onClick={() => setView('all')}>By month</button>
+        <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>One month</button>
       </div>
 
-      {view === 'all' ? <AllMonths appointments={appointments} /> : (
+      {view === 'all' ? <AllMonths appointments={appointments} setAppointmentStatus={setAppointmentStatus} /> : (
       <>
       <div className="periodbar">
         <button className="icobtn" disabled={idx <= 0} onClick={() => setMonthKey(months[idx - 1])} aria-label="Previous month">
@@ -337,7 +337,8 @@ function AddSession({ onSave, onClose }) {
 }
 
 
-function AllMonths({ appointments }) {
+function AllMonths({ appointments, setAppointmentStatus }) {
+  const [openMonth, setOpenMonth] = useState(null);
   const r = useMemo(() => sessionReport(appointments), [appointments]);
   const t = r.total;
   if (t.sessions === 0) {
@@ -397,9 +398,15 @@ function AllMonths({ appointments }) {
         <div className="sthead" style={{ gridTemplateColumns: '64px 1fr auto' }}>
           <span>Month</span><span>Sessions</span><span className="ta-r">Paid</span>
         </div>
-        {r.months.map((m) => (
-          <div className="strow-wrap" key={m.month}>
-            <div className="strow" style={{ gridTemplateColumns: '64px 1fr auto', cursor: 'default' }}>
+        {r.months.map((m) => {
+          const open = openMonth === m.month;
+          const sessions = appointments
+            .filter((a) => a.on_date.startsWith(m.month))
+            .sort((a, b) => (a.on_date === b.on_date ? a.slot.localeCompare(b.slot) : a.on_date.localeCompare(b.on_date)));
+          return (
+          <div className={'strow-wrap' + (open ? ' open' : '')} key={m.month}>
+            <button className="strow" style={{ gridTemplateColumns: '64px 1fr auto' }}
+                    onClick={() => setOpenMonth(open ? null : m.month)}>
               <span className="stdate" style={{ padding: '7px 4px' }}>
                 <b style={{ fontSize: 12 }}>{monthLabel(m.month).split(' ')[0]}</b>
                 <em>{monthLabel(m.month).split(' ')[1]}</em>
@@ -417,12 +424,41 @@ function AllMonths({ appointments }) {
               <span className="stright">
                 <span className="stamt">{money(m.netPaid)}</span>
                 <span className="stpill" style={{ opacity: m.netPaid / peak > 0.99 ? 1 : 0.55 }}>
-                  {Math.round((m.netPaid / peak) * 100)}%
+                  {open ? 'close' : 'open'}
                 </span>
               </span>
-            </div>
+            </button>
+
+            {open && (
+              <div className="monthsessions">
+                {sessions.map((a) => (
+                  <div className={'msrow s-' + a.status} key={a.id}>
+                    <span className="msdate">
+                      {new Date(a.on_date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', weekday: 'short' })}
+                    </span>
+                    <span className="msmain">
+                      <span className="msname">{a.therapy}</span>
+                      <span className="msslot">{a.slot}</span>
+                    </span>
+                    <span className="msamt">{money(a.amount)}</span>
+                    <span className="msacts">
+                      <button className={a.status === 'attended' ? 'on yes' : ''}
+                              onClick={() => setAppointmentStatus(a.id, a.status === 'attended' ? 'planned' : 'attended')}
+                              title="Attended">✓</button>
+                      <button className={a.status === 'missed' ? 'on no' : ''}
+                              onClick={() => setAppointmentStatus(a.id, a.status === 'missed' ? 'planned' : 'missed')}
+                              title="I missed">✕</button>
+                      <button className={a.status === 'cancelled' ? 'on back' : ''}
+                              onClick={() => setAppointmentStatus(a.id, a.status === 'cancelled' ? 'planned' : 'cancelled')}
+                              title="Trainer off">↺</button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+          );
+        })}
         <div className="stfoot"><span>{r.months.length} months</span><b>{money(t.netPaid)}</b></div>
       </div>
 
