@@ -2478,3 +2478,61 @@ body{
   .dg,.morph,.morph.done,.morph.done .mtick{animation:none}
   .dirpill,.morph{transition:none}
 }
+
+/* ============================================================
+   DARK THEME — declared last and with higher specificity, so no later
+   :root block can quietly override it the way one already did.
+   html[data-theme=...] beats a bare :root regardless of source order.
+   ============================================================ */
+html[data-theme="dark"]{
+  --paper:#080B13; --card:#141A28; --card-2:#1B2233;
+  --ink:#EFF3FA; --ink-2:#94A2BA; --ink-3:#647089;
+  --line:#28324a; --line-2:#1E2637;
+
+  --brand:#4FA8E8; --brand-soft:#0E2B45;
+  --g1:#0A4F86; --g2:#1E7FC4; --g3:#5CB6EE;
+  --glow:0 18px 46px -16px rgba(79,168,232,.5);
+
+  --in:#2ED598; --in-soft:#0D2E22;
+  --out:#FF6B6B; --out-soft:#331A1D;
+  --amber:#FFC15E; --amber-soft:#33290F;
+  --blue:#5CB6EE; --blue-soft:#0E2B45;
+  --violet:#8FB4E8; --violet-soft:#15243D;
+  --green:#2ED598; --green-soft:#0D2E22;
+  --red:#FF6B6B; --red-soft:#331A1D;
+  --slate:#94A2BA; --slate-soft:#1E2637;
+
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -14px rgba(0,0,0,.75);
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(79,168,232,.13), transparent 62%),
+    var(--paper);
+}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .periodcard,
+html[data-theme="dark"] .stable,
+html[data-theme="dark"] .loancard,
+html[data-theme="dark"] .acctchip,
+html[data-theme="dark"] .triprow,
+html[data-theme="dark"] .paaristrip,
+html[data-theme="dark"] .row.compact,
+html[data-theme="dark"] .rowwrap.open,
+html[data-theme="dark"] .acctcard{
+  background-image:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 42%);
+}
+html[data-theme="dark"] .seg,
+html[data-theme="dark"] .scaleseg,
+html[data-theme="dark"] .padswitch,
+html[data-theme="dark"] .stepper{box-shadow:none}
+html[data-theme="dark"] .seg-piece .segshare{color:#07243F}
+html[data-theme="dark"] .cell.t-mixed .cnum{color:#FFC15E}
+
+/* the whole surface eases between themes rather than snapping */
+body,.card,.periodcard,.stable,.loancard,.acctchip,.row.compact,.hero,
+.nav::before,.seg,.scaleseg,.ckey,.cell,.day .num,.icobtn,.triprow{
+  transition:background-color .34s ease, border-color .34s ease, color .28s ease;
+}
+@media (prefers-reduced-motion:reduce){
+  body,.card,.hero{transition:none}
+}
