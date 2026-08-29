@@ -3089,3 +3089,14 @@ body,.card,.hero,.periodcard,.stable,.loancard,.acctchip,.row.compact,
 .fact .fk{font-size:8.5px}
 .fact .fv{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fact .fd{font-size:10px}
+
+/* section heading between chip groups */
+.sectionhead{margin:22px 2px 10px;padding-bottom:0}
+.sectionhead h4{font-size:14px}
+.drift .lab .rank{
+  display:inline-grid;place-items:center;width:17px;height:17px;border-radius:5px;
+  background:var(--brand-soft);color:var(--brand);
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;margin-right:7px;
+}
+.seg.modeseg{grid-template-columns:repeat(4,1fr)}
+.seg.modeseg button{font-size:12px;padding:8px 4px}

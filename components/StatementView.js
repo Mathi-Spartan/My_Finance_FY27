@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
 import { Refresh, Trash, Close, Check } from './Icons';
-import { parseStatement, analyse, merchantOf, categorise } from '@/lib/statement';
+import { parseStatement, analyse, deepAnalyse, merchantOf, categorise } from '@/lib/statement';
 import { money } from '@/lib/finance';
 
 const fmtDate = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -22,6 +22,7 @@ export default function StatementView() {
   const pending = useRef(null);
 
   const a = useMemo(() => (rows && rows.length ? analyse(rows, { excludeSelf }) : null), [rows, excludeSelf]);
+  const d = useMemo(() => (a ? deepAnalyse(rows, a) : null), [rows, a]);
 
   const read = async (file, password) => {
     setBusy(true);
@@ -194,6 +195,7 @@ export default function StatementView() {
             <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Overview</button>
             <button className={tab === 'where' ? 'on' : ''} onClick={() => setTab('where')}>Where</button>
             <button className={tab === 'when' ? 'on' : ''} onClick={() => setTab('when')}>When</button>
+            <button className={tab === 'debt' ? 'on' : ''} onClick={() => setTab('debt')}>Debt</button>
           </div>
 
           {tab === 'overview' && (
@@ -210,6 +212,46 @@ export default function StatementView() {
                 <Fact k="Balance low point" v={a.lowestBalance !== null ? money(a.lowestBalance) : '—'} d={`${a.lowBalanceDays} days under ₹1,000`} tone={a.lowBalanceDays > 10 ? 'out' : ''} />
                 <Fact k="Balance high point" v={a.highestBalance !== null ? money(a.highestBalance) : '—'} d={`closed at ${money(a.closingBalance)}`} />
               </div>
+
+              <div className="cardhead sectionhead"><h4>How the money behaves</h4><span>the analyst view</span></div>
+              <div className="factgrid">
+                <Fact k="Debt service" v={d.debtRatio !== null ? Math.round(d.debtRatio) + '%' : '—'}
+                      d="of everything that came in" tone={d.debtRatio > 40 ? 'out' : ''} />
+                <Fact k="Savings rate" v={d.savingsRate !== null ? Math.round(d.savingsRate) + '%' : '—'}
+                      d={d.savingsRate < 0 ? 'you spent more than you earned' : 'of income kept'}
+                      tone={d.savingsRate < 0 ? 'out' : 'in'} />
+                <Fact k="Daily burn" v={money(d.burnPerDay)} d={`± ${money(d.dailySd)} day to day`} />
+                <Fact k="Spending swing" v={Math.round(d.volatility) + '%'}
+                      d={d.volatility > 100 ? 'very uneven day to day' : 'fairly steady'} />
+                <Fact k="Trend across the period" v={(d.trend > 0 ? '+' : '') + Math.round(d.trend) + '%'}
+                      d={`${money(d.firstHalf)} → ${money(d.secondHalf)}`} tone={d.trend > 0 ? 'out' : 'in'} />
+                <Fact k="Concentration" v={Math.round(d.top10Share) + '%'} d="of spend is just 10 payments" />
+                <Fact k="Where the bulk goes" v={`${d.payeesFor80} payees`} d={`carry 80% of ${d.payeeCount} in total`} />
+                <Fact k="One-off payees" v={String(d.onceOnly)} d={`${d.regulars} you paid 5+ times`} />
+                <Fact k="Weekday vs weekend" v={`${Math.round((d.weekday.total / a.totalOut) * 100)}/${Math.round((d.weekend.total / a.totalOut) * 100)}`}
+                      d={`${money(d.weekday.total)} vs ${money(d.weekend.total)}`} />
+                <Fact k="Longest spending run" v={`${d.longestSpendRun} days`}
+                      d={`longest quiet spell ${d.longestQuietRun}`} />
+                <Fact k="Round-number payments" v={String(d.roundCount)} d={`${money(d.roundTotal)} — usually transfers`} />
+                <Fact k="Runway at closing balance" v={d.runway !== null ? (d.runway < 1 ? '<1 day' : Math.round(d.runway) + ' days') : '—'}
+                      d="at this rate of spending" tone={d.runway !== null && d.runway < 7 ? 'out' : ''} />
+              </div>
+
+              {d.dupeCount > 0 && (
+                <div className="card">
+                  <div className="cardhead"><h4>Worth a second look</h4><span>same payee, amount and day</span></div>
+                  <p className="note" style={{ marginTop: 0 }}>
+                    {d.dupeCount} {d.dupeCount === 1 ? 'payment looks' : 'payments look'} like they may have gone
+                    out twice. Not necessarily wrong — but worth checking.
+                  </p>
+                  {d.dupes.map((x, i) => (
+                    <div className="rtrow" key={i}>
+                      <span className="rtname">{x.name}</span>
+                      <span className="rtmeta"><b>{money(x.amount)}</b><em>{fmtDate(new Date(x.iso + 'T12:00:00'))}</em></span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {a.repeats.filter((r) => r.steady).length > 0 && (
                 <div className="card">
@@ -326,6 +368,25 @@ export default function StatementView() {
               </div>
 
               <div className="card">
+                <div className="cardhead"><h4>Across the month</h4><span>when money leaves</span></div>
+                {d.weekOfMonth.map((w) => {
+                  const max = Math.max(...d.weekOfMonth.map((x) => x.total), 1);
+                  return (
+                    <div className="drift" key={w.key}>
+                      <div className="drifttop">
+                        <span className="lab">{w.key}</span>
+                        <span className="val">{money(w.total)}</span>
+                      </div>
+                      <div className="track">
+                        <div className="fillbar" style={{ width: Math.max(3, (w.total / max) * 100) + '%', background: 'linear-gradient(90deg,var(--g1),var(--g3))' }} />
+                      </div>
+                      <div className="driftfoot">{w.count} payments</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="card">
                 <div className="cardhead"><h4>Heaviest days</h4><span>top 8</span></div>
                 {a.byDay.slice(0, 8).map((d) => (
                   <div className="rtrow" key={d.key}>
@@ -336,6 +397,61 @@ export default function StatementView() {
                     </span>
                   </div>
                 ))}
+              </div>
+            </>
+          )}
+
+          {tab === 'debt' && (
+            <>
+              <div className="hero paarihero" style={{ marginTop: 0 }}>
+                <div className="eyebrow"><span className="dot warn" />repayments in this period</div>
+                <div className="bignum"><span className="cur">₹</span>{Math.round(a.debt.total).toLocaleString('en-IN')}</div>
+                <div className="sublabel">
+                  {a.debt.count} payments to {d.byLender.length} lenders
+                  {d.debtRatio !== null && <> · {Math.round(d.debtRatio)}% of everything that came in</>}
+                </div>
+                <div className="paarigrid">
+                  <div className="pg"><span className="k">A month</span><span className="v">{money(a.debt.total / a.months)}</span><span className="d">on average</span></div>
+                  <div className="pg"><span className="k">Salary</span><span className="v">{money(d.salary.total / Math.max(1, d.salary.count))}</span><span className="d">per credit</span></div>
+                  <div className="pg"><span className="k">Eats</span><span className="v">{d.salary.total > 0 ? Math.round((a.debt.total / d.salary.total) * 100) : '—'}%</span><span className="d">of salary</span></div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="cardhead"><h4>Who you are repaying</h4><span>{d.byLender.length} lenders</span></div>
+                {d.byLender.map((l, i) => {
+                  const share = (l.total / a.debt.total) * 100;
+                  return (
+                    <div className="drift" key={l.key}>
+                      <div className="drifttop">
+                        <span className="lab"><b className="rank">{i + 1}</b>{l.key}</span>
+                        <span className="val">{money(l.total)}</span>
+                      </div>
+                      <div className="track">
+                        <div className="fillbar" style={{ width: Math.max(3, share) + '%', background: 'linear-gradient(90deg,#C93A3F,#FF8A80)' }} />
+                      </div>
+                      <div className="driftfoot">{l.count} payments · {money(l.total / l.count)} each · {Math.round(share)}% of repayments</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="card">
+                <div className="cardhead"><h4>What came in</h4><span>income mix</span></div>
+                <div className="drift">
+                  <div className="drifttop"><span className="lab">Salary</span><span className="val">{money(d.salary.total)}</span></div>
+                  <div className="track"><div className="fillbar" style={{ width: Math.max(3, (d.salary.total / a.totalIn) * 100) + '%', background: 'linear-gradient(90deg,#0E9E6E,#5FD9AF)' }} /></div>
+                  <div className="driftfoot">{d.salary.count} credits · {Math.round((d.salary.total / a.totalIn) * 100)}% of income</div>
+                </div>
+                <div className="drift">
+                  <div className="drifttop"><span className="lab">Everything else</span><span className="val">{money(d.otherIn.total)}</span></div>
+                  <div className="track"><div className="fillbar" style={{ width: Math.max(3, (d.otherIn.total / a.totalIn) * 100) + '%', background: 'linear-gradient(90deg,var(--g1),var(--g3))' }} /></div>
+                  <div className="driftfoot">{d.otherIn.count} credits · loans, refunds and transfers in</div>
+                </div>
+                <p className="note">
+                  Borrowing counted as income flatters the picture. Against salary alone,
+                  repayments take {d.salary.total > 0 ? Math.round((a.debt.total / d.salary.total) * 100) : 0}% of what you earn.
+                </p>
               </div>
             </>
           )}
