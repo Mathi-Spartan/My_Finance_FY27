@@ -2671,3 +2671,85 @@ html[data-theme="dark"] .navpill::before{
 @media (prefers-reduced-motion:reduce){
   .viewfade.fwd,.viewfade.back,.viewfade > .body > *{animation:none}
 }
+
+/* ============================================================
+   FIRM SURFACES + A FASTER TAB CHANGE
+   The old transition faded from zero opacity with a full-screen blur, so the
+   page showed through and every card animated at once. Transform only now,
+   nothing see-through, nothing to rasterise.
+   ============================================================ */
+
+/* the screen slides in solid — no fade, no blur */
+.viewfade{
+  will-change:transform;
+  background:var(--paper);
+  min-height:100dvh;
+}
+.viewfade.fwd{animation:slideInFwd .26s cubic-bezier(.22,.98,.3,1) both}
+.viewfade.back{animation:slideInBack .26s cubic-bezier(.22,.98,.3,1) both}
+@keyframes slideInFwd{
+  from{transform:translate3d(30px,0,0)}
+  to{transform:translate3d(0,0,0)}
+}
+@keyframes slideInBack{
+  from{transform:translate3d(-30px,0,0)}
+  to{transform:translate3d(0,0,0)}
+}
+/* the per-card stagger was the actual lag — one moving layer, not twenty */
+.viewfade.fwd > .body > *,
+.viewfade.back > .body > *{animation:none !important}
+
+/* a fixed background repaints on every scroll frame on mobile */
+body{background-attachment:scroll}
+
+/* ---------- the bar: still glass, no longer see-through ---------- */
+.nav.glass::before{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88)),
+    var(--card);
+  backdrop-filter:blur(16px) saturate(1.5);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,1) inset,
+    0 -1px 0 rgba(10,45,85,.06) inset,
+    0 -8px 24px -8px rgba(10,45,85,.16),
+    0 20px 44px -20px rgba(10,45,85,.5);
+}
+html[data-theme="dark"] .nav.glass::before{
+  background:
+    linear-gradient(180deg, rgba(30,40,60,.96), rgba(18,24,38,.94)),
+    var(--card);
+  border-color:rgba(255,255,255,.14);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.16) inset,
+    0 -1px 0 rgba(0,0,0,.4) inset,
+    0 20px 44px -20px rgba(0,0,0,.9);
+}
+
+/* the pill reads as a solid key, not a wash */
+.navpill::before{
+  background:linear-gradient(180deg, var(--brand-soft), color-mix(in srgb,var(--brand-soft) 70%, var(--card)));
+  border:1px solid color-mix(in srgb,var(--brand) 26%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 4px 10px -6px rgba(10,45,85,.4);
+}
+html[data-theme="dark"] .navpill::before{
+  background:linear-gradient(180deg, color-mix(in srgb,var(--brand) 30%, var(--card)), var(--brand-soft));
+  border-color:color-mix(in srgb,var(--brand) 42%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.14) inset;
+}
+.navpill{transition:transform .34s cubic-bezier(.3,1.2,.4,1)}
+
+/* sheets were translucent over the page too */
+.sheet{
+  background:var(--card);
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  box-shadow:0 -24px 60px -24px rgba(10,45,85,.55);
+}
+html[data-theme="dark"] .sheet{box-shadow:0 -24px 60px -24px rgba(0,0,0,.95)}
+.scrim{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);background:rgba(6,14,26,.5)}
+
+@media (prefers-reduced-motion:reduce){
+  .viewfade.fwd,.viewfade.back{animation:none}
+  .navpill{transition:none}
+}
