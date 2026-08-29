@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import HomeView from './HomeView';
 import EntriesView from './EntriesView';
@@ -34,7 +33,6 @@ export default function App() {
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
   const [dir, setDir] = useState('fwd');
-  const moving = useRef(false);
 
   // Move between tabs through the View Transitions API when the browser has
   // it, so the two screens cross-dissolve as one surface instead of swapping.
@@ -43,34 +41,8 @@ export default function App() {
     const from = TABS.findIndex((t) => t.id === tab);
     const to = TABS.findIndex((t) => t.id === next);
     const forward = to === -1 || from === -1 ? true : to > from;
-
-    // The direction only drives CSS, so set it on the element rather than in
-    // state: a React render before startViewTransition invalidates the capture
-    // and the transition aborts with an invalid-state error.
-    document.documentElement.dataset.nav = forward ? 'fwd' : 'back';
-
-    const canAnimate =
-      typeof document !== 'undefined' &&
-      document.startViewTransition &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (!canAnimate || moving.current) {
-      setDir(forward ? 'fwd' : 'back');
-      setTab(next);
-      return;
-    }
-
-    moving.current = true;
-    const vt = document.startViewTransition(() => {
-      try {
-        flushSync(() => { setDir(forward ? 'fwd' : 'back'); setTab(next); });
-      } catch (e) {
-        window.__vtCallbackError = String(e && e.message);
-        throw e;
-      }
-    });
-    vt.ready.catch((e) => { window.__vtReadyError = String(e && e.message); });
-    vt.finished.catch(() => {}).finally(() => { moving.current = false; });
+    setDir(forward ? 'fwd' : 'back');
+    setTab(next);
   };
 
   const activeIndex = Math.max(0, TABS.findIndex((t) => t.id === tab));
