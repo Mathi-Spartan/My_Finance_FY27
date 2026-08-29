@@ -3,6 +3,10 @@ import { useMemo, useRef, useState } from 'react';
 import { Refresh, Trash, Close, Check } from './Icons';
 import { parseStatement, analyse, deepAnalyse, merchantOf, categorise } from '@/lib/statement';
 import { money } from '@/lib/finance';
+import {
+  BalanceChart, DailyChart, Heatmap, SizeBands, Projection,
+  Explorer, PayeeSheet, DaySheet,
+} from './StatementExplore';
 
 const fmtDate = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -17,6 +21,8 @@ export default function StatementView() {
   const [how, setHow] = useState('');
   const [excludeSelf, setExcludeSelf] = useState(true);
   const [tab, setTab] = useState('overview');
+  const [payee, setPayee] = useState(null);
+  const [day, setDay] = useState(null);
   const [openCat, setOpenCat] = useState(null);
   const fileRef = useRef(null);
   const pending = useRef(null);
@@ -196,6 +202,7 @@ export default function StatementView() {
             <button className={tab === 'where' ? 'on' : ''} onClick={() => setTab('where')}>Where</button>
             <button className={tab === 'when' ? 'on' : ''} onClick={() => setTab('when')}>When</button>
             <button className={tab === 'debt' ? 'on' : ''} onClick={() => setTab('debt')}>Debt</button>
+            <button className={tab === 'explore' ? 'on' : ''} onClick={() => setTab('explore')}>Explore</button>
           </div>
 
           {tab === 'overview' && (
@@ -307,14 +314,14 @@ export default function StatementView() {
 
               <div className="card">
                 <div className="cardhead"><h4>Who took the most</h4><span>top 12</span></div>
-                {a.byMerchant.slice(0, 12).map((m, i) => (
-                  <div className="rtrow" key={m.key}>
+                {a.byMerchant.slice(0, 15).map((m, i) => (
+                  <button className="rtrow tappable" key={m.key} onClick={() => setPayee(m.key)}>
                     <span className="rtname"><b className="rank">{i + 1}</b>{m.key}</span>
                     <span className="rtmeta">
                       <b>{money(m.total)}</b>
-                      <em>{m.count}× · {money(m.total / m.count)} each</em>
+                      <em>{m.count}× · {money(m.total / m.count)} each →</em>
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </>
@@ -401,6 +408,17 @@ export default function StatementView() {
             </>
           )}
 
+          {tab === 'explore' && (
+            <>
+              <Projection rows={rows} a={a} />
+              <BalanceChart rows={rows} />
+              <DailyChart rows={rows} from={a.from} to={a.to} onDay={setDay} />
+              <Heatmap rows={rows} onCell={(cat) => { setTab('where'); setOpenCat(cat); }} />
+              <SizeBands rows={rows} />
+              <Explorer rows={rows} />
+            </>
+          )}
+
           {tab === 'debt' && (
             <>
               <div className="hero paarihero" style={{ marginTop: 0 }}>
@@ -422,7 +440,7 @@ export default function StatementView() {
                 {d.byLender.map((l, i) => {
                   const share = (l.total / a.debt.total) * 100;
                   return (
-                    <div className="drift" key={l.key}>
+                    <button className="drift tappable" key={l.key} onClick={() => setPayee(l.key)}>
                       <div className="drifttop">
                         <span className="lab"><b className="rank">{i + 1}</b>{l.key}</span>
                         <span className="val">{money(l.total)}</span>
@@ -430,8 +448,8 @@ export default function StatementView() {
                       <div className="track">
                         <div className="fillbar" style={{ width: Math.max(3, share) + '%', background: 'linear-gradient(90deg,#C93A3F,#FF8A80)' }} />
                       </div>
-                      <div className="driftfoot">{l.count} payments · {money(l.total / l.count)} each · {Math.round(share)}% of repayments</div>
-                    </div>
+                      <div className="driftfoot">{l.count} payments · {money(l.total / l.count)} each · {Math.round(share)}% of repayments →</div>
+                    </button>
                   );
                 })}
               </div>
@@ -474,6 +492,9 @@ export default function StatementView() {
           </div>
         </>
       )}
+
+      {payee && <PayeeSheet rows={rows} name={payee} onClose={() => setPayee(null)} />}
+      {day && <DaySheet rows={rows} iso={day} onClose={() => setDay(null)} />}
     </div>
   );
 }
