@@ -2536,3 +2536,128 @@ body,.card,.periodcard,.stable,.loancard,.acctchip,.row.compact,.hero,
 @media (prefers-reduced-motion:reduce){
   body,.card,.hero{transition:none}
 }
+
+/* ============================================================
+   GLASS NAV — one pill that travels, real depth, real blur
+   ============================================================ */
+.nav.glass{
+  background:none;
+  padding:10px 12px calc(14px + env(safe-area-inset-bottom));
+  gap:10px;
+}
+.nav.glass::before{
+  content:'';position:absolute;left:10px;right:10px;top:2px;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  border-radius:28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.42)),
+    color-mix(in srgb, var(--card) 60%, transparent);
+  backdrop-filter:blur(26px) saturate(1.7);
+  -webkit-backdrop-filter:blur(26px) saturate(1.7);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 -1px 0 rgba(10,45,85,.05) inset,
+    0 18px 40px -18px rgba(10,45,85,.45);
+}
+html[data-theme="dark"] .nav.glass::before{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
+    color-mix(in srgb, var(--card) 55%, transparent);
+  border-color:rgba(255,255,255,.13);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.14) inset,
+    0 18px 40px -18px rgba(0,0,0,.85);
+}
+
+.navtabs{
+  position:relative;flex:1;display:grid;
+  grid-template-columns:repeat(var(--n), 1fr);
+  align-items:center;min-width:0;
+}
+
+/* the pill glides to whichever tab is live */
+.navpill{
+  position:absolute;z-index:0;
+  top:0;bottom:0;left:0;
+  width:calc(100% / var(--n));
+  transform:translateX(calc(var(--i) * 100%));
+  transition:transform .52s cubic-bezier(.32,1.28,.38,1), opacity .25s ease;
+  pointer-events:none;
+}
+.navpill::before{
+  content:'';position:absolute;inset:2px 4px;border-radius:15px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.55)),
+    var(--brand-soft);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,1) inset,
+    0 6px 14px -8px rgba(10,45,85,.5);
+}
+html[data-theme="dark"] .navpill::before{
+  background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)), var(--brand-soft);
+  border-color:rgba(255,255,255,.16);
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px -8px rgba(0,0,0,.8);
+}
+.navpill.hidden{opacity:0;transform:translateX(calc(var(--i) * 100%)) scale(.7)}
+
+.nav.glass .navbtn{position:relative;z-index:1;background:none}
+.nav.glass .navbtn::before{display:none}
+.nav.glass .navbtn svg{transition:transform .4s cubic-bezier(.32,1.4,.38,1)}
+.nav.glass .navbtn.on svg{transform:translateY(-1px) scale(1.1)}
+.nav.glass .addbtn{
+  flex:0 0 auto;z-index:1;
+  box-shadow:0 10px 24px -10px var(--g1), 0 1px 0 rgba(255,255,255,.35) inset;
+}
+
+/* ============================================================
+   VIEW TRANSITIONS — the two screens cross-dissolve as one surface
+   ============================================================ */
+@keyframes vtInFwd{
+  from{opacity:0;transform:translate3d(22px,0,0) scale(.985);filter:blur(6px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+@keyframes vtOutFwd{
+  from{opacity:1;transform:none;filter:blur(0)}
+  to{opacity:0;transform:translate3d(-16px,0,0) scale(.99);filter:blur(6px)}
+}
+@keyframes vtInBack{
+  from{opacity:0;transform:translate3d(-22px,0,0) scale(.985);filter:blur(6px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+@keyframes vtOutBack{
+  from{opacity:1;transform:none;filter:blur(0)}
+  to{opacity:0;transform:translate3d(16px,0,0) scale(.99);filter:blur(6px)}
+}
+
+::view-transition-old(root),
+::view-transition-new(root){
+  mix-blend-mode:normal;
+}
+html[data-nav="fwd"]::view-transition-old(root){
+  animation:vtOutFwd .34s cubic-bezier(.4,0,.2,1) both;
+}
+html[data-nav="fwd"]::view-transition-new(root){
+  animation:vtInFwd .42s cubic-bezier(.2,.9,.25,1) both;
+}
+html[data-nav="back"]::view-transition-old(root){
+  animation:vtOutBack .34s cubic-bezier(.4,0,.2,1) both;
+}
+html[data-nav="back"]::view-transition-new(root){
+  animation:vtInBack .42s cubic-bezier(.2,.9,.25,1) both;
+}
+/* the nav must not slide with the page — it stays put and the pill travels */
+.nav.glass{view-transition-name:appnav}
+::view-transition-group(appnav){animation-duration:.01s}
+::view-transition-old(appnav),::view-transition-new(appnav){animation:none;opacity:1}
+
+/* fallback for browsers without the API */
+.viewfade.fwd{animation:vtInFwd .38s cubic-bezier(.2,.9,.25,1) both}
+.viewfade.back{animation:vtInBack .38s cubic-bezier(.2,.9,.25,1) both}
+
+@media (prefers-reduced-motion:reduce){
+  .navpill{transition:none}
+  .viewfade.fwd,.viewfade.back{animation:none}
+  ::view-transition-old(root),::view-transition-new(root){animation:none}
+}
