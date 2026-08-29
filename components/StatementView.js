@@ -24,7 +24,20 @@ export default function StatementView() {
     setBusy(true);
     setMsg(null);
     try {
-      const pdfjs = await import('pdfjs-dist');
+      // Safari before 17.4 has no Promise.withResolvers, which pdf.js calls on
+      // load — without this it fails with "undefined is not a function".
+      if (typeof Promise.withResolvers !== 'function') {
+        Promise.withResolvers = function () {
+          let resolve, reject;
+          const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+          return { promise, resolve, reject };
+        };
+      }
+      if (typeof Array.prototype.at !== 'function') {
+        Array.prototype.at = function (i) { return this[i < 0 ? this.length + i : i]; };
+      }
+
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
       const buf = await file.arrayBuffer();
       const doc = await pdfjs.getDocument({ data: buf, password: password || undefined }).promise;
@@ -65,7 +78,14 @@ export default function StatementView() {
         setMsg({ t: 'err', m: 'That statement is password protected. Enter the password below.' });
         return;
       }
-      setMsg({ t: 'err', m: e?.message || 'Could not read that file.' });
+      const raw = e?.message || String(e);
+      const friendly =
+        /not a function|undefined is not/i.test(raw)
+          ? 'This browser is too old to read PDFs here. Update iOS or Safari, or open the app in Chrome.'
+          : /invalid|corrupt|structure/i.test(raw)
+            ? 'That file could not be opened as a PDF. If it came from an email, try downloading it first.'
+            : raw;
+      setMsg({ t: 'err', m: friendly });
     }
   };
 
