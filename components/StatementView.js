@@ -25,102 +25,50 @@ export default function StatementView() {
     setBusy(true);
     setMsg(null);
     try {
-      // Safari before 17.4 has no Promise.withResolvers, which pdf.js calls on
-      // load — without this it fails with "undefined is not a function".
-      if (typeof Promise.withResolvers !== 'function') {
-        Promise.withResolvers = function () {
-          let resolve, reject;
-          const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
-          return { promise, resolve, reject };
-        };
-      }
-      if (typeof Array.prototype.at !== 'function') {
-        Array.prototype.at = function (i) { return this[i < 0 ? this.length + i : i]; };
-      }
+      // Read on our own server: pdf.js could not be relied on to load across
+      // phones, and the server is one fixed, known environment.
+      const res = await fetch('/api/read-pdf', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/pdf',
+          ...(password ? { 'x-pdf-password': password } : {}),
+        },
+        body: file,
+      });
 
-      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      const buf = await file.arrayBuffer();
-
-      // Open with the background worker; if that fails for any reason — a
-      // blocked worker, a strict engine, an odd network — fall back to a worker
-      // built from a blob, and then to no worker at all on the main thread.
-      const open = async (how) => {
-        if (how === 'src') {
-          pdfjs.GlobalWorkerOptions.workerPort = null;
-          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-        } else if (how === 'blob') {
-          const res = await fetch('/pdf.worker.min.mjs');
-          const code = await res.text();
-          const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
-          pdfjs.GlobalWorkerOptions.workerSrc = '';
-          pdfjs.GlobalWorkerOptions.workerPort = new Worker(url, { type: 'module' });
-        } else {
-          pdfjs.GlobalWorkerOptions.workerPort = null;
-          pdfjs.GlobalWorkerOptions.workerSrc = '';
-        }
-        return pdfjs.getDocument({
-          data: buf.slice(0),
-          password: password || undefined,
-          disableWorker: how === 'none',
-          isEvalSupported: false,
-          useWorkerFetch: false,
-          useSystemFonts: false,
-        }).promise;
-      };
-
-      let doc, lastErr = null;
-      for (const how of ['src', 'blob', 'none']) {
-        try { doc = await open(how); setHow(how); break; }
-        catch (e) {
-          if (/password/i.test(e?.message || '') || e?.name === 'PasswordException') throw e;
-          lastErr = e;
-        }
-      }
-      if (!doc) throw lastErr || new Error('Could not open the PDF');
-
-      let text = '';
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const content = await page.getTextContent();
-        // rebuild lines from item positions, since PDFs have no line breaks
-        const lines = {};
-        content.items.forEach((it) => {
-          const y = Math.round(it.transform[5]);
-          (lines[y] = lines[y] || []).push({ x: it.transform[4], s: it.str });
-        });
-        Object.keys(lines)
-          .sort((p, q) => q - p)
-          .forEach((y) => {
-            text += lines[y].sort((p, q) => p.x - q.x).map((o) => o.s).join(' ') + '\n';
-          });
+      if (res.status === 401) {
+        pending.current = file;
+        setBusy(false);
+        setNeedPass(true);
+        setMsg({ t: 'err', m: password ? 'That password did not open it. Try again.' : 'That statement is password protected.' });
+        return;
       }
 
-      const out = parseStatement(text);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBusy(false);
+        setMsg({ t: 'err', m: data.message ? `Could not read it: ${data.message}` : 'Could not read that file.' });
+        return;
+      }
+
+      const out = parseStatement(data.text || '');
       setBusy(false);
       setNeedPass(false);
       setPass('');
       if (!out.rows.length) {
-        setMsg({ t: 'err', m: 'No transactions found in that PDF. If it is a scanned image rather than text, this cannot read it.' });
+        setMsg({
+          t: 'err',
+          m: `Read ${data.pages || 0} page(s) but found no transactions. If the statement is a scan rather than text, it cannot be read.`,
+        });
         return;
       }
       setRows(out.rows);
       setSkipped(out.skipped);
       setFileName(file.name);
+      setHow('');
     } catch (e) {
       setBusy(false);
-      if (/password/i.test(e?.message || '') || e?.name === 'PasswordException') {
-        pending.current = file;
-        setNeedPass(true);
-        setMsg({ t: 'err', m: 'That statement is password protected. Enter the password below.' });
-        return;
-      }
-      const raw = (e?.message || String(e)).slice(0, 200);
-      setMsg({
-        t: 'err',
-        m: /invalid|corrupt|structure/i.test(raw)
-          ? `That file could not be opened as a PDF. If it came from an email, download it first. (${raw})`
-          : `Could not read it: ${raw}`,
-      });
+      setMsg({ t: 'err', m: `Could not read it: ${(e?.message || String(e)).slice(0, 160)}` });
     }
   };
 
@@ -151,11 +99,12 @@ export default function StatementView() {
       {!rows && (
         <>
           <div className="card">
-            <div className="cardhead"><h4>Read a bank statement</h4><span>stays on this device</span></div>
+            <div className="cardhead"><h4>Read a bank statement</h4><span>nothing is stored</span></div>
             <p className="note" style={{ marginTop: 0 }}>
-              Upload a PDF statement and it is analysed here, in your browser. Nothing is
-              uploaded anywhere and nothing is saved — close the app and it is gone.
-              This is kept entirely separate from your entries.
+              Upload a PDF statement and get a full breakdown of it. The file is read by
+              your own server, in memory, and is never written to disk or saved to your
+              database. The results live only on this screen — close the app and they are
+              gone. This is kept entirely separate from your entries.
             </p>
             <button className="btn" style={{ marginTop: 14 }} disabled={busy}
                     onClick={() => fileRef.current?.click()}>
