@@ -3072,3 +3072,20 @@ body,.card,.hero,.periodcard,.stable,.loancard,.acctchip,.row.compact,
 .fact:nth-child(8){animation-delay:.28s}
 .fact:nth-child(9){animation-delay:.32s}
 .fact:nth-child(10){animation-delay:.36s}
+
+/* the tier cards and hero figures were overflowing on a 390px screen */
+.tierrow{gap:7px}
+.tier{padding:11px 9px 10px;min-width:0}
+.tier .tval{font-size:12px;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tier .tlabel{font-size:8px;letter-spacing:.07em}
+.tier .tfoot{font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.paarigrid .pg{min-width:0}
+.paarigrid .pg .v{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paarigrid .pg .k,.paarigrid .pg .d{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.hero .sublabel{line-height:1.5}
+.attmeta{font-size:9px}
+.fact .fk{font-size:8.5px}
+.fact .fv{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fact .fd{font-size:10px}
