@@ -20,6 +20,10 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
   const [date, setDate] = useState(isoDay(new Date()));
   const [picker, setPicker] = useState(null); // 'cat' | 'acct' | 'to' | 'date'
   const [saving, setSaving] = useState(false);
+  const [phase, setPhase] = useState('idle');   // idle | saving | done
+  const [note, setNote] = useState('');
+  const [showNote, setShowNote] = useState(false);
+  const [again, setAgain] = useState(false);
 
   const amount = Number(raw || 0) || 0;
   // Show the number exactly as typed, only grouping the rupee part.
@@ -77,9 +81,21 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
     });
   };
 
+  const reset = () => {
+    setRaw('');
+    setMerchant('');
+    setCatId(null);
+    setAutoCat(false);
+    setNote('');
+    setShowNote(false);
+  };
+
   const commit = async () => {
-    if (amount <= 0) { say('Enter an amount first'); return; }
-    if (!acctId) { say('Pick an account'); return; }
+    if (phase !== 'idle') return;
+    if (amount <= 0) { say('Enter an amount first'); bump(); return; }
+    if (!acctId) { say('Pick an account'); bump(); return; }
+
+    setPhase('saving');
     setSaving(true);
     const when = new Date(date);
     const now = new Date();
@@ -92,11 +108,30 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
       amount,
       occurred_at: when.toISOString(),
       context: 'personal',
+      note: note.trim(),
       transfer_to: dir === 'transfer' ? toAcctId : null,
     };
     const ok = await addTx(row);
     setSaving(false);
-    if (ok) { say('Entry filed'); onClose(); }
+
+    if (!ok) { setPhase('idle'); return; }
+    setPhase('done');
+    if (navigator.vibrate) navigator.vibrate([8, 40, 14]);
+    setTimeout(() => {
+      if (again) { reset(); setPhase('idle'); }
+      else onClose();
+    }, 700);
+  };
+
+  // a small shake when something is missing
+  const [shake, setShake] = useState(0);
+  const bump = () => { setShake((n) => n + 1); if (navigator.vibrate) navigator.vibrate(30); };
+
+  const quick = (n) => {
+    setRaw((p) => {
+      const next = (Number(p || 0) || 0) + n;
+      return String(next);
+    });
   };
 
   return (
@@ -122,18 +157,29 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
           <>
             <div className="flowhead">
               <button className="icobtn" onClick={onClose} aria-label="Close"><Close width="15" height="15" /></button>
-              <div className="dirseg">
-                <button className={dir === 'in' ? 'on-in' : ''} onClick={() => setDir('in')}>In</button>
-                <button className={dir === 'out' ? 'on-out' : ''} onClick={() => setDir('out')}>Out</button>
-                <button className={dir === 'transfer' ? 'on-tr' : ''} onClick={() => setDir('transfer')}>Move</button>
+              <div className={'dirseg slide pos-' + dir}>
+                <span className="dirpill" />
+                <button className={dir === 'in' ? 'sel' : ''} onClick={() => setDir('in')}>In</button>
+                <button className={dir === 'out' ? 'sel' : ''} onClick={() => setDir('out')}>Out</button>
+                <button className={dir === 'transfer' ? 'sel' : ''} onClick={() => setDir('transfer')}>Move</button>
               </div>
               <div style={{ width: 36 }} />
             </div>
 
             <div className={'amount' + (dir === 'in' ? ' credit' : '')}>
               {dir !== 'transfer' && <span className="sgn">{dir === 'in' ? '+' : '−'}</span>}
-              ₹{typed.whole}
-              {typed.dec !== null && <span className="ghost">.{typed.dec}</span>}
+              <span className="digits">
+                {('₹' + typed.whole).split('').map((ch, i) => (
+                  <span key={ch + i} className="dg">{ch}</span>
+                ))}
+              </span>
+              {typed.dec !== null && (
+                <span className="ghost digits">
+                  {('.' + typed.dec).split('').map((ch, i) => (
+                    <span key={'d' + ch + i} className="dg">{ch}</span>
+                  ))}
+                </span>
+              )}
             </div>
 
             <div className="who">
@@ -197,7 +243,43 @@ export default function AddSheet({ onClose, presetAccount, presetAmount }) {
               <button className="key" onClick={() => press('del')} aria-label="Delete">⌫</button>
             </div>
 
-            <Slider onDone={commit} busy={saving} />
+            {/* quick amounts */}
+            <div className="quickamts">
+              {[100, 500, 1000, 5000].map((n) => (
+                <button key={n} className="qamt" onClick={() => quick(n)}>+{n >= 1000 ? (n / 1000) + 'k' : n}</button>
+              ))}
+              <button className="qamt ghost" onClick={() => setRaw('')} disabled={!raw}>Clear</button>
+            </div>
+
+            {/* optional note */}
+            {showNote ? (
+              <div className="field notefield">
+                <input autoFocus value={note} onChange={(e) => setNote(e.target.value)}
+                       placeholder="Note — what was this for exactly?" />
+              </div>
+            ) : (
+              <button className="addnote" onClick={() => setShowNote(true)}>+ Add a note</button>
+            )}
+
+            <div className="actionrow">
+              <button
+                className={'morph ' + phase + (dir === 'in' ? ' in' : '')}
+                onClick={commit}
+                disabled={phase !== 'idle'}
+                key={shake}
+              >
+                <span className="mlabel">
+                  {dir === 'in' ? 'Add money in' : dir === 'transfer' ? 'Move money' : 'Add money out'}
+                </span>
+                <span className="mspin" />
+                <span className="mtick"><Check width="22" height="22" /></span>
+              </button>
+            </div>
+
+            <button className={'againtoggle' + (again ? ' on' : '')} onClick={() => setAgain((v) => !v)}>
+              <span className="box">{again ? <Check width="11" height="11" /> : null}</span>
+              Keep the sheet open for another
+            </button>
           </>
         )}
       </div>
@@ -257,70 +339,6 @@ function Picker({ kind, cats, accounts, date, onPick, onBack }) {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function Slider({ onDone, busy }) {
-  const wrap = useRef(null), knob = useRef(null), fill = useRef(null);
-  const [done, setDone] = useState(false);
-  const drag = useRef({ on: false, x: 0, max: 0 });
-
-  useEffect(() => {
-    const move = (e) => {
-      if (!drag.current.on) return;
-      const cx = (e.touches ? e.touches[0] : e).clientX;
-      const x = Math.min(drag.current.max, Math.max(0, cx - drag.current.x));
-      knob.current.style.transform = `translateX(${x}px)`;
-      fill.current.style.width = 58 + x + 'px';
-      if (x > drag.current.max * 0.88) finish();
-    };
-    const finish = () => {
-      drag.current.on = false;
-      setDone(true);
-      knob.current.style.transform = `translateX(${drag.current.max}px)`;
-      fill.current.style.width = '100%';
-      if (navigator.vibrate) navigator.vibrate(12);
-      onDone();
-    };
-    const end = () => {
-      if (!drag.current.on) return;
-      drag.current.on = false;
-      knob.current.style.transition = 'transform .2s';
-      knob.current.style.transform = 'translateX(0)';
-      fill.current.style.width = '58px';
-    };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('touchmove', move, { passive: true });
-    window.addEventListener('mouseup', end);
-    window.addEventListener('touchend', end);
-    return () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('touchmove', move);
-      window.removeEventListener('mouseup', end);
-      window.removeEventListener('touchend', end);
-    };
-  }, [onDone]);
-
-  const begin = (e) => {
-    if (done || busy) return;
-    drag.current = {
-      on: true,
-      x: (e.touches ? e.touches[0] : e).clientX,
-      max: wrap.current.clientWidth - 58,
-    };
-    knob.current.style.transition = 'none';
-  };
-
-  return (
-    <div className={'swipe' + (done ? ' done' : '') + (busy ? ' busy' : '')} ref={wrap}>
-      <div className="fill" ref={fill} />
-      <span className="txt">{done ? 'Filed' : 'Slide to file entry'}</span>
-      <div className="knob" ref={knob} onMouseDown={begin} onTouchStart={begin}
-           onDoubleClick={onDone} role="button" tabIndex={0}
-           onKeyDown={(e) => { if (e.key === 'Enter') onDone(); }}>
-        {done ? <Check width="17" height="17" /> : <Arrow width="17" height="17" />}
-      </div>
     </div>
   );
 }

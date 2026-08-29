@@ -2352,3 +2352,129 @@ body{
 .seg-piece.tone-e{background:#7FB6E4}
 .seg-piece.tone-f{background:#E3F0FA}
 .seg-piece .segshare{color:#0A3358}
+
+/* ============================================================
+   ADD SHEET — morphing confirm, sliding direction, live digits
+   ============================================================ */
+
+/* direction control with a pill that slides between the three */
+.dirseg.slide{position:relative;isolation:isolate}
+.dirseg.slide button{
+  position:relative;z-index:1;flex:1;min-width:66px;
+  background:transparent;color:var(--ink-2);transition:color .22s ease;
+}
+.dirseg.slide button.sel{color:#fff}
+.dirpill{
+  position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);
+  border-radius:999px;
+  transition:transform .4s cubic-bezier(.35,1.35,.4,1), background .3s ease;
+}
+.dirseg.pos-in    .dirpill{transform:translateX(0);            background:linear-gradient(135deg,#0E9E6E,#2DBE8A)}
+.dirseg.pos-out   .dirpill{transform:translateX(100%);         background:linear-gradient(135deg,#C93A3F,#E5484D)}
+.dirseg.pos-transfer .dirpill{transform:translateX(200%);      background:linear-gradient(135deg,var(--g1),var(--g2))}
+
+/* every digit lands on its own */
+.digits{display:inline-flex}
+.dg{
+  display:inline-block;
+  animation:digitIn .28s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes digitIn{
+  0%{opacity:0;transform:translateY(14px) scale(.82)}
+  100%{opacity:1;transform:none}
+}
+
+/* quick amounts */
+.quickamts{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.qamt{
+  flex:1;min-width:60px;border:1px solid var(--line);background:var(--card-2);color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;
+  padding:10px 6px;border-radius:12px;
+  transition:transform .13s ease,background .18s ease,color .18s ease,border-color .18s ease;
+}
+.qamt:active{
+  transform:scale(.93);
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border-color:transparent;
+}
+.qamt.ghost{color:var(--ink-3);font-weight:600}
+.qamt:disabled{opacity:.4}
+
+/* note */
+.addnote{
+  width:100%;margin-top:10px;border:1px dashed var(--line);background:transparent;
+  color:var(--ink-3);font-size:12.5px;font-weight:600;padding:10px;border-radius:12px;
+  transition:color .18s ease,border-color .18s ease;
+}
+.addnote:active{color:var(--brand);border-color:var(--brand)}
+.notefield{margin-top:10px;margin-bottom:0;animation:reveal .24s cubic-bezier(.2,.85,.25,1) both}
+
+/* the button that becomes a tick */
+.actionrow{margin-top:14px;display:flex;justify-content:center}
+.morph{
+  position:relative;overflow:hidden;
+  width:100%;height:56px;border:0;border-radius:16px;
+  background:linear-gradient(135deg,#C93A3F,#E5484D);
+  color:#fff;font-size:15.5px;font-weight:700;letter-spacing:-.01em;
+  box-shadow:0 12px 26px -12px rgba(201,58,63,.75);
+  display:grid;place-items:center;
+  animation:nudge .34s cubic-bezier(.36,.07,.19,.97) both;
+  transition:width .42s cubic-bezier(.7,-0.2,.3,1.2),
+             border-radius .42s cubic-bezier(.7,-0.2,.3,1.2),
+             background .3s ease, box-shadow .3s ease;
+}
+.morph.in{
+  background:linear-gradient(135deg,#0E9E6E,#2DBE8A);
+  box-shadow:0 12px 26px -12px rgba(14,158,110,.75);
+}
+.morph:active{transform:scale(.985)}
+@keyframes nudge{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-7px)} 40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)} 80%{transform:translateX(2px)}
+}
+.morph .mlabel{transition:opacity .16s ease}
+.morph .mspin,.morph .mtick{position:absolute;opacity:0;pointer-events:none}
+.morph .mspin{
+  width:22px;height:22px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.28);border-top-color:#fff;
+}
+
+/* collapse to a circle while it saves */
+.morph.saving{width:56px;border-radius:50%}
+.morph.saving .mlabel{opacity:0}
+.morph.saving .mspin{opacity:1;animation:spin .7s linear infinite}
+
+/* then bloom into the tick */
+.morph.done{
+  width:56px;border-radius:50%;
+  background:linear-gradient(135deg,#0E9E6E,#2DBE8A);
+  box-shadow:0 0 0 0 rgba(45,190,138,.55);
+  animation:bloom .6s cubic-bezier(.2,1.4,.4,1) both;
+}
+.morph.done .mlabel{opacity:0}
+.morph.done .mtick{opacity:1;animation:tickIn .4s cubic-bezier(.2,1.6,.4,1) .05s both}
+@keyframes bloom{
+  0%{box-shadow:0 0 0 0 rgba(45,190,138,.5)}
+  70%{box-shadow:0 0 0 18px rgba(45,190,138,0)}
+  100%{box-shadow:0 0 0 0 rgba(45,190,138,0)}
+}
+@keyframes tickIn{from{opacity:0;transform:scale(.4) rotate(-14deg)}to{opacity:1;transform:none}}
+
+/* keep another one coming */
+.againtoggle{
+  display:flex;align-items:center;gap:9px;width:100%;margin-top:12px;
+  background:transparent;border:0;color:var(--ink-3);
+  font-size:12.5px;font-weight:600;padding:4px 2px;
+}
+.againtoggle .box{
+  width:19px;height:19px;border-radius:6px;border:1.5px solid var(--line);
+  display:grid;place-items:center;color:#fff;flex:0 0 auto;
+  transition:background .18s ease,border-color .18s ease;
+}
+.againtoggle.on{color:var(--brand)}
+.againtoggle.on .box{background:var(--brand);border-color:var(--brand)}
+
+@media (prefers-reduced-motion:reduce){
+  .dg,.morph,.morph.done,.morph.done .mtick{animation:none}
+  .dirpill,.morph{transition:none}
+}
