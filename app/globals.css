@@ -2753,3 +2753,26 @@ html[data-theme="dark"] .sheet{box-shadow:0 -24px 60px -24px rgba(0,0,0,.95)}
   .viewfade.fwd,.viewfade.back{animation:none}
   .navpill{transition:none}
 }
+
+/* ============================================================
+   The bar is opaque now, so the backdrop blur was compositing a full-screen
+   layer every frame for an effect you cannot see. Dropped.
+   ============================================================ */
+.nav.glass::before{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  background:linear-gradient(180deg, #FFFFFF, color-mix(in srgb, var(--card) 92%, var(--paper)));
+}
+html[data-theme="dark"] .nav.glass::before{
+  background:linear-gradient(180deg, #1B2437, #131A29);
+}
+
+/* keep the moving screen on its own layer and off the rest of the page */
+.viewfade{contain:layout paint style}
+.nav.glass{contain:layout style}
+
+/* long lists stop laying out what is far off screen */
+.stable .strow-wrap,.triprow,.rowwrap,.loancard{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 64px;
+}
