@@ -62,8 +62,14 @@ export default function App() {
 
     moving.current = true;
     const vt = document.startViewTransition(() => {
-      flushSync(() => { setDir(forward ? 'fwd' : 'back'); setTab(next); });
+      try {
+        flushSync(() => { setDir(forward ? 'fwd' : 'back'); setTab(next); });
+      } catch (e) {
+        window.__vtCallbackError = String(e && e.message);
+        throw e;
+      }
     });
+    vt.ready.catch((e) => { window.__vtReadyError = String(e && e.message); });
     vt.finished.catch(() => {}).finally(() => { moving.current = false; });
   };
 
