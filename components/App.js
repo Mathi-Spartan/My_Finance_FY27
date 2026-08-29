@@ -40,25 +40,31 @@ export default function App() {
   // it, so the two screens cross-dissolve as one surface instead of swapping.
   const go = (next) => {
     if (next === tab) return;
-    // Starting a second transition while one is running aborts both.
-    if (moving.current) { setTab(next); return; }
     const from = TABS.findIndex((t) => t.id === tab);
     const to = TABS.findIndex((t) => t.id === next);
     const forward = to === -1 || from === -1 ? true : to > from;
-    setDir(forward ? 'fwd' : 'back');
+
+    // The direction only drives CSS, so set it on the element rather than in
+    // state: a React render before startViewTransition invalidates the capture
+    // and the transition aborts with an invalid-state error.
     document.documentElement.dataset.nav = forward ? 'fwd' : 'back';
 
-    if (typeof document !== 'undefined' && document.startViewTransition
-        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // The callback has to change the DOM synchronously. Returning a promise
-      // that waits on React's own scheduling times the transition out and the
-      // tab never changes at all, so force the render with flushSync.
-      moving.current = true;
-      const vt = document.startViewTransition(() => { flushSync(() => setTab(next)); });
-      vt.finished.catch(() => {}).finally(() => { moving.current = false; });
-    } else {
+    const canAnimate =
+      typeof document !== 'undefined' &&
+      document.startViewTransition &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!canAnimate || moving.current) {
+      setDir(forward ? 'fwd' : 'back');
       setTab(next);
+      return;
     }
+
+    moving.current = true;
+    const vt = document.startViewTransition(() => {
+      flushSync(() => { setDir(forward ? 'fwd' : 'back'); setTab(next); });
+    });
+    vt.finished.catch(() => {}).finally(() => { moving.current = false; });
   };
 
   const activeIndex = Math.max(0, TABS.findIndex((t) => t.id === tab));
