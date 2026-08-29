@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Refresh, Plus, Gear } from './Icons';
+import { Mark } from './Logo';
 import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
@@ -86,8 +87,12 @@ export default function HomeView({ onAddTo, goTo }) {
   return (
     <div className="body">
       <div className="apphead">
-        <div className="hi">
-          <span className="k">{selected ? 'Account' : 'Everything'}</span>
+        <div className="brandbar">
+          <Mark size={30} />
+          <span className="bbtext">
+            Kanakku
+            <em>{selected ? 'account' : 'every rupee accounted for'}</em>
+          </span>
         </div>
         <div className="spacer" />
         <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">

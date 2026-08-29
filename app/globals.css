@@ -2181,3 +2181,18 @@ button{cursor:pointer}
   font-size:calc(var(--wm) * 0.34);letter-spacing:.22em;text-transform:uppercase;
   color:var(--ink-3);margin-top:4px;
 }
+
+/* brand lockup in the app header */
+.brandbar{display:flex;align-items:center;gap:10px;min-width:0}
+.brandbar svg{flex:0 0 auto;border-radius:9px}
+.bbtext{
+  display:flex;flex-direction:column;line-height:1;min-width:0;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:17px;letter-spacing:-.035em;
+}
+.bbtext em{
+  font-style:normal;font-family:'IBM Plex Mono',monospace;font-weight:600;
+  font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
