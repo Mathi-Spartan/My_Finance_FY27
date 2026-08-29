@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { supabase, configured, apiBase } from '@/lib/supabase';
+import { Mark } from './Logo';
 
 export default function Login() {
   const [mode, setMode] = useState('password'); // password | link

@@ -1,4 +1,4 @@
-// Ledgerline service worker: app shell cache + offline fallback.
+// Kanakku service worker: app shell cache + offline fallback.
 const CACHE = 'kanakku-v1';
 const SHELL = ['/', '/manifest.json', '/icons/icon-192.png'];
 
