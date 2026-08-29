@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
+import useReveal from './useReveal';
 import { useStore } from '@/lib/store';
 import { Search, Refresh, Back, Trash } from './Icons';
 import Portal from './Portal';
@@ -18,6 +19,7 @@ export default function EntriesView({ onEdit }) {
   const [searching, setSearching] = useState(false);
   const [openId, setOpenId] = useState(null);
   const [wipe, setWipe] = useState(false);
+  useReveal([mode, anchor, txs.length, q]);
   const [wiping, setWiping] = useState(false);
 
 
@@ -158,7 +160,7 @@ export default function EntriesView({ onEdit }) {
           const t = rangeTotals(list);
           return (
             <div key={day}>
-              <div className="sechead">
+              <div className="sechead" data-reveal>
                 <h4>{dayLabel(day)}</h4>
                 <span>
                   {t.in > 0 && <em className="pin">+{money(t.in)}</em>}
@@ -169,7 +171,8 @@ export default function EntriesView({ onEdit }) {
                 const c = colorOf(catName[tx.category_id] || tx.merchant);
                 const isIn = tx.direction === 'in';
                 return (
-                  <div key={tx.id} className={'rowwrap' + (openId === tx.id ? ' open' : '') + (justAdded === tx.id ? ' fresh' : '')}>
+                  <div key={tx.id} data-reveal
+                 className={'rowwrap' + (openId === tx.id ? ' open' : '') + (justAdded === tx.id ? ' fresh' : '')}>
                     <button
                       className={'row compact ' + (isIn ? 'r-in' : 'r-out') + (openId === tx.id ? ' open' : '')}
                       onClick={() => setOpenId(openId === tx.id ? null : tx.id)}
