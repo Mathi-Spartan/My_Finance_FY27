@@ -2196,3 +2196,136 @@ button{cursor:pointer}
   color:var(--ink-3);margin-top:4px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+
+/* ============================================================
+   LIGHT THEME — put colour back into the neutrals
+   The dark theme works because the blue glows against black. In light,
+   every grey was desaturated, so the hero was the only colour on screen.
+   These greys are mixed with the brand hue instead of being pure neutral.
+   ============================================================ */
+:root{
+  --paper:#E8EEF6;
+  --card:#FFFFFF;
+  --card-2:#F1F6FC;
+  --ink:#0A1A2B;
+  --ink-2:#4A5D75;
+  --ink-3:#8398B2;
+  --line:#D3E0EE;
+  --line-2:#E4EDF7;
+  --shadow:0 1px 2px rgba(10,45,85,.05), 0 10px 26px -12px rgba(10,45,85,.18);
+}
+
+/* the page itself carries a faint wash, so nothing floats on flat grey */
+body{
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(11,111,191,.10), transparent 62%),
+    var(--paper);
+  background-attachment:fixed;
+}
+[data-theme="dark"] body{
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(79,168,232,.10), transparent 62%),
+    var(--paper);
+}
+
+/* cards get a lit top edge, which is what makes a white surface read as raised */
+.card,.periodcard,.stable,.loancard,.acctchip,.triprow,.paaristrip,
+.row.compact,.rowwrap.open,.acctcard{
+  background-image:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0) 42%);
+}
+[data-theme="dark"] .card,[data-theme="dark"] .periodcard,[data-theme="dark"] .stable,
+[data-theme="dark"] .loancard,[data-theme="dark"] .acctchip,[data-theme="dark"] .triprow,
+[data-theme="dark"] .paaristrip,[data-theme="dark"] .row.compact,[data-theme="dark"] .acctcard{
+  background-image:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,0) 42%);
+}
+
+/* icon buttons stop being grey squares */
+.icobtn{color:var(--brand);background:var(--card);border-color:var(--line)}
+.icobtn:active{background:var(--brand-soft)}
+
+/* section rules and table headers take the brand hue */
+.sechead{border-bottom-color:color-mix(in srgb,var(--brand) 22%,transparent)}
+.sechead h4{color:var(--ink)}
+.sthead{
+  background:linear-gradient(180deg,var(--brand-soft),color-mix(in srgb,var(--brand-soft) 40%,var(--card)));
+  color:color-mix(in srgb,var(--brand) 78%,var(--ink));
+  border-bottom-color:color-mix(in srgb,var(--brand) 24%,transparent);
+}
+.stfoot{background:var(--card-2);border-top-color:color-mix(in srgb,var(--brand) 18%,transparent)}
+
+/* mono labels were nearly invisible on white */
+.pg .k,.stat .k,.psk,.rbk,.cardhead span,.emihead{letter-spacing:.12em}
+.stat{background:var(--card-2);border-color:var(--line-2)}
+
+/* the nav's active tab now fills rather than just changing colour */
+.navbtn{position:relative;padding-top:10px;padding-bottom:8px;border-radius:14px;transition:color .2s ease}
+.navbtn.on{color:var(--brand)}
+.navbtn.on::before{
+  content:'';position:absolute;inset:2px 2px 0;border-radius:12px;
+  background:var(--brand-soft);z-index:-1;
+  animation:tabIn .28s cubic-bezier(.2,1.3,.4,1) both;
+}
+@keyframes tabIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.nav::before{border-color:color-mix(in srgb,var(--brand) 16%,var(--line))}
+
+/* the segmented controls read as controls, not text */
+.seg,.scaleseg,.padswitch,.stepper{
+  background:var(--card);
+  box-shadow:inset 0 1px 2px rgba(10,45,85,.05);
+}
+[data-theme="dark"] .seg,[data-theme="dark"] .scaleseg,
+[data-theme="dark"] .padswitch,[data-theme="dark"] .stepper{box-shadow:none}
+
+/* calculator keys were flat white on white */
+.ckey{background:var(--card);border-color:var(--line)}
+.ckey.fn{background:var(--card-2)}
+.ckey.op{background:var(--brand-soft);border-color:color-mix(in srgb,var(--brand) 26%,transparent)}
+
+/* week strip and calendar cells */
+.day .num{border-color:var(--line)}
+.calendar.v2 .cell{border-color:var(--line)}
+
+/* ============================================================
+   A NEW ENTRY ANNOUNCES ITSELF
+   ============================================================ */
+.rowwrap.fresh .row.compact{
+  animation:landed 2.4s cubic-bezier(.2,.8,.2,1) both;
+  position:relative;
+}
+@keyframes landed{
+  0%  {transform:translateY(-8px) scale(.985);box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 45%,transparent)}
+  12% {transform:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 22%,transparent)}
+  70% {box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 10%,transparent)}
+  100%{box-shadow:0 0 0 0 transparent}
+}
+/* a light sweeps across it once */
+.rowwrap.fresh .row.compact::after{
+  content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(100deg,transparent 20%,color-mix(in srgb,var(--brand) 16%,transparent) 50%,transparent 80%);
+  transform:translateX(-100%);
+  animation:sweep 1.1s cubic-bezier(.3,.7,.3,1) .12s both;
+}
+@keyframes sweep{to{transform:translateX(100%)}}
+
+/* the slider's confirmation reads as a stamp, not a colour change */
+.swipe.done{border-color:var(--in)}
+.swipe.done .knob{animation:stamp .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes stamp{
+  0%{transform:scale(1)} 45%{transform:scale(1.22)} 100%{transform:scale(1)}
+}
+
+/* keypad presses feel physical */
+.key{transition:transform .09s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
+.key:active{
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  transform:scale(.92);box-shadow:0 6px 14px -7px var(--g1);
+}
+
+/* the amount grows very slightly as digits land */
+.amount{transition:transform .12s cubic-bezier(.2,1.5,.4,1)}
+.sheet .amount:not(:empty){will-change:transform}
+
+@media (prefers-reduced-motion:reduce){
+  .rowwrap.fresh .row.compact,.rowwrap.fresh .row.compact::after,
+  .swipe.done .knob,.navbtn.on::before{animation:none}
+}

@@ -11,7 +11,7 @@ import {
 const MODES = [['day', 'Day'], ['week', 'Week'], ['month', 'Month']];
 
 export default function EntriesView({ onEdit }) {
-  const { txs, accounts, categories, reload, loading, deleteMany } = useStore();
+  const { txs, accounts, categories, reload, loading, deleteMany, justAdded } = useStore();
   const [mode, setMode] = useState('month');
   const [anchor, setAnchor] = useState(new Date());
   const [q, setQ] = useState('');
@@ -169,7 +169,7 @@ export default function EntriesView({ onEdit }) {
                 const c = colorOf(catName[tx.category_id] || tx.merchant);
                 const isIn = tx.direction === 'in';
                 return (
-                  <div key={tx.id} className={'rowwrap' + (openId === tx.id ? ' open' : '')}>
+                  <div key={tx.id} className={'rowwrap' + (openId === tx.id ? ' open' : '') + (justAdded === tx.id ? ' fresh' : '')}>
                     <button
                       className={'row compact ' + (isIn ? 'r-in' : 'r-out') + (openId === tx.id ? ' open' : '')}
                       onClick={() => setOpenId(openId === tx.id ? null : tx.id)}
