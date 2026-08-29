@@ -99,6 +99,24 @@ export const NavCalc = ({ solid, ...p }) =>
     </svg>
   );
 
+
+export const NavScan = ({ solid, ...p }) =>
+  solid ? (
+    <svg viewBox="0 0 24 24" {...p}>
+      <path d="M6.4 2.2h7l5.4 5.4v14.2a1.2 1.2 0 01-1.2 1.2H6.4a1.2 1.2 0 01-1.2-1.2V3.4a1.2 1.2 0 011.2-1.2z" fill="currentColor" opacity=".45" />
+      <path d="M13.4 2.2l5.4 5.4h-4.2a1.2 1.2 0 01-1.2-1.2z" fill="currentColor" />
+      <rect x="8" y="16.4" width="2.1" height="3.4" rx="1.05" fill="currentColor" />
+      <rect x="11" y="13.4" width="2.1" height="6.4" rx="1.05" fill="currentColor" />
+      <rect x="14" y="10.6" width="2.1" height="9.2" rx="1.05" fill="currentColor" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" {...{ fill:'none', stroke:'currentColor', strokeWidth:2.1, strokeLinecap:'round', strokeLinejoin:'round' }} {...p}>
+      <path d="M13.4 2.8H6.6a1.8 1.8 0 00-1.8 1.8v14.8a1.8 1.8 0 001.8 1.8h10.8a1.8 1.8 0 001.8-1.8V8.4z" />
+      <path d="M13.4 2.8v4.4a1.2 1.2 0 001.2 1.2h4.6" />
+      <path d="M9 18v-2.4M12 18v-4.8M15 18v-7.2" />
+    </svg>
+  );
+
 export const NAV_ICONS = {
   home: NavHome,
   entries: NavEntries,
@@ -106,4 +124,5 @@ export const NAV_ICONS = {
   drivers: NavDrivers,
   insights: NavPatterns,
   calc: NavCalc,
+  scan: NavScan,
 };

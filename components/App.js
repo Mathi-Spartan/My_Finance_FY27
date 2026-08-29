@@ -14,6 +14,7 @@ import Login from './Login';
 import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
+import StatementView from './StatementView';
 import ThemePicker from './ThemePicker';
 import { THEMES, applyTheme, byId } from '@/lib/themes';
 
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'drivers',  label: 'Drivers' },
   { id: 'insights', label: 'Patterns' },
   { id: 'calc',     label: 'Calc' },
+  { id: 'scan',     label: 'Scan' },
 ];
 
 export default function App() {
@@ -111,6 +113,7 @@ export default function App() {
         {tab === 'paari' && <PaariView />}
         {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
+        {tab === 'scan' && <StatementView />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
