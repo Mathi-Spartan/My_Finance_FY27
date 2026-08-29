@@ -41,6 +41,15 @@ export default function App() {
     const from = TABS.findIndex((t) => t.id === tab);
     const to = TABS.findIndex((t) => t.id === next);
     const forward = to === -1 || from === -1 ? true : to > from;
+
+    // Decorative loops keep compositing while the screen moves, which is where
+    // the dropped frames come from. Pause them for the length of the slide.
+    const root = document.documentElement;
+    root.dataset.nav = forward ? 'fwd' : 'back';
+    root.classList.add('switching');
+    clearTimeout(window.__switchT);
+    window.__switchT = setTimeout(() => root.classList.remove('switching'), 320);
+
     setDir(forward ? 'fwd' : 'back');
     setTab(next);
   };
