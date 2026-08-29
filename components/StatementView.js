@@ -14,6 +14,7 @@ export default function StatementView() {
   const [pass, setPass] = useState('');
   const [needPass, setNeedPass] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [how, setHow] = useState('');
   const [openCat, setOpenCat] = useState(null);
   const fileRef = useRef(null);
   const pending = useRef(null);
@@ -38,9 +39,44 @@ export default function StatementView() {
       }
 
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
       const buf = await file.arrayBuffer();
-      const doc = await pdfjs.getDocument({ data: buf, password: password || undefined }).promise;
+
+      // Open with the background worker; if that fails for any reason — a
+      // blocked worker, a strict engine, an odd network — fall back to a worker
+      // built from a blob, and then to no worker at all on the main thread.
+      const open = async (how) => {
+        if (how === 'src') {
+          pdfjs.GlobalWorkerOptions.workerPort = null;
+          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        } else if (how === 'blob') {
+          const res = await fetch('/pdf.worker.min.mjs');
+          const code = await res.text();
+          const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+          pdfjs.GlobalWorkerOptions.workerSrc = '';
+          pdfjs.GlobalWorkerOptions.workerPort = new Worker(url, { type: 'module' });
+        } else {
+          pdfjs.GlobalWorkerOptions.workerPort = null;
+          pdfjs.GlobalWorkerOptions.workerSrc = '';
+        }
+        return pdfjs.getDocument({
+          data: buf.slice(0),
+          password: password || undefined,
+          disableWorker: how === 'none',
+          isEvalSupported: false,
+          useWorkerFetch: false,
+          useSystemFonts: false,
+        }).promise;
+      };
+
+      let doc, lastErr = null;
+      for (const how of ['src', 'blob', 'none']) {
+        try { doc = await open(how); setHow(how); break; }
+        catch (e) {
+          if (/password/i.test(e?.message || '') || e?.name === 'PasswordException') throw e;
+          lastErr = e;
+        }
+      }
+      if (!doc) throw lastErr || new Error('Could not open the PDF');
 
       let text = '';
       for (let i = 1; i <= doc.numPages; i++) {
@@ -78,14 +114,13 @@ export default function StatementView() {
         setMsg({ t: 'err', m: 'That statement is password protected. Enter the password below.' });
         return;
       }
-      const raw = e?.message || String(e);
-      const friendly =
-        /not a function|undefined is not/i.test(raw)
-          ? 'This browser is too old to read PDFs here. Update iOS or Safari, or open the app in Chrome.'
-          : /invalid|corrupt|structure/i.test(raw)
-            ? 'That file could not be opened as a PDF. If it came from an email, try downloading it first.'
-            : raw;
-      setMsg({ t: 'err', m: friendly });
+      const raw = (e?.message || String(e)).slice(0, 200);
+      setMsg({
+        t: 'err',
+        m: /invalid|corrupt|structure/i.test(raw)
+          ? `That file could not be opened as a PDF. If it came from an email, download it first. (${raw})`
+          : `Could not read it: ${raw}`,
+      });
     }
   };
 
@@ -299,6 +334,7 @@ export default function StatementView() {
           <div className="card">
             <div className="cardhead"><h4>What was read</h4><span>{fileName}</span></div>
             <p className="note" style={{ marginTop: 0 }}>
+              {how && how !== 'src' && <>Opened using the {how === 'blob' ? 'fallback' : 'no-worker'} route. </>}
               {a.count} lines understood{skipped.length > 0 && <>, {skipped.length} skipped as not being transactions</>}.
               {a.openingBalance !== null && <> Balance ran from {money(a.openingBalance)} to {money(a.closingBalance)}.</>}
               {' '}Check a few against the PDF before trusting the totals — statement layouts vary.
