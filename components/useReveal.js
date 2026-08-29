@@ -15,6 +15,11 @@ export default function useReveal(deps = []) {
     // native scroll timelines already handle it; a second animation would fight
     if (CSS.supports?.('animation-timeline: view()')) return;
 
+    // Safety net: if neither path runs for any reason, nothing may stay hidden.
+    const failsafe = setTimeout(() => {
+      document.querySelectorAll('[data-reveal]:not(.seen)').forEach((el) => el.classList.add('seen'));
+    }, 1400);
+
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
         if (e.isIntersecting) e.target.classList.add('seen');
@@ -23,7 +28,7 @@ export default function useReveal(deps = []) {
     );
     const nodes = document.querySelectorAll('[data-reveal]:not(.seen)');
     nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
+    return () => { clearTimeout(failsafe); io.disconnect(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }
