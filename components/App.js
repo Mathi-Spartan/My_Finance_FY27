@@ -14,6 +14,8 @@ import Login from './Login';
 import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
+import ThemePicker from './ThemePicker';
+import { THEMES, applyTheme, byId } from '@/lib/themes';
 
 const TABS = [
   { id: 'home',     label: 'Home' },
@@ -32,6 +34,9 @@ export default function App() {
   const [editing, setEditing] = useState(null);
   const [presetAmount, setPresetAmount] = useState(null);
   const [theme, setTheme] = useState('light');
+  const [palette, setPalette] = useState('azure');
+  const [picking, setPicking] = useState(false);
+  const [flash, setFlash] = useState('');
   const [unlocked, setUnlocked] = useState(false);
   const [dir, setDir] = useState('fwd');
 
@@ -57,16 +62,35 @@ export default function App() {
 
 
   useEffect(() => {
-    const saved = localStorage.getItem('ll-theme') || 'light';
-    setTheme(saved);
-    document.documentElement.dataset.theme = saved;
+    const savedMode = localStorage.getItem('ll-theme') || 'light';
+    const savedPalette = localStorage.getItem('ll-palette') || 'azure';
+    setTheme(savedMode);
+    setPalette(savedPalette);
+    applyTheme(savedPalette, savedMode);
   }, []);
+
+  const usePalette = (id, mode = theme) => {
+    setPalette(id);
+    localStorage.setItem('ll-palette', id);
+    applyTheme(id, mode);
+  };
+
+  // one tap moves to the next palette, so you can flick through them
+  const shuffle = () => {
+    const i = THEMES.findIndex((t) => t.id === palette);
+    const next = THEMES[(i + 1) % THEMES.length];
+    usePalette(next.id);
+    setFlash(next.name);
+    clearTimeout(window.__paletteT);
+    window.__paletteT = setTimeout(() => setFlash(''), 1400);
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    document.documentElement.dataset.theme = next;
     localStorage.setItem('ll-theme', next);
+    applyTheme(palette, next);
   };
 
   useEffect(() => {
@@ -81,7 +105,7 @@ export default function App() {
   return (
     <div className="shell">
       <div key={tab} className={"viewfade " + dir}>
-        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={go} />}
+        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={go} onShuffle={shuffle} onThemes={() => setPicking(true)} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'paari' && <PaariView />}
         {tab === 'drivers' && <DriversView />}
@@ -89,7 +113,7 @@ export default function App() {
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
-        {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
+        {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} palette={palette} onThemes={() => setPicking(true)} />}
       </div>
 
       <nav className="nav solid">
@@ -112,6 +136,12 @@ export default function App() {
 
       {adding && <AddSheet presetAccount={presetAccount} presetAmount={presetAmount} onClose={() => { setAdding(false); setPresetAccount(null); setPresetAmount(null); }} />}
       {editing && <EditSheet tx={editing} onClose={() => setEditing(null)} />}
+      {picking && (
+        <ThemePicker current={palette} mode={theme}
+                     onPick={(id) => usePalette(id)}
+                     onClose={() => setPicking(false)} />
+      )}
+      {flash && <div className="palettetoast">{flash}</div>}
     </div>
   );
 }

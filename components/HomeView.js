@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Refresh, Plus, Gear } from './Icons';
+import { Refresh, Plus, Gear, Palette } from './Icons';
 import { Mark } from './Logo';
 import INRNote, { notesFor } from './INRNote';
 import {
@@ -33,7 +33,7 @@ function useCountUp(target, ms = 700) {
   return v;
 }
 
-export default function HomeView({ onAddTo, goTo }) {
+export default function HomeView({ onAddTo, goTo, onShuffle, onThemes }) {
   const { accounts, txs, appointments, reload, loading } = useStore();
   const [focus, setFocus] = useState(null); // null = everything
   const [burst, setBurst] = useState(null);
@@ -97,6 +97,11 @@ export default function HomeView({ onAddTo, goTo }) {
         <div className="spacer" />
         <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
           <Refresh width="16" height="16" />
+        </button>
+        <button className="icobtn palettebtn" onClick={onShuffle}
+                onContextMenu={(e) => { e.preventDefault(); onThemes && onThemes(); }}
+                aria-label="Next theme">
+          <Palette width="17" height="17" />
         </button>
         <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
           <Gear width="16" height="16" />

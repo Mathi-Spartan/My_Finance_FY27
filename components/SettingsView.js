@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { Moon, Sun, Plus } from './Icons';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
-export default function SettingsView({ theme, toggleTheme }) {
+export default function SettingsView({ theme, toggleTheme, palette, onThemes }) {
   const {
     accounts, categories, txs, settings, session,
     saveAccount, saveCategory, saveSettings, bulkTx, signOut, say,
@@ -121,6 +121,18 @@ export default function SettingsView({ theme, toggleTheme }) {
               Import looks for columns named date, merchant (or description / narration), amount,
               and optionally direction, category, account and context. Anything it can't match lands
               in your first account, uncategorised, for you to fix.
+            </p>
+          </div>
+
+          <div className="card">
+            <div className="cardhead"><h4>Appearance</h4><span>{byId(palette).name}</span></div>
+            <button className="btn ghost" onClick={onThemes}>Choose a theme</button>
+            <button className="btn ghost" style={{ marginTop: 8 }} onClick={toggleTheme}>
+              {theme === 'dark' ? 'Switch to day' : 'Switch to night'}
+            </button>
+            <p className="note">
+              Twenty-five palettes. The paint icon on Home steps through them one tap
+              at a time; hold it to open this list.
             </p>
           </div>
 
