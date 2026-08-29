@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { Refresh, Trash, Close } from './Icons';
+import { Refresh, Trash, Close, Check } from './Icons';
 import { parseStatement, analyse, merchantOf, categorise } from '@/lib/statement';
 import { money } from '@/lib/finance';
 
@@ -15,11 +15,13 @@ export default function StatementView() {
   const [needPass, setNeedPass] = useState(false);
   const [fileName, setFileName] = useState('');
   const [how, setHow] = useState('');
+  const [excludeSelf, setExcludeSelf] = useState(true);
+  const [tab, setTab] = useState('overview');
   const [openCat, setOpenCat] = useState(null);
   const fileRef = useRef(null);
   const pending = useRef(null);
 
-  const a = useMemo(() => (rows && rows.length ? analyse(rows) : null), [rows]);
+  const a = useMemo(() => (rows && rows.length ? analyse(rows, { excludeSelf }) : null), [rows, excludeSelf]);
 
   const read = async (file, password) => {
     setBusy(true);
@@ -135,12 +137,27 @@ export default function StatementView() {
 
       {a && (
         <>
+          {/* what the money actually did */}
           <div className="hero paarihero">
             <div className="eyebrow"><span className="dot warn" />{fmtDate(a.from)} – {fmtDate(a.to)}</div>
             <div className="bignum">
               <span className="cur">₹</span>{Math.round(a.totalOut).toLocaleString('en-IN')}
             </div>
-            <div className="sublabel">spent over {a.days} days · {a.spendCount} payments</div>
+            <div className="sublabel">
+              spent over {a.days} days · {a.spendCount} payments
+              {a.excluded && a.self.total > 0 && <> · {money(a.self.total)} moved between your own accounts is excluded</>}
+            </div>
+
+            <div className="attbar" style={{ marginTop: 16 }}>
+              <span className="attfill used" style={{ width: (a.living.total / a.totalOut) * 100 + '%' }} />
+              <span className="attfill lost" style={{ width: (a.debt.total / a.totalOut) * 100 + '%' }} />
+              <span className="attfill back" style={{ width: (a.people.total / a.totalOut) * 100 + '%' }} />
+            </div>
+            <div className="attmeta">
+              <span>Living {Math.round((a.living.total / a.totalOut) * 100)}%</span>
+              <span>Debt {Math.round((a.debt.total / a.totalOut) * 100)}%</span>
+              <span>People {Math.round((a.people.total / a.totalOut) * 100)}%</span>
+            </div>
 
             <div className="paarigrid">
               <div className="pg">
@@ -149,135 +166,178 @@ export default function StatementView() {
                 <span className="d">{a.incomeCount} credits</span>
               </div>
               <div className="pg">
-                <span className="k">Per day</span>
-                <span className="v">{money(a.perDay)}</span>
-                <span className="d">average</span>
+                <span className="k">A month</span>
+                <span className="v">{money(a.perMonth)}</span>
+                <span className="d">{money(a.perDay)} a day</span>
               </div>
               <div className="pg">
                 <span className="k">Net</span>
                 <span className="v">{a.net < 0 ? '−' : '+'}{money(Math.abs(a.net))}</span>
-                <span className="d">{a.net >= 0 ? 'kept' : 'overspent'}</span>
+                <span className="d">{a.net >= 0 ? 'kept' : 'shortfall'}</span>
               </div>
             </div>
           </div>
 
-          {/* the headline facts, as chips */}
-          <div className="factgrid">
-            <Fact k="Biggest single spend" v={money(a.biggest.amount)} d={merchantOf(a.biggest.description)} tone="out" />
-            <Fact k="Heaviest day" v={money(a.peakDay.total)} d={fmtDate(new Date(a.peakDay.key + 'T12:00:00'))} tone="out" />
-            <Fact k="Most spent on" v={a.busiestWeekday.key + 's'} d={money(a.busiestWeekday.total) + ' in total'} />
-            <Fact k="Typical payment" v={money(a.perTransaction)} d={`smallest ${money(a.smallest.amount)}`} />
-            <Fact k="Days you spent nothing" v={String(a.noSpendDays)} d={`of ${a.days} days`} tone="in" />
-            <Fact k="Small payments" v={money(a.smallSpends.total)} d={`${a.smallSpends.count} under ₹200`} />
+          <button className={'selftoggle' + (excludeSelf ? ' on' : '')} onClick={() => setExcludeSelf((v) => !v)}>
+            <span className="box">{excludeSelf ? <Check width="11" height="11" /> : null}</span>
+            Leave out money moved between your own accounts
+          </button>
+
+          {/* three ways to read the same money */}
+          <div className="tierrow">
+            <Tier label="Living costs" v={a.living.total} n={a.living.count} total={a.totalOut} tone="in" />
+            <Tier label="Debt & cards" v={a.debt.total} n={a.debt.count} total={a.totalOut} tone="out" />
+            <Tier label="Sent to people" v={a.people.total} n={a.people.count} total={a.totalOut} tone="amber" />
           </div>
 
-          {/* where it went */}
-          <div className="card">
-            <div className="cardhead"><h4>Where it went</h4><span>tap for detail</span></div>
-            {a.byCategory.map((c) => {
-              const share = (c.total / a.totalOut) * 100;
-              const open = openCat === c.key;
-              return (
-                <div key={c.key}>
-                  <button className="drift catrow" onClick={() => setOpenCat(open ? null : c.key)}>
-                    <span className="drifttop">
-                      <span className="lab">{c.key}</span>
-                      <span className="val">{Math.round(share)}% · {money(c.total)}</span>
-                    </span>
-                    <span className="track">
-                      <span className="fillbar" style={{
-                        width: Math.max(3, share) + '%',
-                        background: 'linear-gradient(90deg,var(--g1),var(--g3))',
-                      }} />
-                    </span>
-                    <span className="driftfoot">
-                      {c.count} {c.count === 1 ? 'payment' : 'payments'} · {money(c.total / c.count)} each
-                    </span>
-                  </button>
-                  {open && (
-                    <div className="catlist">
-                      {c.items.slice().sort((x, y) => y.amount - x.amount).map((r, i) => (
-                        <div className="catitem" key={i}>
-                          <span className="cidate">{r.iso.slice(8)}/{r.iso.slice(5, 7)}</span>
-                          <span className="ciname">{merchantOf(r.description)}</span>
-                          <span className="ciamt">{money(r.amount)}</span>
-                        </div>
-                      ))}
+          <div className="seg modeseg" style={{ marginTop: 14 }}>
+            <button className={tab === 'overview' ? 'on' : ''} onClick={() => setTab('overview')}>Overview</button>
+            <button className={tab === 'where' ? 'on' : ''} onClick={() => setTab('where')}>Where</button>
+            <button className={tab === 'when' ? 'on' : ''} onClick={() => setTab('when')}>When</button>
+          </div>
+
+          {tab === 'overview' && (
+            <>
+              <div className="factgrid">
+                <Fact k="Biggest single payment" v={money(a.biggest.amount)} d={merchantOf(a.biggest.description)} tone="out" />
+                <Fact k="Heaviest day" v={money(a.peakDay.total)} d={fmtDate(new Date(a.peakDay.key + 'T12:00:00'))} tone="out" />
+                <Fact k="Typical payment" v={money(a.median)} d={`half are under this`} />
+                <Fact k="Average payment" v={money(a.perTransaction)} d={`pulled up by the big ones`} />
+                <Fact k="Largest credit" v={a.biggestIn ? money(a.biggestIn.amount) : '—'} d={a.biggestIn ? merchantOf(a.biggestIn.description) : ''} tone="in" />
+                <Fact k="Payments over ₹10k" v={String(a.bigSpends.count)} d={`${money(a.bigSpends.total)} together`} />
+                <Fact k="Small payments" v={String(a.smallSpends.count)} d={`under ₹200 · ${money(a.smallSpends.total)}`} />
+                <Fact k="Days you spent nothing" v={String(a.noSpendDays)} d={`of ${a.days} days`} tone="in" />
+                <Fact k="Balance low point" v={a.lowestBalance !== null ? money(a.lowestBalance) : '—'} d={`${a.lowBalanceDays} days under ₹1,000`} tone={a.lowBalanceDays > 10 ? 'out' : ''} />
+                <Fact k="Balance high point" v={a.highestBalance !== null ? money(a.highestBalance) : '—'} d={`closed at ${money(a.closingBalance)}`} />
+              </div>
+
+              {a.repeats.filter((r) => r.steady).length > 0 && (
+                <div className="card">
+                  <div className="cardhead"><h4>Same amount, again and again</h4><span>likely fixed commitments</span></div>
+                  {a.repeats.filter((r) => r.steady).slice(0, 8).map((r) => (
+                    <div className="rtrow" key={r.key}>
+                      <span className="rtname">{r.key}</span>
+                      <span className="rtmeta">
+                        <b>{money(r.avg)}</b>
+                        <em>{r.count}× · {money(r.total)} total</em>
+                      </span>
                     </div>
-                  )}
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-
-          {/* who took the money */}
-          <div className="card">
-            <div className="cardhead"><h4>Who you paid most</h4><span>top 8</span></div>
-            {a.byMerchant.slice(0, 8).map((m, i) => (
-              <div className="rtrow" key={m.key}>
-                <span className="rtname"><b className="rank">{i + 1}</b>{m.key}</span>
-                <span className="rtmeta">
-                  <b>{money(m.total)}</b>
-                  <em>{m.count}× · {money(m.total / m.count)} each</em>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* rhythm */}
-          <div className="card">
-            <div className="cardhead"><h4>Your week</h4><span>where spending lands</span></div>
-            <div className="dowrow">
-              {a.byWeekday.map((d) => {
-                const max = Math.max(...a.byWeekday.map((x) => x.total), 1);
-                return (
-                  <div className="dowbar" key={d.key}>
-                    <div className="dowfill" style={{ height: Math.max(5, (d.total / max) * 100) + '%' }} />
-                    <span>{d.key[0]}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="note" style={{ marginTop: 14 }}>
-              <b>{a.busiestWeekday.key}</b> is your heaviest day at {money(a.busiestWeekday.total)}.
-              {a.quietestWeekday && <> The lightest is {a.quietestWeekday.key} at {money(a.quietestWeekday.total)}.</>}
-            </p>
-          </div>
-
-          {a.repeats.length > 0 && (
-            <div className="card">
-              <div className="cardhead"><h4>Paid again and again</h4><span>3+ times</span></div>
-              {a.repeats.slice(0, 8).map((r) => (
-                <div className="rtrow" key={r.key}>
-                  <span className="rtname">{r.key}{r.steady && <em className="steady">same amount</em>}</span>
-                  <span className="rtmeta">
-                    <b>{money(r.total)}</b>
-                    <em>{r.count}× · {money(r.avg)} each</em>
-                  </span>
-                </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
-          {a.byMonth.length > 1 && (
-            <div className="card">
-              <div className="cardhead"><h4>Month by month</h4><span>{a.byMonth.length} months</span></div>
-              {a.byMonth.slice().sort((x, y) => x.key.localeCompare(y.key)).map((m) => {
-                const max = Math.max(...a.byMonth.map((x) => x.total), 1);
-                return (
-                  <div className="drift" key={m.key}>
-                    <div className="drifttop">
-                      <span className="lab">{new Date(m.key + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span>
-                      <span className="val">{money(m.total)}</span>
+          {tab === 'where' && (
+            <>
+              <div className="card">
+                <div className="cardhead"><h4>By category</h4><span>tap for payments</span></div>
+                {a.byCategory.map((c) => {
+                  const share = (c.total / a.totalOut) * 100;
+                  const open = openCat === c.key;
+                  return (
+                    <div key={c.key}>
+                      <button className="drift catrow" onClick={() => setOpenCat(open ? null : c.key)}>
+                        <span className="drifttop">
+                          <span className="lab">{c.key}</span>
+                          <span className="val">{share < 1 ? '<1' : Math.round(share)}% · {money(c.total)}</span>
+                        </span>
+                        <span className="track">
+                          <span className="fillbar" style={{ width: Math.max(2, share) + '%', background: 'linear-gradient(90deg,var(--g1),var(--g3))' }} />
+                        </span>
+                        <span className="driftfoot">{c.count} payments · {money(c.total / c.count)} each</span>
+                      </button>
+                      {open && (
+                        <div className="catlist">
+                          {c.items.slice().sort((x, y) => y.amount - x.amount).slice(0, 40).map((r, i) => (
+                            <div className="catitem" key={i}>
+                              <span className="cidate">{r.iso.slice(8)}/{r.iso.slice(5, 7)}</span>
+                              <span className="ciname">{merchantOf(r.description)}</span>
+                              <span className="ciamt">{money(r.amount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="track">
-                      <div className="fillbar" style={{ width: Math.max(3, (m.total / max) * 100) + '%', background: 'linear-gradient(90deg,var(--g1),var(--g3))' }} />
-                    </div>
-                    <div className="driftfoot">{m.count} payments</div>
+                  );
+                })}
+              </div>
+
+              <div className="card">
+                <div className="cardhead"><h4>Who took the most</h4><span>top 12</span></div>
+                {a.byMerchant.slice(0, 12).map((m, i) => (
+                  <div className="rtrow" key={m.key}>
+                    <span className="rtname"><b className="rank">{i + 1}</b>{m.key}</span>
+                    <span className="rtmeta">
+                      <b>{money(m.total)}</b>
+                      <em>{m.count}× · {money(m.total / m.count)} each</em>
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {tab === 'when' && (
+            <>
+              <div className="card">
+                <div className="cardhead"><h4>Month by month</h4><span>out against in</span></div>
+                {a.byMonth.slice().sort((x, y) => x.key.localeCompare(y.key)).map((m) => {
+                  const inMonth = a.incomeByMonth.find((x) => x.key === m.key);
+                  const max = Math.max(...a.byMonth.map((x) => x.total), ...a.incomeByMonth.map((x) => x.total), 1);
+                  return (
+                    <div className="mrow" key={m.key}>
+                      <div className="mlabel">
+                        {new Date(m.key + '-01T12:00:00').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })}
+                      </div>
+                      <div className="mbars">
+                        <div className="mline">
+                          <span className="mfill out" style={{ width: (m.total / max) * 100 + '%' }} />
+                          <em>{money(m.total)}</em>
+                        </div>
+                        <div className="mline">
+                          <span className="mfill in" style={{ width: ((inMonth?.total || 0) / max) * 100 + '%' }} />
+                          <em>{money(inMonth?.total || 0)}</em>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="legendrow"><span><i className="lg out" />out</span><span><i className="lg in" />in</span></div>
+              </div>
+
+              <div className="card">
+                <div className="cardhead"><h4>Your week</h4><span>where spending lands</span></div>
+                <div className="dowrow">
+                  {a.byWeekday.map((d) => {
+                    const max = Math.max(...a.byWeekday.map((x) => x.total), 1);
+                    return (
+                      <div className="dowbar" key={d.key}>
+                        <div className="dowfill" style={{ height: Math.max(4, (d.total / max) * 100) + '%' }} />
+                        <span>{d.short}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="note" style={{ marginTop: 14 }}>
+                  <b>{a.busiestWeekday.key}</b> costs the most at {money(a.busiestWeekday.total)} across {a.busiestWeekday.count} payments.
+                  {a.quietestWeekday && <> The lightest is {a.quietestWeekday.key} at {money(a.quietestWeekday.total)}.</>}
+                </p>
+              </div>
+
+              <div className="card">
+                <div className="cardhead"><h4>Heaviest days</h4><span>top 8</span></div>
+                {a.byDay.slice(0, 8).map((d) => (
+                  <div className="rtrow" key={d.key}>
+                    <span className="rtname">{fmtDate(new Date(d.key + 'T12:00:00'))}</span>
+                    <span className="rtmeta">
+                      <b>{money(d.total)}</b>
+                      <em>{d.count} payments</em>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="card">
@@ -298,6 +358,18 @@ export default function StatementView() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function Tier({ label, v, n, total, tone }) {
+  const pct = total > 0 ? (v / total) * 100 : 0;
+  return (
+    <div className={'tier ' + tone}>
+      <span className="tlabel">{label}</span>
+      <span className="tval">{money(v)}</span>
+      <span className="tbar"><i style={{ width: Math.max(3, pct) + '%' }} /></span>
+      <span className="tfoot">{Math.round(pct)}% · {n} payments</span>
     </div>
   );
 }
