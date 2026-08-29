@@ -2797,3 +2797,76 @@ html.switching .hero{
 }
 /* the hero's slow gradient drift is the most expensive loop on the page */
 html.switching .hero{animation:none !important}
+
+/* ============================================================
+   NAV — solid, firm, no glass, nothing compositing
+   ============================================================ */
+.nav.solid{
+  background:none;
+  padding:9px 12px calc(12px + env(safe-area-inset-bottom));
+  gap:10px;
+  contain:layout style;
+}
+.nav.solid::before{
+  content:'';position:absolute;left:10px;right:10px;top:0;
+  bottom:calc(7px + env(safe-area-inset-bottom));
+  border-radius:24px;
+  background:var(--card);
+  border:1px solid var(--line);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.85) inset,
+    0 -10px 26px -12px rgba(10,45,85,.14),
+    0 14px 34px -16px rgba(10,45,85,.4);
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+html[data-theme="dark"] .nav.solid::before{
+  background:#161E2E;
+  border-color:#2A3550;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.09) inset,
+    0 14px 34px -16px rgba(0,0,0,.9);
+}
+
+.nav.solid .navtabs{
+  position:relative;flex:1;display:flex;align-items:stretch;gap:2px;min-width:0;
+}
+.nav.solid .navbtn{
+  flex:1;min-width:0;position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:0;background:transparent;color:var(--ink-3);
+  padding:8px 0 6px;border-radius:14px;
+  transition:color .18s ease, background-color .18s ease;
+}
+.nav.solid .navbtn::before{display:none}
+
+/* the active tab is a solid block, set instantly rather than travelling */
+.nav.solid .navbtn.on{
+  color:var(--brand);
+  background:var(--brand-soft);
+}
+html[data-theme="dark"] .nav.solid .navbtn.on{background:#12304C;color:#6FBBF0}
+
+.navico{display:grid;place-items:center;height:22px}
+.navico svg{display:block}
+.nav.solid .navbtn.on .navico{animation:icoPop .3s cubic-bezier(.3,1.5,.4,1) both}
+@keyframes icoPop{0%{transform:scale(.82)}100%{transform:scale(1)}}
+
+.navlabel{
+  font-size:9.5px;font-weight:700;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.nav.solid .navbtn.on .navlabel{font-weight:800}
+
+.nav.solid .addbtn{
+  flex:0 0 auto;z-index:1;
+  padding:12px 16px;border-radius:16px;font-size:13.5px;
+  background:linear-gradient(180deg,var(--g2),var(--g1));
+  box-shadow:0 1px 0 rgba(255,255,255,.28) inset, 0 10px 22px -10px var(--g1);
+}
+.nav.solid .addbtn:active{transform:scale(.95)}
+
+/* narrow phones: keep six tabs legible */
+@media (max-width:380px){
+  .navlabel{font-size:8.5px}
+  .nav.solid .addbtn{padding:12px 13px;font-size:12.5px}
+}

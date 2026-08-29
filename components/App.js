@@ -12,15 +12,16 @@ import PaariView from './PaariView';
 import DriversView from './DriversView';
 import Login from './Login';
 import Lock from './Lock';
-import { Home, Chart, Gear, Plus, Calendar, Calc, Heart, Car } from './Icons';
+import { Plus } from './Icons';
+import { NAV_ICONS } from './NavIcons';
 
 const TABS = [
-  { id: 'home',     label: 'Home',     Icon: Home },
-  { id: 'entries',  label: 'Entries',  Icon: Calendar },
-  { id: 'paari',    label: 'Paari',    Icon: Heart },
-  { id: 'drivers',  label: 'Drivers',  Icon: Car },
-  { id: 'insights', label: 'Patterns', Icon: Chart },
-  { id: 'calc',     label: 'Calc',     Icon: Calc },
+  { id: 'home',     label: 'Home' },
+  { id: 'entries',  label: 'Entries' },
+  { id: 'paari',    label: 'Paari' },
+  { id: 'drivers',  label: 'Drivers' },
+  { id: 'insights', label: 'Patterns' },
+  { id: 'calc',     label: 'Calc' },
 ];
 
 export default function App() {
@@ -54,7 +55,6 @@ export default function App() {
     setTab(next);
   };
 
-  const activeIndex = Math.max(0, TABS.findIndex((t) => t.id === tab));
 
   useEffect(() => {
     const saved = localStorage.getItem('ll-theme') || 'light';
@@ -92,17 +92,21 @@ export default function App() {
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} />}
       </div>
 
-      <nav className="nav glass">
-        <div className="navtabs" style={{ '--n': TABS.length, '--i': activeIndex }}>
-          <span className={'navpill' + (tab === 'settings' ? ' hidden' : '')} />
-          {TABS.map(({ id, label, Icon }) => (
-            <button key={id} className={'navbtn' + (tab === id ? ' on' : '')} onClick={() => go(id)}>
-              <Icon /> {label}
-            </button>
-          ))}
+      <nav className="nav solid">
+        <div className="navtabs">
+          {TABS.map(({ id, label }) => {
+            const Icon = NAV_ICONS[id];
+            const on = tab === id;
+            return (
+              <button key={id} className={'navbtn' + (on ? ' on' : '')} onClick={() => go(id)}>
+                <span className="navico"><Icon solid={on} width="22" height="22" /></span>
+                <span className="navlabel">{label}</span>
+              </button>
+            );
+          })}
         </div>
         <button className="addbtn" onClick={() => { setPresetAccount(null); setPresetAmount(null); setAdding(true); }}>
-          <Plus width="16" height="16" /> Add
+          <Plus width="17" height="17" /> Add
         </button>
       </nav>
 
