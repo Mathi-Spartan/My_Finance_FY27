@@ -2160,3 +2160,24 @@ button{cursor:pointer}
 .msacts button.on.yes{background:var(--in);border-color:var(--in);color:#fff}
 .msacts button.on.no{background:var(--out);border-color:var(--out);color:#fff}
 .msacts button.on.back{background:#2DBE8A;border-color:#2DBE8A;color:#fff}
+
+/* ============================================================
+   BRAND
+   ============================================================ */
+.brandlock{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.brandlock .mark{margin:0}
+.loginbox .mark{
+  font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;
+  letter-spacing:-.045em;
+}
+.wordmark{display:inline-flex;align-items:center;gap:10px}
+.wmtext{
+  display:flex;flex-direction:column;line-height:1;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:var(--wm);letter-spacing:-.04em;
+}
+.wmtext em{
+  font-style:normal;font-family:'IBM Plex Mono',monospace;font-weight:600;
+  font-size:calc(var(--wm) * 0.34);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:4px;
+}

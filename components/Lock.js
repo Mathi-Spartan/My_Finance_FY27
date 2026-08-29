@@ -18,7 +18,7 @@ export default function Lock({ pin, onUnlock }) {
   return (
     <div className="center">
       <div className="loginbox">
-        <div className="mark" style={{ textAlign: 'center' }}>Ledgerline</div>
+        <div className="mark" style={{ textAlign: 'center' }}>Kanakku</div>
         <p className="tag2" style={{ textAlign: 'center' }}>
           {bad ? 'Wrong PIN. Try again.' : 'Enter your PIN'}
         </p>

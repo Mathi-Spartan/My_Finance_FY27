@@ -94,7 +94,7 @@ function Splash() {
   return (
     <div className="center">
       <div className="loginbox" style={{ textAlign: 'center' }}>
-        <div className="mark">Ledgerline</div>
+        <div className="mark">Kanakku</div>
         <p className="tag2">Opening your ledger…</p>
       </div>
     </div>

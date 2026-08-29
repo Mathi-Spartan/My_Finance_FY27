@@ -1,6 +1,6 @@
-# Ledgerline
+# Kanakku
 
-Personal finance tracker. Next.js + Supabase, installable as a PWA — no App Store or Play Store account needed.
+Personal finance tracker. Every rupee accounted for. Next.js + Supabase, installable as a PWA — no App Store or Play Store account needed.
 
 Currency is INR throughout, formatted Indian-style (₹1,24,300, lakh and crore in compact views).
 

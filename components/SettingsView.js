@@ -23,7 +23,7 @@ export default function SettingsView({ theme, toggleTheme }) {
     const blob = new Blob([toCSV(txs, accounts, categories)], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `ledgerline-${isoDay(new Date())}.csv`;
+    a.download = `kanakku-${isoDay(new Date())}.csv`;
     a.click();
   };
 

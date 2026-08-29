@@ -1,5 +1,5 @@
 // Ledgerline service worker: app shell cache + offline fallback.
-const CACHE = 'ledgerline-v1';
+const CACHE = 'kanakku-v1';
 const SHELL = ['/', '/manifest.json', '/icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
