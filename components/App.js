@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useStore } from '@/lib/store';
 import HomeView from './HomeView';
 import EntriesView from './EntriesView';
@@ -46,10 +47,10 @@ export default function App() {
 
     if (typeof document !== 'undefined' && document.startViewTransition
         && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.startViewTransition(() => new Promise((r) => {
-        setTab(next);
-        requestAnimationFrame(() => requestAnimationFrame(r));
-      }));
+      // The callback has to change the DOM synchronously. Returning a promise
+      // that waits on React's own scheduling times the transition out and the
+      // tab never changes at all, so force the render with flushSync.
+      document.startViewTransition(() => { flushSync(() => setTab(next)); });
     } else {
       setTab(next);
     }
