@@ -2776,3 +2776,24 @@ html[data-theme="dark"] .nav.glass::before{
   content-visibility:auto;
   contain-intrinsic-size:auto 64px;
 }
+
+/* nothing decorative runs while a screen is moving */
+html.switching .dnote,
+html.switching .flynote,
+html.switching .bar,
+html.switching .dg,
+html.switching .attfill,
+html.switching .fillbar,
+html.switching .cwash,
+html.switching .cb,
+html.switching .cell,
+html.switching .row,
+html.switching .card,
+html.switching .acctchip,
+html.switching .seg-piece,
+html.switching .triprow,
+html.switching .hero{
+  animation-play-state:paused !important;
+}
+/* the hero's slow gradient drift is the most expensive loop on the page */
+html.switching .hero{animation:none !important}

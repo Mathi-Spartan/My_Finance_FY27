@@ -106,7 +106,7 @@ export default function HomeView({ onAddTo, goTo }) {
       <div className={'hero wallet' + (selected ? ' focused' : '')}>
         {/* ambient notes drifting behind the figures */}
         <div className="drift-notes" aria-hidden="true">
-          {[500, 200, 100, 50, 20].map((v, i) => (
+          {[500, 100, 50].map((v, i) => (
             <INRNote key={v} denom={v} className={'dnote dn' + i} />
           ))}
         </div>
