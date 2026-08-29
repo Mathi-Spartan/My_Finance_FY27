@@ -105,7 +105,8 @@ export default function App() {
   return (
     <div className="shell">
       <div key={tab} className={"viewfade " + dir}>
-        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={go} onShuffle={shuffle} onThemes={() => setPicking(true)} />}
+        {tab === 'home' && <HomeView onAddTo={(id) => { setPresetAccount(id); setAdding(true); }} goTo={go} onShuffle={shuffle} onThemes={() => setPicking(true)}
+                                     theme={theme} toggleTheme={toggleTheme} />}
         {tab === 'entries' && <EntriesView onEdit={setEditing} />}
         {tab === 'paari' && <PaariView />}
         {tab === 'drivers' && <DriversView />}

@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Moon, Sun, Plus } from './Icons';
+import { Palette, Plus } from './Icons';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
 export default function SettingsView({ theme, toggleTheme, palette, onThemes }) {
@@ -64,8 +64,8 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes }) 
           <button className={tab === 'app' ? 'on' : ''} onClick={() => setTab('app')}>App</button>
         </div>
         <div className="spacer" />
-        <button className="icobtn" onClick={toggleTheme} aria-label="Switch theme">
-          {theme === 'dark' ? <Sun width="16" height="16" /> : <Moon width="16" height="16" />}
+        <button className="icobtn" onClick={onThemes} aria-label="Themes">
+          <Palette width="16" height="16" />
         </button>
       </div>
 
@@ -127,12 +127,10 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes }) 
           <div className="card">
             <div className="cardhead"><h4>Appearance</h4><span>{byId(palette).name}</span></div>
             <button className="btn ghost" onClick={onThemes}>Choose a theme</button>
-            <button className="btn ghost" style={{ marginTop: 8 }} onClick={toggleTheme}>
-              {theme === 'dark' ? 'Switch to day' : 'Switch to night'}
-            </button>
             <p className="note">
-              Twenty-five palettes. The paint icon on Home steps through them one tap
-              at a time; hold it to open this list.
+              Twenty-five palettes. On Home, the paint icon steps through them one tap
+              at a time and the moon switches day and night. Hold the paint icon to
+              open this list.
             </p>
           </div>
 

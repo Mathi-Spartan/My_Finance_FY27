@@ -2928,3 +2928,15 @@ body,.card,.hero,.periodcard,.stable,.loancard,.acctchip,.row.compact,
 .nav.solid::before,.navbtn,.sheet,.triprow,.paaristrip,.ckey,.cell,.day .num,.icobtn{
   transition:background-color .3s ease, border-color .3s ease, color .25s ease;
 }
+
+/* four actions in the header now: refresh, day/night, palette, settings */
+.apphead{gap:7px}
+.apphead .icobtn{width:34px;height:34px;border-radius:11px}
+@media (max-width:380px){
+  .apphead .icobtn{width:31px;height:31px}
+  .bbtext{font-size:15.5px}
+  .bbtext em{font-size:8px}
+}
+/* the moon and sun swap with a turn rather than a hard cut */
+.apphead .icobtn svg{transition:transform .3s cubic-bezier(.3,1.3,.4,1)}
+.apphead .icobtn:active svg{transform:rotate(-25deg) scale(.9)}
