@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useStore } from '@/lib/store';
 import HomeView from './HomeView';
@@ -34,11 +34,14 @@ export default function App() {
   const [theme, setTheme] = useState('light');
   const [unlocked, setUnlocked] = useState(false);
   const [dir, setDir] = useState('fwd');
+  const moving = useRef(false);
 
   // Move between tabs through the View Transitions API when the browser has
   // it, so the two screens cross-dissolve as one surface instead of swapping.
   const go = (next) => {
     if (next === tab) return;
+    // Starting a second transition while one is running aborts both.
+    if (moving.current) { setTab(next); return; }
     const from = TABS.findIndex((t) => t.id === tab);
     const to = TABS.findIndex((t) => t.id === next);
     const forward = to === -1 || from === -1 ? true : to > from;
@@ -50,7 +53,9 @@ export default function App() {
       // The callback has to change the DOM synchronously. Returning a promise
       // that waits on React's own scheduling times the transition out and the
       // tab never changes at all, so force the render with flushSync.
-      document.startViewTransition(() => { flushSync(() => setTab(next)); });
+      moving.current = true;
+      const vt = document.startViewTransition(() => { flushSync(() => setTab(next)); });
+      vt.finished.catch(() => {}).finally(() => { moving.current = false; });
     } else {
       setTab(next);
     }
