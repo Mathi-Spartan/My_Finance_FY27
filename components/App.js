@@ -41,6 +41,33 @@ const TAB_SETS = {
   ],
 };
 
+
+// Each world shows its own tabs. Finance keeps the seven it had; the other two
+// are much smaller, which is the point of separating them.
+const TABS = [
+  { id: 'home',     label: 'Home' },
+  { id: 'entries',  label: 'Entries' },
+  { id: 'paari',    label: 'Paari' },
+  { id: 'drivers',  label: 'Drivers' },
+  { id: 'insights', label: 'Patterns' },
+  { id: 'calc',     label: 'Calc' },
+  { id: 'scan',     label: 'Scan' },
+];
+
+const TABS_BY_WORLD = {
+  health: [
+    { id: 'today',  label: 'Today' },
+    { id: 'trends', label: 'Trends' },
+    { id: 'body',   label: 'Body' },
+    { id: 'sleep',  label: 'Sleep' },
+  ],
+  lab: [
+    { id: 'lab',     label: 'The Lab' },
+    { id: 'running', label: 'Running' },
+    { id: 'done',    label: 'Finished' },
+  ],
+};
+
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
   const [tab, setTab] = useState('home');
