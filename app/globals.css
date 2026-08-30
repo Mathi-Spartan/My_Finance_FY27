@@ -3428,3 +3428,66 @@ html[data-theme="dark"] .sheetup{box-shadow:0 -12px 30px -14px rgba(0,0,0,.8)}
 /* the old hero is gone; keep the page flush to the top */
 .body{padding-top:0}
 .skytop + .sheetup .paaristrip{margin-top:4px}
+
+/* ============================================================
+   THIS MONTH + COMING UP
+   ============================================================ */
+.standout{padding:16px 17px 15px}
+.socap{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.sotag{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--brand);
+  background:var(--brand-soft);padding:4px 9px;border-radius:var(--r-xs);
+}
+.soday{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3)}
+.sohead{font-size:16px;font-weight:750;letter-spacing:-.025em;margin-bottom:14px}
+
+/* the spectrum bar, with a pin marking where today sits */
+.spectrum{
+  position:relative;height:9px;border-radius:var(--r-round);
+  background:linear-gradient(90deg,#3FA9E5,#5FD9AF,#FFD166,#FF9F6B,#F26D8A);
+  overflow:visible;margin-bottom:26px;
+}
+.spectrum::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:var(--line-2);
+  clip-path:inset(0 0 0 var(--pin,100%));
+}
+.specfill{display:none}
+.specpin{
+  position:absolute;top:16px;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
+  padding:3px 8px;border-radius:var(--r-xs);white-space:nowrap;
+  animation:pinIn .5s var(--ease-pop) both .25s;
+}
+.specpin::before{
+  content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%);
+  border-left:4px solid transparent;border-right:4px solid transparent;
+  border-bottom:4px solid var(--ink);
+}
+@keyframes pinIn{from{opacity:0;transform:translate(-50%,-5px) scale(.8)}to{opacity:1}}
+.sodetail{font-size:12.5px;line-height:1.55;color:var(--ink-2);margin:0}
+
+/* coming up */
+.comingup{padding-bottom:6px}
+.cuprow{
+  display:grid;grid-template-columns:9px 1fr auto;gap:11px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line-2);
+  animation:rowIn .42s var(--ease-settle) both;
+}
+.cuprow:last-child{border-bottom:0}
+.cuprow:nth-child(3){animation-delay:.04s}
+.cuprow:nth-child(4){animation-delay:.08s}
+.cuprow:nth-child(n+5){animation-delay:.12s}
+.cudot{width:9px;height:9px;border-radius:50%}
+.k-emi .cudot{background:var(--out)}
+.k-session .cudot{background:var(--brand)}
+.k-salary .cudot{background:var(--in)}
+.cumain{display:flex;flex-direction:column;gap:1px;min-width:0}
+.cumain b{font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cumain em{font-style:normal;font-size:10px;color:var(--ink-3)}
+.cuside{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.cuside b{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.cuside em{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3)}
+.cuside em.soon{color:var(--out);font-weight:700}

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Refresh, Plus, Gear, Palette, Moon, Sun, Eye, EyeOff } from './Icons';
 import { Mark } from './Logo';
+import { upcoming, standout } from '@/lib/home-cards';
 import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
@@ -34,7 +35,7 @@ function useCountUp(target, ms = 700) {
 }
 
 export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, toggleTheme }) {
-  const { accounts, txs, appointments, reload, loading } = useStore();
+  const { accounts, txs, appointments, loans, loanPayments, salary, reload, loading } = useStore();
   const [focus, setFocus] = useState(null); // null = everything
   const [burst, setBurst] = useState(null);
   const prev = useRef(null);
@@ -43,6 +44,14 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
   const paari = useMemo(() => sessionReport(appointments || []), [appointments]);
   const trend = useMemo(() => balanceTrend(txs, accounts, 30), [txs, accounts]);
   const [hidden, setHidden] = useState(false);
+  const due = useMemo(
+    () => upcoming({ loans, loanPayments, appointments, salary }),
+    [loans, loanPayments, appointments, salary]
+  );
+  const note = useMemo(
+    () => standout({ txs, appointments, loans, accounts }),
+    [txs, appointments, loans, accounts]
+  );
   const month = useMemo(() => totals(txs), [txs]);
   const balances = useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
   const flow = useMemo(() => accountFlow(txs), [txs]);
@@ -144,6 +153,41 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
 
       <div className="sheetup">
         <span className="sheetgrab" />
+
+        {/* the month, as a spectrum, with where today sits on it */}
+        <div className="card standout">
+          <div className="socap">
+            <span className="sotag">This month</span>
+            <span className="soday">Day {note.dayOfMonth} of {note.daysInMonth}</span>
+          </div>
+          <div className="sohead">{note.headline}</div>
+          <div className="spectrum" style={{ '--pin': note.monthProgress + '%' }}>
+            <span className="specfill" style={{ width: note.monthProgress + '%' }} />
+            <span className="specpin" style={{ left: note.monthProgress + '%' }}>
+              {Math.round(note.monthProgress)}%
+            </span>
+          </div>
+          <p className="sodetail">{hidden ? 'Figures hidden.' : note.detail}</p>
+        </div>
+
+        {due.length > 0 && (
+          <div className="card comingup">
+            <div className="cardhead"><h4>Coming up</h4><span>next {due.length}</span></div>
+            {due.map((u, i) => (
+              <div className={'cuprow k-' + u.kind} key={i}>
+                <span className="cudot" />
+                <span className="cumain">
+                  <b>{u.title}</b>
+                  <em>{u.sub}</em>
+                </span>
+                <span className="cuside">
+                  <b>{hidden ? '••••' : money(u.amount)}</b>
+                  <em className={u.days <= 1 ? 'soon' : ''}>{u.when}</em>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {paari.total.sessions > 0 && (
           <button className="paaristrip" onClick={() => goTo && goTo('paari')}>
