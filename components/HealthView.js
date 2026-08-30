@@ -1,14 +1,14 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Refresh, Plus, Close } from './Icons';
+import { Refresh, Plus, Close, Gear } from './Icons';
 import Portal from './Portal';
 import { healthReport, series, hhmm, METRICS, isoDay } from '@/lib/health';
 
 const num = (v, dp = 0) =>
   v === null || v === undefined || Number.isNaN(v) ? '—' : Number(v).toLocaleString('en-IN', { maximumFractionDigits: dp });
 
-export default function HealthView({ tab }) {
+export default function HealthView({ tab, goTo }) {
   const { healthDays, saveHealthDay, reload, loading } = useStore();
   const [adding, setAdding] = useState(false);
   const r = useMemo(() => healthReport(healthDays || []), [healthDays]);
@@ -18,9 +18,14 @@ export default function HealthView({ tab }) {
       <div className="body">
         <div className="pagehead">
           <h2>Nalam</h2>
-          <button className="icobtn" onClick={() => setAdding(true)} aria-label="Add a day">
-            <Plus width="16" height="16" />
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="icobtn" onClick={() => setAdding(true)} aria-label="Add a day">
+              <Plus width="16" height="16" />
+            </button>
+            <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
+              <Gear width="16" height="16" />
+            </button>
+          </div>
         </div>
         <div className="card">
           <div className="cardhead"><h4>Nothing here yet</h4><span>waiting for data</span></div>
@@ -45,6 +50,9 @@ export default function HealthView({ tab }) {
           </button>
           <button className="icobtn" onClick={() => setAdding(true)} aria-label="Add a day">
             <Plus width="16" height="16" />
+          </button>
+          <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
+            <Gear width="16" height="16" />
           </button>
         </div>
       </div>

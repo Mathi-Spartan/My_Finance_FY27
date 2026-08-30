@@ -195,13 +195,14 @@ export default function App() {
         {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'scan' && <StatementView />}
-        {['today', 'trends', 'body', 'sleep'].includes(tab) && <HealthView tab={tab} />}
-        {['lab', 'running', 'done'].includes(tab) && <LabView tab={tab} />}
+        {['today', 'trends', 'body', 'sleep'].includes(tab) && <HealthView tab={tab} goTo={go} />}
+        {['lab', 'running', 'done'].includes(tab) && <LabView tab={tab} goTo={go} />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
         {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} palette={palette} onThemes={() => setPicking(true)}
-                                        world={worldOf(world)} onLeaveWorld={leaveWorld} />}
+                                        world={worldOf(world)} onLeaveWorld={leaveWorld}
+                                        onBack={() => go(tabsFor[0].id)} />}
       </div>
 
       <nav className="nav solid">

@@ -1,10 +1,11 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Palette, Plus } from './Icons';
+import { Palette, Plus, Back } from './Icons';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
-export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld }) {
+export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld, onBack }) {
+  const [leaving, setLeaving] = useState(false);
   const {
     accounts, categories, txs, settings, session,
     saveAccount, saveCategory, saveSettings, bulkTx, signOut, say,
@@ -64,6 +65,9 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
           <button className={tab === 'app' ? 'on' : ''} onClick={() => setTab('app')}>App</button>
         </div>
         <div className="spacer" />
+        <button className="icobtn" onClick={() => onBack && onBack()} aria-label="Back">
+          <Back width="16" height="16" />
+        </button>
         <button className="icobtn" onClick={onThemes} aria-label="Themes">
           <Palette width="16" height="16" />
         </button>
@@ -123,6 +127,14 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
               in your first account, uncategorised, for you to fix.
             </p>
           </div>
+
+          {leaving && (
+            <div className="card">
+              <div className="cardhead"><h4>Sign out?</h4><span>you will need your password again</span></div>
+              <button className="btn danger" onClick={signOut}>Yes, sign me out</button>
+              <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => setLeaving(false)}>Stay signed in</button>
+            </div>
+          )}
 
           <div className="card">
             <div className="cardhead"><h4>Appearance</h4><span>{byId(palette).name}</span></div>
@@ -203,7 +215,7 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
           <div className="card">
             <div className="cardhead"><h4>Account</h4><span>signed in</span></div>
             <p className="note" style={{ marginTop: 0, marginBottom: 12 }}>{session?.user?.email}</p>
-            <button className="btn danger" onClick={signOut}>Sign out</button>
+            <button className="btn danger" onClick={() => setLeaving(true)}>Sign out</button>
           </div>
         </>
       )}

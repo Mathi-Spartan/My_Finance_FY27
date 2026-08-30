@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Plus, Close, Trash, Check } from './Icons';
+import { Plus, Close, Trash, Check, Gear } from './Icons';
 import Portal from './Portal';
 import { experimentState, sideEffects, feasibility, METRICS, hhmm, isoDay } from '@/lib/health';
 
@@ -13,7 +13,7 @@ const fmtVal = (metric, v) => {
 };
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-export default function LabView({ tab }) {
+export default function LabView({ tab, goTo }) {
   const { experiments, experimentLogs, healthDays, addExperiment, deleteExperiment, logExperiment } = useStore();
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState(null);
@@ -40,9 +40,14 @@ export default function LabView({ tab }) {
     <div className="body">
       <div className="pagehead">
         <h2>{tab === 'running' ? 'Running' : tab === 'done' ? 'Finished' : 'The Lab'}</h2>
-        <button className="icobtn" onClick={() => setAdding(true)} aria-label="New experiment">
-          <Plus width="16" height="16" />
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="icobtn" onClick={() => setAdding(true)} aria-label="New experiment">
+            <Plus width="16" height="16" />
+          </button>
+          <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
+            <Gear width="16" height="16" />
+          </button>
+        </div>
       </div>
 
       {live.length === 0 ? (
