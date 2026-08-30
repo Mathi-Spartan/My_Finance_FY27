@@ -133,17 +133,40 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
         <div className="skytiles">
           <div className="skytile">
             <span className="stk">In this month</span>
-            <span className="stv">{hidden ? '••••' : money(flow.in)}</span>
+            <span className="stv">{hidden ? '••••' : money(flowNow.in)}</span>
           </div>
           <div className="skytile">
             <span className="stk">Out this month</span>
-            <span className="stv">{hidden ? '••••' : money(flow.out)}</span>
+            <span className="stv">{hidden ? '••••' : money(flowNow.out)}</span>
           </div>
         </div>
       </div>
 
       <div className="sheetup">
         <span className="sheetgrab" />
+
+        {paari.total.sessions > 0 && (
+          <button className="paaristrip" onClick={() => goTo && goTo('paari')}>
+            <span className="psleft">
+              <span className="psk">Paari · therapy</span>
+              <span className="psv">{hidden ? '••••' : money(paari.total.netPaid)}</span>
+              <span className="psd">{paari.months.length} months · {paari.total.sessions} sessions</span>
+            </span>
+            <span className="psright">
+              <span className="psbar">
+                <i className="pb used" style={{ flexGrow: Math.max(paari.total.attendedAmt, 0.001) }} />
+                <i className="pb lost" style={{ flexGrow: Math.max(paari.total.missedAmt, 0.001) }} />
+                <i className="pb open" style={{ flexGrow: Math.max(paari.total.plannedAmt, 0.001) }} />
+              </span>
+              <span className="pstags">
+                <em className="ok">{paari.total.attended} attended</em>
+                {paari.total.missed > 0 && <em className="bad">{paari.total.missed} missed</em>}
+                {paari.total.refund > 0 && <em className="ref">−{money(paari.total.refund)} refunded</em>}
+                {paari.total.planned > 0 && <em>{paari.total.planned} to mark</em>}
+              </span>
+            </span>
+          </button>
+        )}
 
       <div className="chipsrail">
         <button className={'acctchip' + (!focus ? ' on' : '')} onClick={() => setFocus(null)}>
