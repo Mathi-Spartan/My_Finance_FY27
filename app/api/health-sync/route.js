@@ -18,6 +18,24 @@ const FIELDS = [
   'weight_kg', 'body_fat',
 ];
 
+// Shortcuts sends whatever the phone's locale gives: 30/8/2026, 30-08-2026,
+// or an ISO timestamp. Take all of them.
+const asDate = (v) => {
+  if (!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (m) {
+    let [, d, mo, y] = m;
+    if (y.length === 2) y = '20' + y;
+    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  const parsed = new Date(s);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  return null;
+};
+
 const num = (v) => {
   if (v === null || v === undefined || v === '') return null;
   const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
@@ -48,7 +66,13 @@ export async function POST(req) {
   const email = body.email || req.headers.get('x-email');
   const password = body.password || req.headers.get('x-password');
   if (!email || !password) {
-    return Response.json({ message: 'Send email and password, the same ones you sign in with' }, { status: 401 });
+    // Telling you what arrived is the difference between fixing this in one
+    // try and guessing at it.
+    return Response.json({
+      message: 'Send email and password, the same ones you sign in with',
+      received_keys: body && typeof body === 'object' ? Object.keys(body) : typeof body,
+      hint: 'In Shortcuts the Request Body must be JSON, and the field names must be exactly email and password, all lowercase.',
+    }, { status: 401 });
   }
 
   const sb = createClient(url, anon, { auth: { persistSession: false } });
@@ -62,8 +86,8 @@ export async function POST(req) {
   const rejected = [];
 
   for (const r of rows) {
-    const date = String(r.date || r.on_date || '').slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { rejected.push({ why: 'no valid date', got: r.date ?? null }); continue; }
+    const date = asDate(r.date || r.on_date);
+    if (!date) { rejected.push({ why: 'could not read that date', got: r.date ?? r.on_date ?? null }); continue; }
 
     const out = {
       user_id: auth.user.id, on_date: date,
