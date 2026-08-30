@@ -1,6 +1,11 @@
 // Where the iPhone Shortcut posts. Apple gives no web access to Health, so the
-// Shortcut reads the samples and sends them here. Accepts one day or many, and
-// upserts so re-sending the same day corrects rather than duplicates.
+// Shortcut reads the samples and sends them here.
+//
+// No server secrets are needed: the Shortcut sends the same email and password
+// you sign in with, this route signs in as you against Supabase, and writes as
+// you. Row-level security then applies exactly as it does in the browser — the
+// request can only ever touch your own rows. That avoids putting a service-role
+// key anywhere, which would have been able to touch everyone's.
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,51 +24,78 @@ const num = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-export async function POST(req) {
-  const token = req.headers.get('x-sync-key');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const service = process.env.SUPABASE_SERVICE_ROLE;
-  const expected = process.env.HEALTH_SYNC_KEY;
-  const userId = process.env.HEALTH_SYNC_USER;
+// Shortcuts sends sleep as minutes, but people type "7:15" or "7.25" — take all three
+const minutes = (v) => {
+  if (v === null || v === undefined || v === '') return null;
+  const s = String(v).trim();
+  const hm = s.match(/^(\d{1,2})[:h](\d{1,2})/i);
+  if (hm) return Number(hm[1]) * 60 + Number(hm[2]);
+  const n = num(s);
+  if (n === null) return null;
+  return n < 24 ? Math.round(n * 60) : Math.round(n);   // under 24 means hours
+};
 
-  if (!url || !service || !expected || !userId) {
-    return Response.json({
-      message: 'Sync is not configured. Set HEALTH_SYNC_KEY, HEALTH_SYNC_USER and SUPABASE_SERVICE_ROLE.',
-    }, { status: 500 });
-  }
-  if (token !== expected) {
-    return Response.json({ message: 'Wrong or missing x-sync-key' }, { status: 401 });
+export async function POST(req) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    return Response.json({ message: 'Supabase is not configured on this deployment' }, { status: 500 });
   }
 
   let body;
   try { body = await req.json(); } catch { return Response.json({ message: 'Body must be JSON' }, { status: 400 }); }
 
-  const rows = Array.isArray(body) ? body : [body];
+  const email = body.email || req.headers.get('x-email');
+  const password = body.password || req.headers.get('x-password');
+  if (!email || !password) {
+    return Response.json({ message: 'Send email and password, the same ones you sign in with' }, { status: 401 });
+  }
+
+  const sb = createClient(url, anon, { auth: { persistSession: false } });
+  const { data: auth, error: authError } = await sb.auth.signInWithPassword({ email, password });
+  if (authError || !auth?.user) {
+    return Response.json({ message: 'Those credentials were not accepted' }, { status: 401 });
+  }
+
+  const rows = Array.isArray(body.days) ? body.days : Array.isArray(body) ? body : [body];
   const clean = [];
   const rejected = [];
 
   for (const r of rows) {
     const date = String(r.date || r.on_date || '').slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { rejected.push({ row: r, why: 'no valid date' }); continue; }
-    const out = { user_id: userId, on_date: date, source: 'shortcut', updated_at: new Date().toISOString() };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { rejected.push({ why: 'no valid date', got: r.date ?? null }); continue; }
+
+    const out = {
+      user_id: auth.user.id, on_date: date,
+      source: 'shortcut', updated_at: new Date().toISOString(),
+    };
     let any = false;
     for (const f of FIELDS) {
-      const v = num(r[f]);
+      const v = f.endsWith('_min') ? minutes(r[f]) : num(r[f]);
       if (v !== null) { out[f] = v; any = true; }
     }
-    if (!any) { rejected.push({ row: r, why: 'no readable measurements' }); continue; }
+    // a couple of friendlier aliases
+    if (out.sleep_min === undefined && r.sleep !== undefined) {
+      const v = minutes(r.sleep); if (v !== null) { out.sleep_min = v; any = true; }
+    }
+    if (out.weight_kg === undefined && r.weight !== undefined) {
+      const v = num(r.weight); if (v !== null) { out.weight_kg = v; any = true; }
+    }
+    if (!any) { rejected.push({ why: 'no readable measurements', date }); continue; }
     clean.push(out);
   }
 
   if (!clean.length) {
+    await sb.auth.signOut();
     return Response.json({ message: 'Nothing usable in that payload', rejected }, { status: 400 });
   }
 
-  const sb = createClient(url, service, { auth: { persistSession: false } });
   const { data, error } = await sb
     .from('health_days')
     .upsert(clean, { onConflict: 'user_id,on_date' })
     .select('on_date');
+
+  await sb.auth.signOut();
 
   if (error) return Response.json({ message: error.message }, { status: 500 });
 
@@ -71,13 +103,19 @@ export async function POST(req) {
     saved: data?.length || 0,
     dates: (data || []).map((d) => d.on_date),
     rejected: rejected.length,
+    ...(rejected.length ? { why: rejected } : {}),
   });
 }
 
 export async function GET() {
   return Response.json({
     ok: true,
-    how: 'POST JSON here with x-sync-key. One object or an array of them.',
-    shape: { date: 'YYYY-MM-DD', ...Object.fromEntries(FIELDS.map((f) => [f, 'number'])) },
+    how: 'POST JSON with your email and password, plus one day or a list of days.',
+    example: {
+      email: 'you@example.com',
+      password: '••••••',
+      days: [{ date: '2026-08-30', steps: 11240, sleep_min: 408, resting_hr: 61, weight_kg: 74.2 }],
+    },
+    fields: FIELDS,
   });
 }
