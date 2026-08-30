@@ -13,7 +13,7 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
     saveAccount, saveCategory, saveSettings, bulkTx, signOut, say,
     clearAllTx, reload,
   } = useStore();
-  const [tab, setTab] = useState('money');
+  const [tab, setTab] = useState(!world || world.id === 'finance' ? 'money' : 'app');
   const [newAcct, setNewAcct] = useState('');
   
   const file = useRef(null);
