@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Refresh, Plus, Gear, Palette, Moon, Sun } from './Icons';
+import { Refresh, Plus, Gear, Palette, Moon, Sun, Eye, EyeOff } from './Icons';
 import { Mark } from './Logo';
 import INRNote, { notesFor } from './INRNote';
 import {
   money, totals, totalCash, accountBalances, accountFlow,
-  splitName, cardStatus, isCard, sessionReport,
+  splitName, cardStatus, isCard, sessionReport, balanceTrend,
 } from '@/lib/finance';
 
 const TONES = ['tone-a', 'tone-b', 'tone-c', 'tone-d', 'tone-e', 'tone-f'];
@@ -41,6 +41,8 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
 
   const live = useMemo(() => accounts.filter((a) => !a.archived), [accounts]);
   const paari = useMemo(() => sessionReport(appointments || []), [appointments]);
+  const trend = useMemo(() => balanceTrend(txs, accounts, 30), [txs, accounts]);
+  const [hidden, setHidden] = useState(false);
   const month = useMemo(() => totals(txs), [txs]);
   const balances = useMemo(() => accountBalances(accounts, txs), [accounts, txs]);
   const flow = useMemo(() => accountFlow(txs), [txs]);
@@ -86,138 +88,62 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
 
   return (
     <div className="body">
-      <div className="apphead">
-        <div className="brandbar">
-          <Mark size={30} />
-          <span className="bbtext">
-            Kanakku
-            <em>{selected ? 'account' : 'every rupee accounted for'}</em>
+      {/* the gradient runs off the top of the screen; the sheet slides over it */}
+      <div className="skytop">
+        <div className="apphead onsky">
+          <div className="brandbar">
+            <Mark size={30} />
+            <span className="bbtext">
+              Kanakku
+              <em>{selected ? 'account' : 'every rupee accounted for'}</em>
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 7 }}>
+            <button className={'skybtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
+              <Refresh width="16" height="16" />
+            </button>
+            <button className="skybtn" onClick={toggleTheme}
+                    aria-label={theme === 'dark' ? 'Switch to day' : 'Switch to night'}>
+              {theme === 'dark' ? <Sun width="16" height="16" /> : <Moon width="16" height="16" />}
+            </button>
+            <button className="skybtn" onClick={onShuffle}
+                    onContextMenu={(e) => { e.preventDefault(); onThemes && onThemes(); }}
+                    aria-label="Next theme">
+              <Palette width="16" height="16" />
+            </button>
+            <button className="skybtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
+              <Gear width="16" height="16" />
+            </button>
+          </div>
+        </div>
+
+        <div className="skylabel">
+          {selected ? splitName(selected.name).title : `Across ${live.length} accounts`}
+        </div>
+
+        <button className="skybal" onClick={() => setHidden((v) => !v)}>
+          <span className="sbnum">
+            {hidden ? '₹ • • • • •' : <>₹{Math.floor(shown).toLocaleString('en-IN')}<em>.{String(Math.round((shown % 1) * 100)).padStart(2, '0')}</em></>}
           </span>
-        </div>
-        <div className="spacer" />
-        <button className={'icobtn' + (loading ? ' spinning' : '')} onClick={() => reload()} aria-label="Refresh">
-          <Refresh width="16" height="16" />
+          <span className="sbeye">{hidden ? <EyeOff width="15" height="15" /> : <Eye width="15" height="15" />}</span>
         </button>
-        <button className="icobtn" onClick={toggleTheme}
-                aria-label={theme === 'dark' ? 'Switch to day' : 'Switch to night'}>
-          {theme === 'dark' ? <Sun width="17" height="17" /> : <Moon width="17" height="17" />}
-        </button>
-        <button className="icobtn palettebtn" onClick={onShuffle}
-                onContextMenu={(e) => { e.preventDefault(); onThemes && onThemes(); }}
-                aria-label="Next theme">
-          <Palette width="17" height="17" />
-        </button>
-        <button className="icobtn" onClick={() => goTo && goTo('settings')} aria-label="Settings">
-          <Gear width="16" height="16" />
-        </button>
-      </div>
 
-      <div className={'hero wallet' + (selected ? ' focused' : '')}>
-        {/* ambient notes drifting behind the figures */}
-        <div className="drift-notes" aria-hidden="true">
-          {[500, 100, 50].map((v, i) => (
-            <INRNote key={v} denom={v} className={'dnote dn' + i} />
-          ))}
-        </div>
+        <Spark data={trend} />
 
-        {/* a short flurry whenever the balance goes up */}
-        {burst && (
-          <div className="cashfly" key={burst.id} aria-hidden="true">
-            {burst.notes.map((v, i) => (
-              <INRNote key={i} denom={v} className={'flynote fn' + i} />
-            ))}
+        <div className="skytiles">
+          <div className="skytile">
+            <span className="stk">In this month</span>
+            <span className="stv">{hidden ? '••••' : money(flow.in)}</span>
           </div>
-        )}
-
-        <div className="eyebrow">
-          <span className="dot" />
-          {selected
-            ? <>{splitName(selected.name).title} · {splitName(selected.name).sub || (card ? 'Credit card' : 'Account')}</>
-            : <>Across {live.length} accounts</>}
-        </div>
-
-        <div className={'bignum' + (headline < 0 ? ' neg' : '')} key={focus || 'all'}>
-          <span className="cur">{headline < 0 ? '−₹' : '₹'}</span>
-          {whole.toLocaleString('en-IN')}
-          <span className="cent">.{cents}</span>
-        </div>
-        {card && <div className="sublabel">available of {money(card.limit)}</div>}
-
-        {/* the money itself, as one bar */}
-        {!selected && (
-          <div className="spread">
-            {spread.sum > 0
-              ? spread.holders.filter((h) => h.v > 0).map((h) => {
-                  const share = (h.v / spread.sum) * 100;
-                  return (
-                    <button
-                      key={h.a.id}
-                      className={'seg-piece ' + TONES[h.i % TONES.length]}
-                      style={{ flexGrow: Math.max(h.v, spread.sum * 0.04) }}
-                      onClick={() => setFocus(h.a.id)}
-                      title={`${splitName(h.a.name).title} · ${money(h.v)}`}
-                    >
-                      {/* a label only where there's room for one */}
-                      {share >= 9 && <span className="segshare">{Math.round(share)}%</span>}
-                    </button>
-                  );
-                })
-              : <div className="seg-empty" />}
+          <div className="skytile">
+            <span className="stk">Out this month</span>
+            <span className="stv">{hidden ? '••••' : money(flow.out)}</span>
           </div>
-        )}
-
-        <div className="flow">
-          <div className="flowcell">
-            <span className="fl">In this month</span>
-            <span className="fv in">+{money(flowNow.in)}</span>
-          </div>
-          <div className="flowdiv" />
-          <div className="flowcell">
-            <span className="fl">Out this month</span>
-            <span className="fv out">−{money(flowNow.out)}</span>
-          </div>
-        </div>
-
-        <div className="netline">
-          {selected ? (
-            <>
-              <button className="ghostchip" onClick={() => setFocus(null)}>← All accounts</button>
-              <button className="solidchip" onClick={() => onAddTo && onAddTo(selected.id)}>
-                <Plus width="13" height="13" /> Add here
-              </button>
-            </>
-          ) : (
-            <>
-              <span>Net this month</span>
-              <b>{month.net < 0 ? '−' : '+'}{money(month.net)}</b>
-            </>
-          )}
         </div>
       </div>
 
-      {/* the accounts, as tabs on the one surface */}
-      {paari.total.sessions > 0 && (
-        <button className="paaristrip" onClick={() => goTo && goTo('paari')}>
-          <span className="psleft">
-            <span className="psk">Paari · therapy</span>
-            <span className="psv">{money(paari.total.netPaid)}</span>
-            <span className="psd">{paari.months.length} months · {paari.total.sessions} sessions</span>
-          </span>
-          <span className="psright">
-            <span className="psbar">
-              <i className="pb used" style={{ flexGrow: Math.max(paari.total.attendedAmt, 0.001) }} />
-              <i className="pb lost" style={{ flexGrow: Math.max(paari.total.missedAmt, 0.001) }} />
-              <i className="pb open" style={{ flexGrow: Math.max(paari.total.plannedAmt, 0.001) }} />
-            </span>
-            <span className="pstags">
-              <em className="ok">{paari.total.attended} attended</em>
-              {paari.total.missed > 0 && <em className="bad">{paari.total.missed} missed</em>}
-              {paari.total.refund > 0 && <em className="ref">−{money(paari.total.refund)} refunded</em>}
-              {paari.total.planned > 0 && <em>{paari.total.planned} to mark</em>}
-            </span>
-          </span>
-        </button>
-      )}
+      <div className="sheetup">
+        <span className="sheetgrab" />
 
       <div className="chipsrail">
         <button className={'acctchip' + (!focus ? ' on' : '')} onClick={() => setFocus(null)}>
@@ -244,7 +170,40 @@ export default function HomeView({ onAddTo, goTo, onShuffle, onThemes, theme, to
             </button>
           );
         })}
+        </div>
       </div>
     </div>
+  );
+}
+
+/* A 30-day line of where the balance has been. No axes, no labels — it is
+   there to show shape, not to be read off. */
+function Spark({ data }) {
+  if (!data || data.length < 2) return null;
+  const W = 300, H = 54;
+  const vals = data.map((d) => d.value);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = max - min || 1;
+  const pts = data.map((d, i) => [
+    (i / (data.length - 1)) * W,
+    H - ((d.value - min) / span) * (H - 10) - 5,
+  ]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length - 1];
+
+  return (
+    <svg className="spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity=".28" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${line} L ${W} ${H} L 0 ${H} Z`} fill="url(#sparkfill)" />
+      <path d={line} fill="none" stroke="#fff" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
+            className="sparkline" />
+      <circle cx={last[0]} cy={last[1]} r="3.6" fill="#fff" vectorEffect="non-scaling-stroke" />
+    </svg>
   );
 }

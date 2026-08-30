@@ -3302,3 +3302,103 @@ body,.card,.hero,.periodcard,.stable,.loancard,.acctchip,.row.compact,
     opacity:1 !important;transform:none !important;animation:none !important;transition:none !important;
   }
 }
+
+/* ============================================================
+   HOME — gradient running off the top, sheet sliding over it
+   ============================================================ */
+.skytop{
+  position:relative;
+  margin:calc(-1 * env(safe-area-inset-top) - 20px) -18px 0;
+  padding:calc(env(safe-area-inset-top) + 26px) 22px 30px;
+  background:linear-gradient(165deg,var(--g2) 0%,var(--g1) 62%,var(--g1) 100%);
+  color:#fff;
+  overflow:hidden;
+}
+.skytop::before{
+  content:'';position:absolute;right:-70px;top:-90px;width:280px;height:280px;
+  border-radius:50%;background:rgba(255,255,255,.10);
+}
+.skytop::after{
+  content:'';position:absolute;left:-60px;bottom:-120px;width:220px;height:220px;
+  border-radius:50%;background:rgba(255,255,255,.06);
+}
+.skytop > *{position:relative;z-index:1}
+
+.apphead.onsky{margin-bottom:20px}
+.apphead.onsky .bbtext{color:#fff}
+.apphead.onsky .bbtext em{color:rgba(255,255,255,.72)}
+.skybtn{
+  width:34px;height:34px;border-radius:12px;flex:0 0 auto;
+  display:grid;place-items:center;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.24);
+  color:#fff;
+  transition:background .18s ease,transform .14s ease;
+}
+.skybtn:active{background:rgba(255,255,255,.3);transform:scale(.92)}
+.skybtn.spinning svg{animation:spin .9s linear infinite}
+
+.skylabel{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:rgba(255,255,255,.78);margin-bottom:6px;
+}
+.skybal{
+  display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;color:#fff;
+}
+.sbnum{
+  font-family:'IBM Plex Mono',monospace;font-size:38px;font-weight:600;
+  letter-spacing:-.045em;line-height:1.05;
+}
+.sbnum em{font-style:normal;font-size:.52em;opacity:.62;font-weight:500}
+.sbeye{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.15);color:#fff;flex:0 0 auto;
+  transition:background .18s ease;
+}
+.skybal:active .sbeye{background:rgba(255,255,255,.3)}
+
+.spark{width:100%;height:58px;display:block;margin:6px 0 20px;overflow:visible}
+.sparkline{
+  stroke-dasharray:1000;stroke-dashoffset:1000;
+  animation:draw 1.5s cubic-bezier(.3,.8,.3,1) .15s forwards;
+}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.skytiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.skytile{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:16px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:4px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.stk{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;
+  text-transform:uppercase;color:rgba(255,255,255,.75);
+}
+.stv{
+  font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;
+  letter-spacing:-.03em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* the sheet rides up over the gradient */
+.sheetup{
+  position:relative;z-index:2;
+  margin:-22px -18px 0;
+  padding:8px 18px 0;
+  background:var(--paper);
+  border-radius:26px 26px 0 0;
+  box-shadow:0 -12px 30px -14px rgba(10,45,85,.4);
+  min-height:60vh;
+  animation:sheetRise .55s cubic-bezier(.2,.9,.25,1) both;
+}
+@keyframes sheetRise{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}
+.sheetgrab{
+  display:block;width:38px;height:4px;border-radius:99px;
+  background:var(--line);margin:0 auto 14px;
+}
+html[data-theme="dark"] .sheetup{box-shadow:0 -12px 30px -14px rgba(0,0,0,.8)}
+
+/* the old hero is gone; keep the page flush to the top */
+.body{padding-top:0}
+.skytop + .sheetup .paaristrip{margin-top:4px}
