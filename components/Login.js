@@ -97,6 +97,9 @@ export default function Login({ world, onBack }) {
 
   return (
     <div className="center">
+      {onBack && (
+        <button className="backworld" onClick={onBack}>← Choose something else</button>
+      )}
       <div className="loginbox">
         <div className="brandlock">
           <Mark size={54} />
