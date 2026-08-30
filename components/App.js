@@ -106,6 +106,9 @@ export default function App() {
     setTab(w.tabs[0] === 'home' ? 'home' : w.tabs[0]);
   };
 
+  // which tabs this world shows
+  const tabsFor = TABS_BY_WORLD[world] || TABS;
+
   const leaveWorld = () => {
     setWorld(null);
     try { localStorage.removeItem('ll-world'); } catch {}
