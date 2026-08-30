@@ -3,27 +3,35 @@ import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Plus, Close, Trash, Check, Gear } from './Icons';
 import Portal from './Portal';
-import { experimentState, sideEffects, feasibility, METRICS, hhmm, isoDay } from '@/lib/health';
+import { experimentState, feasibility, isoDay, daysFromTxs, MONEY_METRICS } from '@/lib/health';
+import { money as rupees } from '@/lib/finance';
 
 const fmtVal = (metric, v) => {
   if (v === null || v === undefined) return '—';
-  if (metric === 'sleep_min') return hhmm(v);
-  if (metric === 'weight_kg') return Number(v).toFixed(1) + ' kg';
+  if (metric === 'spend_out' || metric === 'money_in') return rupees(v);
   return Number(v).toLocaleString('en-IN');
 };
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 export default function LabView({ tab, goTo }) {
-  const { experiments, experimentLogs, healthDays, addExperiment, deleteExperiment, logExperiment } = useStore();
+  const { experiments, experimentLogs, txs, addExperiment, deleteExperiment, logExperiment } = useStore();
+
+  // a day-per-row view of your money, so experiments have something to check
+  const dayRows = useMemo(() => {
+    if (!experiments?.length) return [];
+    const starts = experiments.map((e) => e.started_on).sort();
+    const from = starts[0] || isoDay(new Date());
+    return daysFromTxs(txs, from, isoDay(new Date()));
+  }, [txs, experiments]);
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState(null);
 
   const live = (experiments || []).filter((e) => !e.archived);
   const states = useMemo(() => {
     const m = {};
-    live.forEach((e) => { m[e.id] = experimentState(e, healthDays || [], experimentLogs || []); });
+    live.forEach((e) => { m[e.id] = experimentState(e, dayRows, experimentLogs || []); });
     return m;
-  }, [live, healthDays, experimentLogs]);
+  }, [live, dayRows, experimentLogs]);
 
   const running = live.filter((e) => states[e.id].remaining > 0 && !states[e.id].failed);
   const finished = live.filter((e) => states[e.id].remaining === 0 || states[e.id].failed);
@@ -54,9 +62,9 @@ export default function LabView({ tab, goTo }) {
         <div className="card">
           <div className="cardhead"><h4>No experiments yet</h4><span>start one</span></div>
           <p className="note" style={{ marginTop: 0 }}>
-            An experiment is a rule and a window. Ten thousand steps a day for thirty days.
-            Seven hours of sleep for three weeks. Anything Health measures is checked for you;
-            anything it cannot, you tick yourself.
+            An experiment is a rule and a window. Spend under five hundred a day for a month.
+            Log every entry for thirty days. Walk every morning. Anything your entries can
+            answer is checked for you; anything else you tick yourself.
           </p>
           <button className="btn" style={{ marginTop: 14 }} onClick={() => setAdding(true)}>Set one up</button>
         </div>
@@ -100,7 +108,7 @@ export default function LabView({ tab, goTo }) {
 
       {adding && (
         <NewExperiment
-          days={healthDays || []}
+          days={dayRows}
           onClose={() => setAdding(false)}
           onSave={async (row) => { await addExperiment(row); setAdding(false); }}
         />
@@ -110,7 +118,7 @@ export default function LabView({ tab, goTo }) {
         <ExperimentSheet
           exp={detail}
           state={states[detail.id]}
-          days={healthDays || []}
+          days={dayRows}
           onClose={() => setOpen(null)}
           onLog={logExperiment}
           onDelete={async () => { await deleteExperiment(detail.id); setOpen(null); }}
@@ -124,15 +132,13 @@ const toneOf = (s) => (s.failed ? 'risk' : s.status === 'at risk' ? 'risk' : s.s
 const chipOf = (s) => (s.failed || s.status === 'at risk' ? 'bad' : s.status === 'wobbling' ? 'warn' : 'on');
 const ruleText = (e) => {
   if (e.metric === 'manual') return 'TICKED BY HAND';
-  const m = METRICS[e.metric];
   const word = e.comparator === 'lte' ? 'AT MOST' : e.comparator === 'eq' ? 'EXACTLY' : 'AT LEAST';
-  return `${word} ${fmtVal(e.metric, e.target).toUpperCase()}`;
+  return `${word} ${fmtVal(e.metric, e.target)}`.toUpperCase();
 };
 
 /* ---------- one experiment ---------- */
 function ExperimentSheet({ exp, state: s, days, onClose, onLog, onDelete }) {
   const [confirm, setConfirm] = useState(false);
-  const effects = useMemo(() => sideEffects(exp, days), [exp, days]);
   const today = s.marks.find((m) => m.today);
   const pct = exp.days ? (s.done / exp.days) * 100 : 0;
 
@@ -205,26 +211,6 @@ function ExperimentSheet({ exp, state: s, days, onClose, onLog, onDelete }) {
               </div>
             </div>
 
-            {effects.length > 0 && (
-              <div className="card">
-                <div className="cardhead"><h4>What else changed</h4><span>since it began</span></div>
-                {effects.map((e) => (
-                  <div className="rtrow" key={e.key}>
-                    <span className="rtname">{e.label}</span>
-                    <span className="rtmeta">
-                      <b>{fmtVal(e.key, e.from)} → {fmtVal(e.key, e.to)}</b>
-                      <em className={e.better ? 'up' : 'down'}>
-                        {e.delta > 0 ? '+' : ''}{e.key === 'sleep_min' ? Math.round(e.delta) + 'm' : e.delta.toFixed(1)}
-                      </em>
-                    </span>
-                  </div>
-                ))}
-                <p className="note" style={{ marginTop: 12, marginBottom: 0 }}>
-                  These moved alongside the experiment. That is not proof it caused them — other
-                  things changed too — but it is what the numbers did.
-                </p>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -234,15 +220,16 @@ function ExperimentSheet({ exp, state: s, days, onClose, onLog, onDelete }) {
 
 /* ---------- setting one up ---------- */
 const PRESETS = [
-  { name: 'Walk 10,000 steps', metric: 'steps', comparator: 'gte', target: 10000, days: 30 },
-  { name: 'Sleep seven hours', metric: 'sleep_min', comparator: 'gte', target: 420, days: 21 },
-  { name: 'Move 500 kcal', metric: 'active_kcal', comparator: 'gte', target: 500, days: 30 },
-  { name: 'Exercise 30 minutes', metric: 'exercise_min', comparator: 'gte', target: 30, days: 30 },
+  { name: 'Spend under ₹500 a day', metric: 'spend_out', comparator: 'lte', target: 500, days: 30 },
+  { name: 'Log every entry', metric: 'entries', comparator: 'gte', target: 1, days: 30 },
+  { name: 'No spending at all', metric: 'spend_out', comparator: 'lte', target: 0, days: 7 },
+  { name: 'Walk every day', metric: 'manual', comparator: 'gte', target: 0, days: 30 },
+  { name: 'No phone before bed', metric: 'manual', comparator: 'gte', target: 0, days: 21 },
 ];
 
 function NewExperiment({ days, onClose, onSave }) {
   const [f, setF] = useState({
-    name: '', metric: 'steps', comparator: 'gte', target: 10000,
+    name: '', metric: 'manual', comparator: 'gte', target: 0,
     days: 30, allowed_misses: 2, started_on: isoDay(new Date()),
   });
   const [busy, setBusy] = useState(false);
@@ -285,9 +272,9 @@ function NewExperiment({ days, onClose, onSave }) {
         <div className="field">
           <label>Measure</label>
           <div className="driverpick">
-            {['steps', 'sleep_min', 'active_kcal', 'exercise_min', 'weight_kg', 'resting_hr', 'manual'].map((m) => (
+            {['manual', 'spend_out', 'money_in', 'entries'].map((m) => (
               <button key={m} className={'dchip' + (f.metric === m ? ' on' : '')} onClick={() => set('metric', m)}>
-                {m === 'manual' ? 'By hand' : METRICS[m].label}
+                {m === 'manual' ? 'By hand' : MONEY_METRICS[m].label}
               </button>
             ))}
           </div>
@@ -305,8 +292,9 @@ function NewExperiment({ days, onClose, onSave }) {
               <input type="number" inputMode="decimal" value={f.target}
                      onChange={(e) => set('target', Number(e.target.value))} />
               <p className="note" style={{ marginTop: 7, marginBottom: 0 }}>
-                {METRICS[f.metric].label}{METRICS[f.metric].unit ? ` in ${METRICS[f.metric].unit}` : ''}
-                {f.metric === 'sleep_min' && ` — 420 is seven hours`}
+                {MONEY_METRICS[f.metric]?.label}
+                {f.metric === 'spend_out' && ' — checked against what actually left your accounts that day'}
+                {f.metric === 'entries' && ' — how many entries you logged that day'}
               </p>
             </div>
           </>

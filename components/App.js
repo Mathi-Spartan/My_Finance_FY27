@@ -17,7 +17,6 @@ import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
 import StatementView from './StatementView';
-import HealthView from './HealthView';
 import LabView from './LabView';
 import ThemePicker from './ThemePicker';
 import { THEMES, applyTheme, byId } from '@/lib/themes';
@@ -54,12 +53,6 @@ const TABS = [
 ];
 
 const TABS_BY_WORLD = {
-  health: [
-    { id: 'today',  label: 'Today' },
-    { id: 'trends', label: 'Trends' },
-    { id: 'body',   label: 'Body' },
-    { id: 'sleep',  label: 'Sleep' },
-  ],
   lab: [
     { id: 'lab',     label: 'The Lab' },
     { id: 'running', label: 'Running' },
@@ -195,7 +188,6 @@ export default function App() {
         {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'scan' && <StatementView />}
-        {['today', 'trends', 'body', 'sleep'].includes(tab) && <HealthView tab={tab} goTo={go} />}
         {['lab', 'running', 'done'].includes(tab) && <LabView tab={tab} goTo={go} />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
