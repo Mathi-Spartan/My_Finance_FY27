@@ -107,6 +107,66 @@ function fromText(text) {
   return out;
 }
 
+// Health Auto Export posts its own shape, and needs no Shortcut built by hand:
+//   { data: { metrics: [ { name:'step_count', units:'count',
+//                          data:[{ date:'2026-08-30 00:00:00 +0530', qty: 8412 }] } ] } }
+// Metric names follow HealthKit, so map them onto our columns.
+const HAE = {
+  step_count: 'steps',
+  apple_exercise_time: 'exercise_min',
+  active_energy: 'active_kcal',
+  basal_energy_burned: null,
+  walking_running_distance: 'distance_km',
+  flights_climbed: 'flights',
+  resting_heart_rate: 'resting_hr',
+  heart_rate_variability: 'hrv',
+  weight_body_mass: 'weight_kg',
+  body_fat_percentage: 'body_fat',
+  sleep_analysis: 'sleep_min',
+  apple_stand_hour: 'stand_hours',
+  apple_stand_time: 'stand_hours',
+};
+
+// its sleep entries carry asleep/deep/rem in hours
+function fromAutoExport(payload) {
+  const metrics = payload?.data?.metrics || payload?.metrics;
+  if (!Array.isArray(metrics)) return null;
+
+  const byDate = {};
+  const put = (date, key, value) => {
+    if (!date || value === null || value === undefined || Number.isNaN(value)) return;
+    byDate[date] = byDate[date] || { date };
+    byDate[date][key] = key === 'steps' || key === 'flights' || key === 'active_kcal'
+      ? Math.round((byDate[date][key] || 0) + value)          // counts add up
+      : value;                                                // measurements replace
+  };
+
+  for (const m of metrics) {
+    const col = HAE[String(m.name || '').toLowerCase()];
+    if (!col) continue;
+    for (const row of m.data || []) {
+      const date = String(row.date || '').slice(0, 10);
+      if (col === 'sleep_min') {
+        const asleep = Number(row.asleep ?? row.totalSleep ?? row.qty);
+        if (!Number.isNaN(asleep)) put(date, 'sleep_min', Math.round(asleep * 60));
+        const deep = Number(row.deep);
+        if (!Number.isNaN(deep)) put(date, 'sleep_deep_min', Math.round(deep * 60));
+        const rem = Number(row.rem);
+        if (!Number.isNaN(rem)) put(date, 'sleep_rem_min', Math.round(rem * 60));
+        continue;
+      }
+      const qty = Number(row.qty ?? row.Avg ?? row.avg);
+      if (Number.isNaN(qty)) continue;
+      put(date, col, col === 'distance_km' || col === 'weight_kg' || col === 'hrv' || col === 'body_fat'
+        ? Math.round(qty * 100) / 100
+        : Math.round(qty));
+    }
+  }
+
+  const days = Object.values(byDate);
+  return days.length ? days : null;
+}
+
 export async function POST(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -148,7 +208,10 @@ export async function POST(req) {
     return Response.json({ message: 'Those credentials were not accepted' }, { status: 401 });
   }
 
-  const rows = Array.isArray(body.days) ? body.days : Array.isArray(body) ? body : [body];
+  // Health Auto Export sends its own structure; take it whole if we see it
+  const autoExport = fromAutoExport(body);
+  const rows = autoExport
+    || (Array.isArray(body.days) ? body.days : Array.isArray(body) ? body : [body]);
   const clean = [];
   const rejected = [];
 
