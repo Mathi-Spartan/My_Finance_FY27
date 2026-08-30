@@ -72,15 +72,37 @@ const ALIASES = {
   date: 'date', day: 'date',
 };
 
-// "steps 8412, sleep 6:48; weight=74.2" -> { steps: '8412', sleep_min: '6:48', ... }
+// A Health Samples variable arrives as raw text: "8412 count", or many
+// samples in a row like "1,234 count 2,001 count 5,177 count". Strip units and
+// thousands separators, then sum what should be summed and average the rest.
+const SUMMED = ['steps', 'active_kcal', 'distance_km', 'flights', 'exercise_min'];
+const KEYWORDS = Object.keys(ALIASES).sort((a, b) => b.length - a.length).join('|');
+
 function fromText(text) {
   const out = {};
-  const cleaned = String(text).replace(/[,;\n]+/g, ' ').trim();
-  const re = /([a-z_]+)\s*[:=]?\s*([0-9]+(?::[0-9]{1,2})?(?:\.[0-9]+)?|[0-9]{1,4}[\/\-.][0-9]{1,2}[\/\-.][0-9]{2,4})/gi;
+  const s = String(text)
+    .replace(/(\d),(?=\d{3}\b)/g, '$1')                 // 1,234 -> 1234
+    .replace(/[;\n]+/g, ' ')
+    // units that trail a number; 'hr' is deliberately absent, it means heart rate
+    .replace(/(\d)\s*(count|steps?|kcal|cal|kg|bpm|km|mi|hours?|mins?|minutes?)\b/gi, '$1')
+    .replace(/,/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const re = new RegExp(
+    `\\b(${KEYWORDS})\\b\\s*[:=]?\\s*(\\d+:\\d{1,2}|(?:\\d+(?:\\.\\d+)?\\s*)+)`, 'gi');
   let m;
-  while ((m = re.exec(cleaned))) {
+  while ((m = re.exec(s))) {
     const key = ALIASES[m[1].toLowerCase()];
-    if (key) out[key] = m[2];
+    if (!key) continue;
+    const nums = m[2].trim().split(/\s+/);
+    if (key === 'date') { out.date = nums[0]; continue; }
+    if (nums.length === 1) { out[key] = nums[0]; continue; }
+    const vals = nums.map(Number).filter((v) => !Number.isNaN(v));
+    if (!vals.length) { out[key] = nums[0]; continue; }
+    out[key] = SUMMED.includes(key)
+      ? String(vals.reduce((a, b) => a + b, 0))
+      : String(vals.reduce((a, b) => a + b, 0) / vals.length);
   }
   return out;
 }
