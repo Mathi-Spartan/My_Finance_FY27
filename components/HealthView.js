@@ -166,8 +166,12 @@ function BodyTab({ r }) {
   const known = line.filter((p) => p.value !== null);
   const first = known[0], last = known[known.length - 1];
   const delta = first && last ? last.value - first.value : null;
-  const perMonth = delta !== null && known.length > 1
-    ? (delta / Math.max(1, (new Date(last.iso) - new Date(first.iso)) / 86400000)) * 30.44 : null;
+  // Extrapolating a monthly rate from two readings a day apart produced
+  // nonsense like "-6.09 a month". Only quote a rate once there is enough
+  // ground under it.
+  const spanDays = first && last ? (new Date(last.iso) - new Date(first.iso)) / 86400000 : 0;
+  const enough = known.length >= 3 && spanDays >= 14;
+  const perMonth = enough ? (delta / spanDays) * 30.44 : null;
 
   return (
     <>
@@ -176,7 +180,9 @@ function BodyTab({ r }) {
         <div className="bignum">{num(r.weight.latest, 1)}<span className="cur" style={{ fontSize: '.36em', marginLeft: 6 }}>kg</span></div>
         <div className="sublabel">
           {delta !== null ? <><b>{delta > 0 ? '+' : ''}{delta.toFixed(1)} kg</b> across {known.length} weigh-ins</> : 'Add a weight to start tracking'}
-          {perMonth !== null && <> · {perMonth > 0 ? '+' : ''}{perMonth.toFixed(2)} a month</>}
+          {perMonth !== null
+            ? <> · {perMonth > 0 ? '+' : ''}{perMonth.toFixed(2)} kg a month</>
+            : known.length > 1 && <> · a rate needs about two weeks of readings</>}
         </div>
       </div>
 
@@ -187,7 +193,8 @@ function BodyTab({ r }) {
         <div className="factgrid" style={{ marginTop: 0 }}>
           <Fact k="Highest" v={num(r.weight.best, 1) + ' kg'} d="in this window" />
           <Fact k="Lowest" v={num(r.weight.low, 1) + ' kg'} d="in this window" tone="in" />
-          <Fact k="Rate" v={perMonth !== null ? `${perMonth > 0 ? '+' : ''}${perMonth.toFixed(2)}` : '—'} d="kg a month" tone={perMonth < 0 ? 'in' : ''} />
+          <Fact k="Rate" v={perMonth !== null ? `${perMonth > 0 ? '+' : ''}${perMonth.toFixed(2)}` : '—'}
+                d={perMonth !== null ? 'kg a month' : `${Math.round(spanDays)} days so far`} tone={perMonth < 0 ? 'in' : ''} />
           <Fact k="Logged" v={String(known.length)} d="days with a reading" />
         </div>
       </div>

@@ -53,6 +53,38 @@ const minutes = (v) => {
   return n < 24 ? Math.round(n * 60) : Math.round(n);   // under 24 means hours
 };
 
+// Adding six fields in the Shortcuts editor is tedious on a phone, so this
+// also accepts one line of free text: "steps 8412 sleep 6:48 weight 74.2".
+// Credentials can ride in the URL, leaving the body with a single field.
+const ALIASES = {
+  steps: 'steps', step: 'steps',
+  sleep: 'sleep_min', sleep_min: 'sleep_min', asleep: 'sleep_min',
+  hr: 'resting_hr', heart: 'resting_hr', resting: 'resting_hr', resting_hr: 'resting_hr',
+  weight: 'weight_kg', kg: 'weight_kg', weight_kg: 'weight_kg',
+  move: 'active_kcal', kcal: 'active_kcal', calories: 'active_kcal', active_kcal: 'active_kcal',
+  distance: 'distance_km', km: 'distance_km', distance_km: 'distance_km',
+  exercise: 'exercise_min', exercise_min: 'exercise_min',
+  flights: 'flights', stairs: 'flights',
+  hrv: 'hrv', fat: 'body_fat', body_fat: 'body_fat',
+  stand: 'stand_hours', stand_hours: 'stand_hours',
+  deep: 'sleep_deep_min', sleep_deep_min: 'sleep_deep_min',
+  rem: 'sleep_rem_min', sleep_rem_min: 'sleep_rem_min',
+  date: 'date', day: 'date',
+};
+
+// "steps 8412, sleep 6:48; weight=74.2" -> { steps: '8412', sleep_min: '6:48', ... }
+function fromText(text) {
+  const out = {};
+  const cleaned = String(text).replace(/[,;\n]+/g, ' ').trim();
+  const re = /([a-z_]+)\s*[:=]?\s*([0-9]+(?::[0-9]{1,2})?(?:\.[0-9]+)?|[0-9]{1,4}[\/\-.][0-9]{1,2}[\/\-.][0-9]{2,4})/gi;
+  let m;
+  while ((m = re.exec(cleaned))) {
+    const key = ALIASES[m[1].toLowerCase()];
+    if (key) out[key] = m[2];
+  }
+  return out;
+}
+
 export async function POST(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -60,11 +92,24 @@ export async function POST(req) {
     return Response.json({ message: 'Supabase is not configured on this deployment' }, { status: 500 });
   }
 
-  let body;
-  try { body = await req.json(); } catch { return Response.json({ message: 'Body must be JSON' }, { status: 400 }); }
+  const qs = new URL(req.url).searchParams;
+  const raw = await req.text();
 
-  const email = body.email || req.headers.get('x-email');
-  const password = body.password || req.headers.get('x-password');
+  let body = {};
+  if (raw && raw.trim().startsWith('{')) {
+    try { body = JSON.parse(raw); } catch { body = {}; }
+  } else if (raw && raw.trim().startsWith('[')) {
+    try { body = { days: JSON.parse(raw) }; } catch { body = {}; }
+  } else if (raw && raw.trim()) {
+    body = fromText(raw);              // plain text posted straight in
+  }
+
+  // one free-text field is far easier to build in Shortcuts than six
+  if (typeof body.data === 'string') Object.assign(body, fromText(body.data));
+  if (typeof body.text === 'string') Object.assign(body, fromText(body.text));
+
+  const email = body.email || qs.get('email') || req.headers.get('x-email');
+  const password = body.password || qs.get('password') || req.headers.get('x-password');
   if (!email || !password) {
     // Telling you what arrived is the difference between fixing this in one
     // try and guessing at it.
@@ -86,8 +131,8 @@ export async function POST(req) {
   const rejected = [];
 
   for (const r of rows) {
-    const date = asDate(r.date || r.on_date);
-    if (!date) { rejected.push({ why: 'could not read that date', got: r.date ?? r.on_date ?? null }); continue; }
+    // no date sent at all means today, which is what a daily automation wants
+    const date = asDate(r.date || r.on_date) || new Date().toISOString().slice(0, 10);
 
     const out = {
       user_id: auth.user.id, on_date: date,

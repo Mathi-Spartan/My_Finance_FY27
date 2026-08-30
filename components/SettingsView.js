@@ -6,6 +6,7 @@ import { byId } from '@/lib/themes';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
 export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld, onBack }) {
+  const financeWorld = !world || world.id === 'finance';
   const [leaving, setLeaving] = useState(false);
   const {
     accounts, categories, txs, settings, session,
@@ -61,10 +62,14 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
   return (
     <div className="body">
       <div className="apphead">
-        <div className="seg">
-          <button className={tab === 'money' ? 'on' : ''} onClick={() => setTab('money')}>Money</button>
-          <button className={tab === 'app' ? 'on' : ''} onClick={() => setTab('app')}>App</button>
-        </div>
+        {financeWorld ? (
+          <div className="seg">
+            <button className={tab === 'money' ? 'on' : ''} onClick={() => setTab('money')}>Money</button>
+            <button className={tab === 'app' ? 'on' : ''} onClick={() => setTab('app')}>App</button>
+          </div>
+        ) : (
+          <h2 style={{ margin: 0 }}>Settings</h2>
+        )}
         <div className="spacer" />
         <button className="icobtn" onClick={() => onBack && onBack()} aria-label="Back">
           <Back width="16" height="16" />
@@ -127,6 +132,12 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
               and optionally direction, category, account and context. Anything it can't match lands
               in your first account, uncategorised, for you to fix.
             </p>
+          </div>
+
+          <div className="card">
+            <div className="cardhead"><h4>Account</h4><span>signed in</span></div>
+            <p className="note" style={{ marginTop: 0, marginBottom: 12 }}>{session?.user?.email}</p>
+            <button className="btn danger" onClick={() => setLeaving(true)}>Sign out</button>
           </div>
 
           {leaving && (
@@ -213,11 +224,7 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
             <p className="note">Asked for each time the app opens. It guards the screen, not the database.</p>
           </div>
 
-          <div className="card">
-            <div className="cardhead"><h4>Account</h4><span>signed in</span></div>
-            <p className="note" style={{ marginTop: 0, marginBottom: 12 }}>{session?.user?.email}</p>
-            <button className="btn danger" onClick={() => setLeaving(true)}>Sign out</button>
-          </div>
+
         </>
       )}
     </div>
