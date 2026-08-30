@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase, configured, apiBase } from '@/lib/supabase';
 import { Mark } from './Logo';
 
-export default function Login() {
+export default function Login({ world, onBack }) {
   const [mode, setMode] = useState('password'); // password | link
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -79,7 +79,13 @@ export default function Login() {
     return (
       <div className="center">
         <div className="loginbox">
-          <div className="brandlock"><Mark size={54} /><div className="mark">Kanakku</div></div>
+          <div className="brandlock">
+          <Mark size={54} />
+          <div>
+            <div className="mark">{world ? world.name : 'Kanakku'}</div>
+            {world && <div className="worldtag">{world.tamil}</div>}
+          </div>
+        </div>
           <p className="tag2">
             Supabase isn&apos;t wired up yet. Add NEXT_PUBLIC_SUPABASE_URL and
             NEXT_PUBLIC_SUPABASE_ANON_KEY to your environment, then reload.
@@ -92,8 +98,14 @@ export default function Login() {
   return (
     <div className="center">
       <div className="loginbox">
-        <div className="brandlock"><Mark size={54} /><div className="mark">Kanakku</div></div>
-        <p className="tag2">Every rupee accounted for.</p>
+        <div className="brandlock">
+          <Mark size={54} />
+          <div>
+            <div className="mark">{world ? world.name : 'Kanakku'}</div>
+            {world && <div className="worldtag">{world.tamil}</div>}
+          </div>
+        </div>
+        <p className="tag2">{world ? world.tagline + '.' : 'Every rupee accounted for.'}</p>
 
         {msg && <div className={'msg ' + msg.t}>{msg.m}</div>}
 

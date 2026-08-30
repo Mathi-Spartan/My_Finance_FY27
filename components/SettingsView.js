@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store';
 import { Palette, Plus } from './Icons';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
-export default function SettingsView({ theme, toggleTheme, palette, onThemes }) {
+export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld }) {
   const {
     accounts, categories, txs, settings, session,
     saveAccount, saveCategory, saveSettings, bulkTx, signOut, say,
@@ -127,6 +127,11 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes }) 
           <div className="card">
             <div className="cardhead"><h4>Appearance</h4><span>{byId(palette).name}</span></div>
             <button className="btn ghost" onClick={onThemes}>Choose a theme</button>
+            {onLeaveWorld && (
+              <button className="worldswitch" onClick={onLeaveWorld}>
+                Currently in <b>{world?.name || 'Kanakku'}</b> — switch to something else
+              </button>
+            )}
             <p className="note">
               Twenty-five palettes. On Home, the paint icon steps through them one tap
               at a time and the moon switches day and night. Hold the paint icon to

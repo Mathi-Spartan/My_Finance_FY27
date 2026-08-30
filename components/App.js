@@ -11,6 +11,8 @@ import CalculatorView from './CalculatorView';
 import PaariView from './PaariView';
 import DriversView from './DriversView';
 import Login from './Login';
+import WorldPicker from './WorldPicker';
+import { worldOf, rememberWorld, lastWorld } from '@/lib/worlds';
 import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
@@ -40,6 +42,7 @@ export default function App() {
   const [picking, setPicking] = useState(false);
   const [flash, setFlash] = useState('');
   const [unlocked, setUnlocked] = useState(false);
+  const [world, setWorld] = useState(null);
   const [dir, setDir] = useState('fwd');
 
   // Move between tabs through the View Transitions API when the browser has
@@ -66,14 +69,38 @@ export default function App() {
   useEffect(() => {
     const savedMode = localStorage.getItem('ll-theme') || 'light';
     const savedPalette = localStorage.getItem('ll-palette') || 'azure';
-    setTheme(savedMode);
-    setPalette(savedPalette);
-    applyTheme(savedPalette, savedMode);
+    const savedWorld = lastWorld();
+    if (savedWorld) setWorld(savedWorld);
+    const w = savedWorld ? worldOf(savedWorld) : null;
+    const mode = w ? (localStorage.getItem('ll-theme-' + savedWorld) || w.mode) : savedMode;
+    const pal = w ? (localStorage.getItem('ll-palette-' + savedWorld) || w.palette) : savedPalette;
+    setTheme(mode);
+    setPalette(pal);
+    applyTheme(pal, mode);
   }, []);
+
+  // Choosing a world sets the whole identity, not just the first tab.
+  const enterWorld = (id) => {
+    const w = worldOf(id);
+    setWorld(id);
+    rememberWorld(id);
+    const mode = localStorage.getItem('ll-theme-' + id) || w.mode;
+    const pal = localStorage.getItem('ll-palette-' + id) || w.palette;
+    setTheme(mode);
+    setPalette(pal);
+    applyTheme(pal, mode);
+    setTab(w.tabs[0] === 'home' ? 'home' : w.tabs[0]);
+  };
+
+  const leaveWorld = () => {
+    setWorld(null);
+    try { localStorage.removeItem('ll-world'); } catch {}
+  };
 
   const usePalette = (id, mode = theme) => {
     setPalette(id);
     localStorage.setItem('ll-palette', id);
+    if (world) localStorage.setItem('ll-palette-' + world, id);
     applyTheme(id, mode);
   };
 
@@ -92,6 +119,7 @@ export default function App() {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     localStorage.setItem('ll-theme', next);
+    if (world) localStorage.setItem('ll-theme-' + world, next);
     applyTheme(palette, next);
   };
 
@@ -100,7 +128,8 @@ export default function App() {
   }, []);
 
   if (!ready) return <Splash />;
-  if (!session || !configured) return <Login />;
+  if (!world) return <WorldPicker onPick={enterWorld} />;
+  if (!session || !configured) return <Login world={worldOf(world)} onBack={leaveWorld} />;
   if (loading && !settings) return <Splash />;
   if (settings?.pin && !unlocked) return <Lock pin={settings.pin} onUnlock={() => setUnlocked(true)} />;
 
@@ -117,7 +146,8 @@ export default function App() {
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
-        {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} palette={palette} onThemes={() => setPicking(true)} />}
+        {tab === 'settings' && <SettingsView theme={theme} toggleTheme={toggleTheme} palette={palette} onThemes={() => setPicking(true)}
+                                        world={worldOf(world)} onLeaveWorld={leaveWorld} />}
       </div>
 
       <nav className="nav solid">

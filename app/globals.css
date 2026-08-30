@@ -3491,3 +3491,94 @@ html[data-theme="dark"] .sheetup{box-shadow:0 -12px 30px -14px rgba(0,0,0,.8)}
 .cuside b{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
 .cuside em{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3)}
 .cuside em.soon{color:var(--out);font-weight:700}
+
+/* ============================================================
+   THE WORLD PICKER
+   Shown before sign-in. Each card carries its own world's colour so the
+   choice is made on identity rather than on a label.
+   ============================================================ */
+.picker{
+  min-height:100dvh;padding:calc(env(safe-area-inset-top) + 42px) 22px 40px;
+  background:
+    radial-gradient(90% 55% at 50% 0%, rgba(11,111,191,.16), transparent 60%),
+    #0B0F16;
+  color:#EEF3FA;display:flex;flex-direction:column;
+}
+.pickhead{display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.pickttl b{
+  display:block;font-family:'Bricolage Grotesque',sans-serif;
+  font-size:20px;font-weight:800;letter-spacing:-.035em;
+}
+.pickttl span{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:#7C8CA3;margin-top:5px;
+}
+
+.worlds{display:flex;flex-direction:column;gap:13px;flex:1}
+.world{
+  position:relative;overflow:hidden;text-align:left;
+  border:1px solid rgba(255,255,255,.10);border-radius:24px;
+  background:linear-gradient(160deg,var(--w1),#0D121B 78%);
+  padding:20px 20px 22px;color:#fff;
+  animation:worldIn .55s var(--ease-settle) both;
+  transition:transform .2s var(--ease-spring), border-color .2s ease;
+}
+@keyframes worldIn{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
+.world:active{transform:scale(.975)}
+.world.going{
+  animation:worldGo .3s var(--ease-glide) both;
+  border-color:var(--wa);
+}
+@keyframes worldGo{to{transform:scale(1.03);box-shadow:0 0 0 2px var(--wa)}}
+.world.fading{animation:worldOut .26s var(--ease-glide) both}
+@keyframes worldOut{to{opacity:.25;transform:scale(.96)}}
+
+.wglow{
+  position:absolute;right:-50px;top:-60px;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle, var(--w3), transparent 68%);
+  opacity:.28;pointer-events:none;
+}
+.wtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;position:relative}
+.wtamil{
+  font-size:15px;font-weight:600;color:var(--w3);
+  letter-spacing:.02em;
+}
+.warrow{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.12);font-size:14px;color:#fff;
+}
+.wname{
+  display:block;font-family:'Bricolage Grotesque',sans-serif;
+  font-size:29px;font-weight:800;letter-spacing:-.04em;line-height:1;position:relative;
+}
+.wtag{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--w3);
+  margin-top:9px;position:relative;
+}
+.wblurb{
+  display:block;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.62);
+  margin-top:11px;position:relative;max-width:30ch;
+}
+.picknote{
+  text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:#5C6B80;margin-top:26px;letter-spacing:.04em;
+}
+
+/* login, once a world is chosen */
+.backworld{
+  position:absolute;top:calc(env(safe-area-inset-top) + 16px);left:18px;
+  background:none;border:0;color:var(--ink-3);font-size:12.5px;font-weight:600;padding:6px 0;
+}
+.worldtag{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);
+  margin-top:3px;letter-spacing:.04em;
+}
+
+/* switching worlds from inside */
+.worldswitch{
+  display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;color:var(--ink-2);font-size:12.5px;font-weight:600;text-align:left;
+}
+.worldswitch b{color:var(--brand)}
