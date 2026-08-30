@@ -17,18 +17,28 @@ import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
 import StatementView from './StatementView';
+import { HealthToday, HealthTrends, HealthBody, HealthSleep } from './HealthViews';
+import { LabView } from './LabViews';
 import ThemePicker from './ThemePicker';
 import { THEMES, applyTheme, byId } from '@/lib/themes';
 
-const TABS = [
-  { id: 'home',     label: 'Home' },
-  { id: 'entries',  label: 'Entries' },
-  { id: 'paari',    label: 'Paari' },
-  { id: 'drivers',  label: 'Drivers' },
-  { id: 'insights', label: 'Patterns' },
-  { id: 'calc',     label: 'Calc' },
-  { id: 'scan',     label: 'Scan' },
-];
+const TAB_SETS = {
+  finance: [
+    { id: 'home', label: 'Home' }, { id: 'entries', label: 'Entries' },
+    { id: 'paari', label: 'Paari' }, { id: 'drivers', label: 'Drivers' },
+    { id: 'insights', label: 'Patterns' }, { id: 'calc', label: 'Calc' },
+    { id: 'scan', label: 'Scan' },
+  ],
+  health: [
+    { id: 'today', label: 'Today' }, { id: 'trends', label: 'Trends' },
+    { id: 'body', label: 'Body' }, { id: 'sleep', label: 'Sleep' },
+    { id: 'calc', label: 'Calc' },
+  ],
+  lab: [
+    { id: 'lab', label: 'Lab' }, { id: 'trends', label: 'Trends' },
+    { id: 'today', label: 'Today' },
+  ],
+};
 
 export default function App() {
   const { ready, session, loading, settings, configured } = useStore();
@@ -47,6 +57,8 @@ export default function App() {
 
   // Move between tabs through the View Transitions API when the browser has
   // it, so the two screens cross-dissolve as one surface instead of swapping.
+  const TABS = TAB_SETS[world] || TAB_SETS.finance;
+
   const go = (next) => {
     if (next === tab) return;
     const from = TABS.findIndex((t) => t.id === tab);
@@ -143,6 +155,11 @@ export default function App() {
         {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'scan' && <StatementView />}
+        {tab === 'today' && <HealthToday />}
+        {tab === 'trends' && <HealthTrends />}
+        {tab === 'body' && <HealthBody />}
+        {tab === 'sleep' && <HealthSleep />}
+        {tab === 'lab' && <LabView />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
@@ -153,7 +170,7 @@ export default function App() {
       <nav className="nav solid">
         <div className="navtabs">
           {TABS.map(({ id, label }) => {
-            const Icon = NAV_ICONS[id];
+            const Icon = NAV_ICONS[id] || NAV_ICONS.home;
             const on = tab === id;
             return (
               <button key={id} className={'navbtn' + (on ? ' on' : '')} onClick={() => go(id)}>

@@ -117,12 +117,30 @@ export const NavScan = ({ solid, ...p }) =>
     </svg>
   );
 
+
+export const NavToday = ({ solid, ...p }) => solid ? (
+  <svg viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="9" fill="currentColor" opacity=".45"/><path d="M12 6.5a1 1 0 011 1V12l3 1.8a1 1 0 01-1 1.7l-3.5-2.1a1 1 0 01-.5-.9V7.5a1 1 0 011-1z" fill="currentColor"/></svg>
+) : (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3.2 1.9"/></svg>
+);
+export const NavBody = ({ solid, ...p }) => solid ? (
+  <svg viewBox="0 0 24 24" {...p}><circle cx="12" cy="5" r="2.6" fill="currentColor"/><path d="M8 9.4h8a1.6 1.6 0 011.6 1.8l-.7 4.4a1.4 1.4 0 01-1.4 1.2h-.9l-.4 4.1a1.2 1.2 0 01-2.4 0L11.5 17h-.9l-.4 3.9a1.2 1.2 0 01-2.4 0l-.4-4.1h-.5a1.4 1.4 0 01-1.4-1.2l-.7-4.4A1.6 1.6 0 018 9.4z" fill="currentColor" opacity=".6"/></svg>
+) : (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="5.2" r="2.5"/><path d="M8.4 9.6h7.2l-.9 6h-1.3l-.5 5h-1.9l-.5-5H9.3z"/></svg>
+);
+export const NavSleep = ({ solid, ...p }) => solid ? (
+  <svg viewBox="0 0 24 24" {...p}><path d="M20.5 14.9A8.6 8.6 0 019.1 3.5a8.6 8.6 0 1011.4 11.4z" fill="currentColor"/></svg>
+) : (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20.4 14.7A8.4 8.4 0 019.3 3.6a8.4 8.4 0 1011.1 11.1z"/></svg>
+);
+export const NavLab = ({ solid, ...p }) => solid ? (
+  <svg viewBox="0 0 24 24" {...p}><path d="M9.4 2.6h5.2v2h-.9v5l4.7 8.6a2 2 0 01-1.8 3H7.4a2 2 0 01-1.8-3l4.7-8.6v-5h-.9z" fill="currentColor" opacity=".5"/><path d="M8.2 15.4h7.6l2.2 4a1.4 1.4 0 01-1.2 2.1H7.2A1.4 1.4 0 016 19.4z" fill="currentColor"/></svg>
+) : (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9.5 3v6.6L5 18a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-4.5-8.4V3M8.4 3h7.2M8 14.6h8"/></svg>
+);
+
 export const NAV_ICONS = {
-  home: NavHome,
-  entries: NavEntries,
-  paari: NavPaari,
-  drivers: NavDrivers,
-  insights: NavPatterns,
-  calc: NavCalc,
-  scan: NavScan,
+  home: NavHome, entries: NavEntries, paari: NavPaari, drivers: NavDrivers,
+  insights: NavPatterns, calc: NavCalc, scan: NavScan,
+  today: NavToday, trends: NavPatterns, body: NavBody, sleep: NavSleep, lab: NavLab,
 };
