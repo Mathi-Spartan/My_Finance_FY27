@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Palette, Plus, Back } from './Icons';
+import { byId } from '@/lib/themes';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
 export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld, onBack }) {
