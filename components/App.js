@@ -19,7 +19,6 @@ import { NAV_ICONS } from './NavIcons';
 import StatementView from './StatementView';
 import HealthView from './HealthView';
 import LabView from './LabView';
-import { HealthToday, HealthTrends, HealthBody, HealthSleep } from './HealthViews';
 import ThemePicker from './ThemePicker';
 import { THEMES, applyTheme, byId } from '@/lib/themes';
 
