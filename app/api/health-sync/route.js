@@ -36,8 +36,8 @@ export async function POST(req) {
   if (!key) return Response.json({ message: 'Missing x-sync-key' }, { status: 401 });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !service) {
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
     return Response.json({ message: 'Sync is not configured on the server' }, { status: 500 });
   }
 
@@ -45,18 +45,10 @@ export async function POST(req) {
   try { body = await req.json(); }
   catch { return Response.json({ message: 'Body must be JSON' }, { status: 400 }); }
 
-  const admin = createClient(url, service, { auth: { persistSession: false } });
-
-  // the key identifies the account without putting a password in a Shortcut
-  const { data: owner, error: keyErr } = await admin
-    .from('settings').select('user_id').eq('sync_key', key).maybeSingle();
-  if (keyErr) return Response.json({ message: keyErr.message }, { status: 500 });
-  if (!owner) return Response.json({ message: 'That sync key is not recognised' }, { status: 401 });
-
   const incoming = Array.isArray(body?.days) ? body.days : [body];
   const rows = incoming
     .map((d) => {
-      const row = { user_id: owner.user_id, on_date: isoDate(d?.date || d?.on_date), source: 'shortcut' };
+      const row = { on_date: isoDate(d?.date || d?.on_date) };
       let any = false;
       FIELDS.forEach((f) => {
         const v = num(d?.[f]);
@@ -72,9 +64,12 @@ export async function POST(req) {
 
   if (!rows.length) return Response.json({ message: 'Nothing usable in that payload' }, { status: 400 });
 
-  const { error } = await admin.from('health_days')
-    .upsert(rows, { onConflict: 'user_id,on_date' });
+  // The key never leaves the server as credentials: a database function checks
+  // it and writes only to the account it belongs to.
+  const client = createClient(url, anon, { auth: { persistSession: false } });
+  const { data, error } = await client.rpc('sync_health', { p_key: key, p_days: rows });
   if (error) return Response.json({ message: error.message }, { status: 500 });
+  if (!data?.ok) return Response.json({ message: data?.message || 'Rejected' }, { status: 401 });
 
-  return Response.json({ ok: true, saved: rows.length, dates: rows.map((r) => r.on_date) });
+  return Response.json({ ok: true, saved: data.saved, dates: rows.map((r) => r.on_date) });
 }
