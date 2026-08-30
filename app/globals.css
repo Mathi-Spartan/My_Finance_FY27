@@ -3764,3 +3764,20 @@ html[data-theme="dark"] .sheetup{box-shadow:0 -12px 30px -14px rgba(0,0,0,.8)}
 .feasbar i.n{background:color-mix(in srgb,var(--out) 45%,var(--card))}
 .feastext{font-size:11.5px;line-height:1.55;color:var(--ink-2);margin:0}
 .feastext b{color:var(--ink)}
+
+/* ---------- sync keys ---------- */
+.keyrow{
+  background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:12px 13px;margin-bottom:9px;
+}
+.keytop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.keytop b{font-size:13px;font-weight:700}
+.keyurl{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;line-height:1.5;
+  color:var(--ink-3);word-break:break-all;
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r-sm);
+  padding:8px 10px;margin-bottom:9px;
+}
+.keyfoot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.keyfoot span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink-3)}
+.keyfoot .mini{display:inline-flex;align-items:center;gap:5px}

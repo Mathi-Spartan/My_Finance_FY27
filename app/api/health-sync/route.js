@@ -190,9 +190,14 @@ export async function POST(req) {
   if (typeof body.data === 'string') Object.assign(body, fromText(body.data));
   if (typeof body.text === 'string') Object.assign(body, fromText(body.text));
 
+  // A sync key is the safe way in: it can only add health days, it carries no
+  // password, and it can be revoked from Settings without changing anything
+  // else. Email and password still work, but the key is what should be used
+  // anywhere a third-party app or a URL is involved.
+  const key = body.key || qs.get('key') || req.headers.get('x-sync-key');
   const email = body.email || qs.get('email') || req.headers.get('x-email');
   const password = body.password || qs.get('password') || req.headers.get('x-password');
-  if (!email || !password) {
+  if (!key && (!email || !password)) {
     // Telling you what arrived is the difference between fixing this in one
     // try and guessing at it.
     return Response.json({
@@ -203,9 +208,14 @@ export async function POST(req) {
   }
 
   const sb = createClient(url, anon, { auth: { persistSession: false } });
-  const { data: auth, error: authError } = await sb.auth.signInWithPassword({ email, password });
-  if (authError || !auth?.user) {
-    return Response.json({ message: 'Those credentials were not accepted' }, { status: 401 });
+
+  let userId = null;
+  if (!key) {
+    const { data: auth, error: authError } = await sb.auth.signInWithPassword({ email, password });
+    if (authError || !auth?.user) {
+      return Response.json({ message: 'Those credentials were not accepted' }, { status: 401 });
+    }
+    userId = auth.user.id;
   }
 
   // Health Auto Export sends its own structure; take it whole if we see it
@@ -219,10 +229,8 @@ export async function POST(req) {
     // no date sent at all means today, which is what a daily automation wants
     const date = asDate(r.date || r.on_date) || new Date().toISOString().slice(0, 10);
 
-    const out = {
-      user_id: auth.user.id, on_date: date,
-      source: 'shortcut', updated_at: new Date().toISOString(),
-    };
+    const out = { on_date: date };
+    if (userId) { out.user_id = userId; out.source = 'shortcut'; out.updated_at = new Date().toISOString(); }
     let any = false;
     for (const f of FIELDS) {
       const v = f.endsWith('_min') ? minutes(r[f]) : num(r[f]);
@@ -240,8 +248,21 @@ export async function POST(req) {
   }
 
   if (!clean.length) {
-    await sb.auth.signOut();
+    if (userId) await sb.auth.signOut();
     return Response.json({ message: 'Nothing usable in that payload', rejected }, { status: 400 });
+  }
+
+  if (key) {
+    // goes through a function that can only ever write this key owner's days
+    const { data, error } = await sb.rpc('health_ingest', { p_token: key, p_rows: clean });
+    if (error) return Response.json({ message: error.message }, { status: 500 });
+    if (!data?.ok) return Response.json({ message: data?.message || 'Key not accepted' }, { status: 401 });
+    return Response.json({
+      saved: data.saved,
+      dates: clean.map((c) => c.on_date),
+      rejected: rejected.length,
+      ...(rejected.length ? { why: rejected } : {}),
+    });
   }
 
   const { data, error } = await sb

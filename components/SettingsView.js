@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Palette, Plus, Back } from './Icons';
 import { byId } from '@/lib/themes';
+import SyncKeys from './SyncKeys';
 import { rupees, toCSV, parseCSV, isoDay, accountBalances } from '@/lib/finance';
 
 export default function SettingsView({ theme, toggleTheme, palette, onThemes, world, onLeaveWorld, onBack }) {
@@ -147,6 +148,8 @@ export default function SettingsView({ theme, toggleTheme, palette, onThemes, wo
               <button className="btn ghost" style={{ marginTop: 8 }} onClick={() => setLeaving(false)}>Stay signed in</button>
             </div>
           )}
+
+          <SyncKeys />
 
           <div className="card">
             <div className="cardhead"><h4>Appearance</h4><span>{byId(palette).name}</span></div>
