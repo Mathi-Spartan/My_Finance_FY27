@@ -17,8 +17,9 @@ import Lock from './Lock';
 import { Plus } from './Icons';
 import { NAV_ICONS } from './NavIcons';
 import StatementView from './StatementView';
+import HealthView from './HealthView';
+import LabView from './LabView';
 import { HealthToday, HealthTrends, HealthBody, HealthSleep } from './HealthViews';
-import { LabView } from './LabViews';
 import ThemePicker from './ThemePicker';
 import { THEMES, applyTheme, byId } from '@/lib/themes';
 
@@ -61,8 +62,9 @@ export default function App() {
 
   const go = (next) => {
     if (next === tab) return;
-    const from = TABS.findIndex((t) => t.id === tab);
-    const to = TABS.findIndex((t) => t.id === next);
+    const list = TABS_BY_WORLD[world] || TABS;
+    const from = list.findIndex((t) => t.id === tab);
+    const to = list.findIndex((t) => t.id === next);
     const forward = to === -1 || from === -1 ? true : to > from;
 
     // Decorative loops keep compositing while the screen moves, which is where
@@ -155,11 +157,12 @@ export default function App() {
         {tab === 'drivers' && <DriversView />}
         {tab === 'insights' && <InsightsView />}
         {tab === 'scan' && <StatementView />}
+        {['today', 'trends', 'body', 'sleep'].includes(tab) && <HealthView tab={tab} />}
+        {['lab', 'running', 'done'].includes(tab) && <LabView tab={tab} />}
         {tab === 'today' && <HealthToday />}
         {tab === 'trends' && <HealthTrends />}
         {tab === 'body' && <HealthBody />}
         {tab === 'sleep' && <HealthSleep />}
-        {tab === 'lab' && <LabView />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
@@ -169,7 +172,7 @@ export default function App() {
 
       <nav className="nav solid">
         <div className="navtabs">
-          {TABS.map(({ id, label }) => {
+          {tabsFor.map(({ id, label }) => {
             const Icon = NAV_ICONS[id] || NAV_ICONS.home;
             const on = tab === id;
             return (

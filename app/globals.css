@@ -3706,3 +3706,61 @@ html[data-theme="dark"] .sheetup{box-shadow:0 -12px 30px -14px rgba(0,0,0,.8)}
 .feasbar i.n{background:color-mix(in srgb,var(--out) 50%,var(--line))}
 .feastext{font-size:11.5px;line-height:1.55;color:var(--ink-2);margin:0}
 .feastext b{color:var(--ink)}
+
+/* ============================================================
+   THE LAB — experiment cards
+   ============================================================ */
+.xp{
+  display:block;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:14px 15px;margin-bottom:10px;position:relative;overflow:hidden;
+  animation:rowIn .42s var(--ease-settle) both;
+  transition:transform .15s var(--ease-spring),border-color .18s ease;
+}
+.xp:active{transform:scale(.985);border-color:var(--brand)}
+.xp::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)}
+.xp.risk::before{background:var(--out)}
+.xp.body::before{background:var(--amber)}
+.xptop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:11px}
+.xpname{font-size:15px;font-weight:750;letter-spacing:-.025em;line-height:1.2;display:block}
+.xpname em{
+  display:block;font-style:normal;font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--ink-3);margin-top:5px;letter-spacing:.06em;
+}
+.chip{
+  font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;padding:4px 8px;border-radius:var(--r-sm);white-space:nowrap;flex:0 0 auto;
+}
+.chip.on{background:var(--in-soft);color:var(--in)}
+.chip.warn{background:var(--amber-soft);color:var(--amber)}
+.chip.bad{background:var(--out-soft);color:var(--out)}
+
+.dots{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:11px}
+.dots i{width:9px;height:9px;border-radius:2.5px;background:var(--line-2)}
+.dots i.hit{background:var(--in)}
+.dots i.miss{background:color-mix(in srgb,var(--out) 45%,var(--card))}
+.dots i.today{box-shadow:0 0 0 1.5px var(--brand);background:transparent}
+
+.xpfoot{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);
+}
+.xpfoot b{color:var(--ink-2);font-weight:600}
+
+.cal{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.cal i{aspect-ratio:1;border-radius:4px;background:var(--line-2)}
+.cal i.hit{background:var(--in)}
+.cal i.miss{background:color-mix(in srgb,var(--out) 45%,var(--card))}
+.cal i.today{box-shadow:0 0 0 1.6px var(--brand)}
+
+.feas{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 14px;margin-top:4px}
+.feask{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:9px;
+}
+.feasbar{display:flex;gap:2px;height:22px;margin-bottom:9px}
+.feasbar i{flex:1;border-radius:2px;background:var(--line)}
+.feasbar i.y{background:var(--in)}
+.feasbar i.n{background:color-mix(in srgb,var(--out) 45%,var(--card))}
+.feastext{font-size:11.5px;line-height:1.55;color:var(--ink-2);margin:0}
+.feastext b{color:var(--ink)}

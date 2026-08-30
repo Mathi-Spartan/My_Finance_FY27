@@ -1,15 +1,11 @@
-// Where the iPhone Shortcut posts to. Apple gives no web access to Health, so
-// the Shortcut reads the samples and sends them here.
-//
-// POST /api/health-sync
-//   headers: x-sync-key: <the key from Settings>
-//   body:    { "days": [ { "date":"2026-08-30", "steps":8412, "sleep_min":408, ... } ] }
-//   or a single day at the top level, which is what the simplest Shortcut sends.
-
-import { createClient } from '@supabase/supabase-js';
+// Where the iPhone Shortcut posts. Apple gives no web access to Health, so the
+// Shortcut reads the samples and sends them here. Accepts one day or many, and
+// upserts so re-sending the same day corrects rather than duplicates.
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+import { createClient } from '@supabase/supabase-js';
 
 const FIELDS = [
   'steps', 'distance_km', 'flights', 'active_kcal', 'exercise_min', 'stand_hours',
@@ -19,57 +15,69 @@ const FIELDS = [
 
 const num = (v) => {
   if (v === null || v === undefined || v === '') return null;
-  const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+  const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
   return Number.isFinite(n) ? n : null;
 };
 
-const isoDate = (v) => {
-  if (!v) return new Date().toISOString().slice(0, 10);
-  const s = String(v).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? new Date().toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
-};
-
 export async function POST(req) {
-  const key = req.headers.get('x-sync-key') || '';
-  if (!key) return Response.json({ message: 'Missing x-sync-key' }, { status: 401 });
-
+  const token = req.headers.get('x-sync-key');
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) {
-    return Response.json({ message: 'Sync is not configured on the server' }, { status: 500 });
+  const service = process.env.SUPABASE_SERVICE_ROLE;
+  const expected = process.env.HEALTH_SYNC_KEY;
+  const userId = process.env.HEALTH_SYNC_USER;
+
+  if (!url || !service || !expected || !userId) {
+    return Response.json({
+      message: 'Sync is not configured. Set HEALTH_SYNC_KEY, HEALTH_SYNC_USER and SUPABASE_SERVICE_ROLE.',
+    }, { status: 500 });
+  }
+  if (token !== expected) {
+    return Response.json({ message: 'Wrong or missing x-sync-key' }, { status: 401 });
   }
 
   let body;
-  try { body = await req.json(); }
-  catch { return Response.json({ message: 'Body must be JSON' }, { status: 400 }); }
+  try { body = await req.json(); } catch { return Response.json({ message: 'Body must be JSON' }, { status: 400 }); }
 
-  const incoming = Array.isArray(body?.days) ? body.days : [body];
-  const rows = incoming
-    .map((d) => {
-      const row = { on_date: isoDate(d?.date || d?.on_date) };
-      let any = false;
-      FIELDS.forEach((f) => {
-        const v = num(d?.[f]);
-        if (v !== null) { row[f] = v; any = true; }
-      });
-      // a Shortcut often sends sleep in hours
-      if (row.sleep_min === undefined && num(d?.sleep_hours) !== null) {
-        row.sleep_min = Math.round(num(d.sleep_hours) * 60); any = true;
-      }
-      return any ? row : null;
-    })
-    .filter(Boolean);
+  const rows = Array.isArray(body) ? body : [body];
+  const clean = [];
+  const rejected = [];
 
-  if (!rows.length) return Response.json({ message: 'Nothing usable in that payload' }, { status: 400 });
+  for (const r of rows) {
+    const date = String(r.date || r.on_date || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { rejected.push({ row: r, why: 'no valid date' }); continue; }
+    const out = { user_id: userId, on_date: date, source: 'shortcut', updated_at: new Date().toISOString() };
+    let any = false;
+    for (const f of FIELDS) {
+      const v = num(r[f]);
+      if (v !== null) { out[f] = v; any = true; }
+    }
+    if (!any) { rejected.push({ row: r, why: 'no readable measurements' }); continue; }
+    clean.push(out);
+  }
 
-  // The key never leaves the server as credentials: a database function checks
-  // it and writes only to the account it belongs to.
-  const client = createClient(url, anon, { auth: { persistSession: false } });
-  const { data, error } = await client.rpc('sync_health', { p_key: key, p_days: rows });
+  if (!clean.length) {
+    return Response.json({ message: 'Nothing usable in that payload', rejected }, { status: 400 });
+  }
+
+  const sb = createClient(url, service, { auth: { persistSession: false } });
+  const { data, error } = await sb
+    .from('health_days')
+    .upsert(clean, { onConflict: 'user_id,on_date' })
+    .select('on_date');
+
   if (error) return Response.json({ message: error.message }, { status: 500 });
-  if (!data?.ok) return Response.json({ message: data?.message || 'Rejected' }, { status: 401 });
 
-  return Response.json({ ok: true, saved: data.saved, dates: rows.map((r) => r.on_date) });
+  return Response.json({
+    saved: data?.length || 0,
+    dates: (data || []).map((d) => d.on_date),
+    rejected: rejected.length,
+  });
+}
+
+export async function GET() {
+  return Response.json({
+    ok: true,
+    how: 'POST JSON here with x-sync-key. One object or an array of them.',
+    shape: { date: 'YYYY-MM-DD', ...Object.fromEntries(FIELDS.map((f) => [f, 'number'])) },
+  });
 }
