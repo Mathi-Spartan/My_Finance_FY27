@@ -116,6 +116,9 @@ export default function App() {
     setTheme(mode);
     setPalette(pal);
     applyTheme(pal, mode);
+    // restoring a world has to restore its first tab too, or it opens on a
+    // screen that belongs to a different world
+    if (w) setTab(w.tabs[0]);
   }, []);
 
   // Choosing a world sets the whole identity, not just the first tab.
@@ -133,6 +136,13 @@ export default function App() {
 
   // which tabs this world shows
   const tabsFor = TABS_BY_WORLD[world] || TABS;
+
+  useEffect(() => {
+    if (!world) return;
+    const ids = tabsFor.map((t) => t.id);
+    if (!ids.includes(tab) && tab !== 'settings') setTab(ids[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [world]);
 
   const leaveWorld = () => {
     setWorld(null);
