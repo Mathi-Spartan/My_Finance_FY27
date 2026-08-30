@@ -84,7 +84,6 @@ export default function App() {
 
   // Move between tabs through the View Transitions API when the browser has
   // it, so the two screens cross-dissolve as one surface instead of swapping.
-  const TABS = TAB_SETS[world] || TAB_SETS.finance;
 
   const go = (next) => {
     if (next === tab) return;
@@ -188,10 +187,6 @@ export default function App() {
         {tab === 'scan' && <StatementView />}
         {['today', 'trends', 'body', 'sleep'].includes(tab) && <HealthView tab={tab} />}
         {['lab', 'running', 'done'].includes(tab) && <LabView tab={tab} />}
-        {tab === 'today' && <HealthToday />}
-        {tab === 'trends' && <HealthTrends />}
-        {tab === 'body' && <HealthBody />}
-        {tab === 'sleep' && <HealthSleep />}
         {tab === 'calc' && (
           <CalculatorView onUse={(v) => { setPresetAmount(v); setPresetAccount(null); setAdding(true); }} />
         )}
